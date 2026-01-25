@@ -2,6 +2,14 @@ const pdf = require('pdf-parse');
 const fs = require('fs-extra');
 const path = require('path');
 const syllabusService = require('../services/syllabus.service');
+const { Storage } = require('@google-cloud/storage');
+const { analyzeDocument } = require('../services/vertexai.service');
+const { socraticTutorPrompt } = require('../utils/promptUtils');
+const firestore = require('@google-cloud/firestore');
+
+const storage = new Storage();
+const bucket = storage.bucket(process.env.GCS_BUCKET || 'your-bucket-name');
+const db = new firestore.Firestore();
 
 async function extractTextFromPdf(filePath) {
   const data = await fs.readFile(filePath);
@@ -33,6 +41,14 @@ async function uploadSyllabus(req, res, next) {
 
     const saved = await syllabusService.saveSyllabus({ title: title || 'uploaded syllabus', text: syllabusText, examDate });
 
+    // Log interaction
+    await db.collection('interactions').add({
+      type: 'syllabus_upload',
+      userId: req.body.userId || 'anonymous',
+      title: saved.title,
+      timestamp: new Date(),
+    });
+
     return res.json({ success: true, data: saved });
   } catch (err) {
     next(err);
@@ -59,4 +75,46 @@ async function listSyllabi(req, res, next) {
   }
 }
 
-module.exports = { uploadSyllabus, getSyllabus, listSyllabi };
+exports.scanSyllabus = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    const file = req.file;
+    const fileName = `syllabus-${Date.now()}-${file.originalname}`;
+    const filePath = `gs://${bucket.name}/${fileName}`;
+
+    // Upload to GCS
+    await bucket.upload(file.path, {
+      destination: fileName,
+      metadata: {
+        contentType: file.mimetype,
+      },
+    });
+
+    // Cleanup local file
+    await fs.remove(file.path);
+
+    const userPrompt = req.body.prompt || 'Analyze this syllabus and provide a study plan.';
+    const fullPrompt = socraticTutorPrompt(userPrompt, 'Syllabus analysis');
+
+    const analysis = await analyzeDocument(filePath, fullPrompt, 'gemini-1.5-pro');
+
+    // Log interaction
+    await db.collection('interactions').add({
+      type: 'syllabus',
+      userId: req.body.userId || 'anonymous',
+      prompt: userPrompt,
+      fileUri: filePath,
+      timestamp: new Date(),
+    });
+
+    res.status(200).json({ analysis, fileUri: filePath });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error processing syllabus' });
+  }
+};
+
+module.exports = { uploadSyllabus, getSyllabus, listSyllabi, scanSyllabus: exports.scanSyllabus };
