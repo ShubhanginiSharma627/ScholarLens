@@ -3,7 +3,9 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 import '../models/models.dart';
+import '../widgets/common/polished_components.dart';
 import 'camera_screen.dart';
+import 'snap_details_screen.dart';
 
 /// Snap & Solve screen that allows users to capture or upload problems
 class SnapAndSolveScreen extends StatefulWidget {
@@ -112,6 +114,10 @@ Step-by-Step Solution
               hasAnalyzed: hasAnalyzed,
               onChangeImage: () => _showImageOptions(context),
               onAnalyzeWithAI: _analyzeWithAI,
+            ),
+            BackNavigationBar(
+              title: 'Back to Home',
+              onPressed: () => Navigator.pop(context),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -830,12 +836,12 @@ class RecentSnapCard extends StatelessWidget {
   }
 
   void _openSnapDetails(BuildContext context, RecentSnap snap) {
-    // TODO: Load lesson content by lessonId and navigate
-    // For now, show a placeholder message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening lesson: ${snap.problemTitle}'),
-        backgroundColor: Colors.blue,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => SnapDetailsScreen(
+          snap: snap,
+          imagePath: snap.thumbnailPath,
+        ),
       ),
     );
   }

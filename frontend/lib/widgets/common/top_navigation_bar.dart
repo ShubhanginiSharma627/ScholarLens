@@ -52,15 +52,17 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           const SizedBox(width: 12),
-          const Text(
-            'ScholarLens',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+          const Expanded(
+            child: Text(
+              'ScholarLens',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -90,7 +92,7 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Stack(
             children: [
               const Icon(
@@ -112,7 +114,7 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: () {
               Navigator.of(context).push(

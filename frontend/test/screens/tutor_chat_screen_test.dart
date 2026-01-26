@@ -5,22 +5,28 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../lib/screens/tutor_chat_screen.dart';
 import '../../lib/providers/chat_provider.dart';
+import '../../lib/providers/progress_provider.dart';
 import '../../lib/models/chat_message.dart';
 
 void main() {
   group('TutorChatScreen', () {
     late ChatProvider chatProvider;
+    late ProgressProvider progressProvider;
 
     setUp(() async {
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       chatProvider = ChatProvider();
+      progressProvider = ProgressProvider();
     });
 
     Widget createTestWidget() {
       return MaterialApp(
-        home: ChangeNotifierProvider<ChatProvider>.value(
-          value: chatProvider,
+        home: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ChatProvider>.value(value: chatProvider),
+            ChangeNotifierProvider<ProgressProvider>.value(value: progressProvider),
+          ],
           child: const TutorChatScreen(),
         ),
       );

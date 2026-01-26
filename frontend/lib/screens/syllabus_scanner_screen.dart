@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import '../models/models.dart';
+import '../widgets/common/polished_components.dart';
+import 'textbook_detail_screen.dart';
 
 /// Syllabus Scanner screen that allows users to upload textbooks and PDFs
 class SyllabusScannerScreen extends StatefulWidget {
@@ -30,7 +33,10 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
           fileSize: '24.5 MB',
           status: TextbookStatus.ready,
           uploadedAt: DateTime.now().subtract(const Duration(days: 2)),
-          chapters: ['Cell Structure', 'Mitosis', 'DNA Replication', 'Photosynthesis'],
+          chapters: ['Cell Structure', 'Mitosis', 'DNA Replication', 'Photosynthesis', 'Genetics'],
+          totalPages: 156,
+          keyTopics: ['Cell Structure', 'Mitosis', 'DNA Replication', 'Photosynthesis'],
+          subject: 'Biology',
         ),
         UploadedTextbook(
           id: '2',
@@ -40,6 +46,9 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
           status: TextbookStatus.ready,
           uploadedAt: DateTime.now().subtract(const Duration(days: 5)),
           chapters: ['Newton\'s Laws', 'Kinematics', 'Work & Energy'],
+          totalPages: 124,
+          keyTopics: ['Newton\'s Laws', 'Kinematics', 'Work & Energy'],
+          subject: 'Physics',
         ),
       ];
     });
@@ -53,6 +62,10 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
         child: Column(
           children: [
             const SyllabusHeader(),
+            BackNavigationBar(
+              title: 'Back to Home',
+              onPressed: () => Navigator.pop(context),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -435,10 +448,10 @@ class TextbookCard extends StatelessWidget {
   }
 
   void _studyTextbook(BuildContext context, UploadedTextbook textbook) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Starting study session for ${textbook.title}'),
-        backgroundColor: Colors.blue,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TextbookDetailScreen(textbook: textbook),
       ),
     );
   }
@@ -596,26 +609,3 @@ class TextbookFeaturesCard extends StatelessWidget {
     );
   }
 }
-
-/// Data model for uploaded textbooks
-class UploadedTextbook {
-  final String id;
-  final String title;
-  final String fileName;
-  final String fileSize;
-  final TextbookStatus status;
-  final DateTime uploadedAt;
-  final List<String> chapters;
-
-  const UploadedTextbook({
-    required this.id,
-    required this.title,
-    required this.fileName,
-    required this.fileSize,
-    required this.status,
-    required this.uploadedAt,
-    required this.chapters,
-  });
-}
-
-enum TextbookStatus { uploading, processing, ready, error }

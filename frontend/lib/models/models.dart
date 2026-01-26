@@ -8,4 +8,5 @@ export 'processed_image.dart';
 export 'quiz_question.dart';
 export 'recent_activity.dart';
 export 'recent_snap.dart';
+export 'uploaded_textbook.dart';
 export 'user_progress.dart';

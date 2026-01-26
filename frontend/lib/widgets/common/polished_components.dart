@@ -464,3 +464,48 @@ class PolishedComponents {
     );
   }
 }
+
+/// Back navigation bar component with customizable title text
+class BackNavigationBar extends StatelessWidget {
+  final String title;
+  final VoidCallback onPressed;
+  
+  const BackNavigationBar({
+    super.key,
+    required this.title,
+    required this.onPressed,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: onPressed,
+            icon: const Icon(Icons.arrow_back, size: 20),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Color(0xFF6B7280),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
