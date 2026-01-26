@@ -1,6 +1,10 @@
-const openaiService = require('../services/openai.service');
+const { generateText } = require('../services/vertexai.service');
+const { socraticTutorPrompt } = require('../utils/promptUtils');
+const firestore = require('@google-cloud/firestore');
 
-async function explainTopic(req, res, next) {
+const db = new firestore.Firestore();
+
+exports.explainTopic = async (req, res) => {
   try {
     const { topic, audience = 'student', type = 'concise' } = req.body || {};
 
@@ -8,14 +12,20 @@ async function explainTopic(req, res, next) {
       return res.status(400).json({ success: false, error: { message: '`topic` is required and must be a string' } });
     }
 
-    const promptMeta = { topic, audience, type };
+    const fullPrompt = socraticTutorPrompt(`Explain ${topic} for a ${audience} in a ${type} way.`, 'Topic explanation');
 
-    const response = await openaiService.explainTopic(promptMeta);
+    const explanation = await generateText(fullPrompt);
 
-    return res.json({ success: true, data: response });
-  } catch (err) {
-    next(err);
+    // Log interaction
+    await db.collection('interactions').add({
+      type: 'explain',
+      userId: req.body.userId || 'anonymous',
+      topic,
+      timestamp: new Date(),
+    });
+
+    res.status(200).json({ success: true, data: explanation });
+  } catch (error) {
+    res.status(500).json({ error: 'Error explaining topic' });
   }
-}
-
-module.exports = { explainTopic };
+};
