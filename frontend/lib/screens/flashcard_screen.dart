@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/flashcard.dart';
-import '../widgets/flashcard_widget.dart';
+import '../models/study_session_progress.dart';
+import '../widgets/flashcard/enhanced_flashcard_widget.dart';
+import '../widgets/flashcard/modern_progress_tracker.dart';
 import '../widgets/difficulty_rating_bar.dart';
 
 /// Screen for reviewing flashcards with navigation and progress tracking
@@ -20,6 +22,7 @@ class FlashcardScreen extends StatefulWidget {
 
 class _FlashcardScreenState extends State<FlashcardScreen> {
   late PageController _pageController;
+  late StudySessionProgress _sessionProgress;
   int _currentIndex = 0;
   bool _isFlipped = false;
   final Map<int, Difficulty?> _ratings = {};
@@ -28,6 +31,10 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    _sessionProgress = StudySessionProgress.initial(
+      totalCards: widget.flashcards.length,
+      subject: widget.subject,
+    );
   }
 
   @override
@@ -45,6 +52,11 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   void _onDifficultyRated(Difficulty difficulty) {
     setState(() {
       _ratings[_currentIndex] = difficulty;
+      // Update session progress with real-time tracking
+      _sessionProgress = _sessionProgress.rateCard(
+        widget.flashcards[_currentIndex].id,
+        difficulty,
+      );
     });
     
     // Auto-advance to next card after rating
@@ -58,6 +70,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       setState(() {
         _currentIndex++;
         _isFlipped = false;
+        // Update session progress for navigation
+        _sessionProgress = _sessionProgress.nextCard();
       });
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -71,6 +85,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       setState(() {
         _currentIndex--;
         _isFlipped = false;
+        // Update session progress for navigation
+        _sessionProgress = _sessionProgress.previousCard();
       });
       _pageController.previousPage(
         duration: const Duration(milliseconds: 300),
@@ -83,6 +99,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     setState(() {
       _currentIndex = index;
       _isFlipped = false;
+      // Update session progress when page changes
+      _sessionProgress = _sessionProgress.jumpToCard(index);
     });
   }
 
@@ -138,37 +156,15 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       ),
       body: Column(
         children: [
-          // Progress indicator
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Card ${_currentIndex + 1} of ${widget.flashcards.length}',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Text(
-                      '${((_currentIndex + 1) / widget.flashcards.length * 100).round()}%',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: (_currentIndex + 1) / widget.flashcards.length,
-                  backgroundColor: Colors.grey[300],
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).primaryColor,
-                  ),
-                ),
-              ],
-            ),
+          // Modern progress tracker with real-time updates
+          ModernProgressTracker(
+            totalCards: widget.flashcards.length,
+            masteredCards: _sessionProgress.easyCount + _sessionProgress.mediumCount,
+            correctCount: _sessionProgress.correctCount,
+            incorrectCount: _sessionProgress.incorrectCount,
+            completionPercentage: _sessionProgress.completionPercentage,
+            showCounters: true,
+            showMasteryStats: false, // Hide mastery stats during study session
           ),
           
           // Flashcard display
@@ -180,13 +176,27 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
               itemBuilder: (context, index) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: FlashcardWidget(
+                  child: EnhancedFlashcardWidget(
                     flashcard: widget.flashcards[index],
                     isFlipped: _isFlipped,
                     onFlip: _onFlip,
+                    onDifficultyRated: _onDifficultyRated,
                   ),
                 );
               },
+            ),
+          ),
+          
+          // Card counter display
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              'Card ${_currentIndex + 1} of ${widget.flashcards.length}',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).primaryColor,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
           

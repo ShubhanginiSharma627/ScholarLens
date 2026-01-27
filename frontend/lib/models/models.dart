@@ -1,5 +1,6 @@
 // Core data models for ScholarLens
 export 'app_state.dart';
+export 'chapter_section.dart';
 export 'chat_message.dart';
 export 'flashcard.dart';
 export 'learning_session.dart';
