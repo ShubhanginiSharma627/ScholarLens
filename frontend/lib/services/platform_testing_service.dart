@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'dart:async';
@@ -583,21 +582,25 @@ mixin PlatformTestingMixin<T extends StatefulWidget> on State<T> {
       final results = await testingService.runPlatformTests();
       
       // Close loading dialog
-      Navigator.of(context).pop();
-      
-      // Show results
-      _showTestResults(results);
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        
+        // Show results
+        _showTestResults(results);
+      }
     } catch (e) {
       // Close loading dialog
-      Navigator.of(context).pop();
-      
-      // Show error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Platform tests failed: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        
+        // Show error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Platform tests failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

@@ -231,7 +231,7 @@ class PlatformUIService {
       return Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: activeColor,
+        activeTrackColor: activeColor,
       );
     }
   }
@@ -261,7 +261,7 @@ class PlatformUIService {
         min: min,
         max: max,
         divisions: divisions,
-        activeColor: activeColor,
+        thumbColor: activeColor,
       );
     }
   }

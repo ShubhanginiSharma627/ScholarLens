@@ -6,7 +6,6 @@ import 'screens/auth_wrapper.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/password_reset_screen.dart';
-import 'screens/main_navigation_screen.dart';
 import 'theme/app_theme.dart';
 import 'services/performance_optimizer.dart';
 

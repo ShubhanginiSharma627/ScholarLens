@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class FormValidator {
   // Email validation regex pattern
   static final RegExp _emailRegex = RegExp(

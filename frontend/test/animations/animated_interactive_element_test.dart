@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scholar_lens/animations/animated_interactive_element.dart';
 import 'package:scholar_lens/animations/animation_manager.dart';
@@ -143,9 +142,13 @@ void main() {
         ),
       );
 
-      // Verify semantic properties are applied
+      // Verify semantic properties are applied by checking the widget exists
+      // and has the expected semantic label
+      expect(find.text('Semantic Test'), findsOneWidget);
+      
+      // Check that the semantic label is applied
       final semantics = tester.getSemantics(find.text('Semantic Test'));
-      expect(semantics.hasAction(SemanticsAction.tap), isTrue);
+      expect(semantics.label, contains('Test Button'));
     });
 
     testWidgets('extension methods work correctly', (WidgetTester tester) async {

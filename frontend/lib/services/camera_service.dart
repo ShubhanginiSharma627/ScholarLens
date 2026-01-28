@@ -1,14 +1,10 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_cropper/image_cropper.dart';
-import 'package:path_provider/path_provider.dart';
 import '../models/processed_image.dart';
-import 'camera_error_handler.dart';
 import 'image_processing_pipeline.dart';
-import 'performance_optimizer.dart';
 
 /// Service for handling camera operations including capture, crop, and compress
 abstract class CameraService {

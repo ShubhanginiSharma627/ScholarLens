@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1083187333171",
+    "project_id": "scholar-lens-f5b8b",
+    "storage_bucket": "scholar-lens-f5b8b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1083187333171:android:5c94fac96d4acfeeb67b46",
+        "android_client_info": {
+          "package_name": "com.example.scholar_lens"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsWGYCxN0xhFg1MIrxNb07PtLw1vyrCsU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

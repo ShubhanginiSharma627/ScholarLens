@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'offline_service.dart';
-import 'performance_optimizer.dart';
 
 /// Types of network errors
 enum NetworkErrorType {

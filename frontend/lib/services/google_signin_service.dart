@@ -20,7 +20,10 @@ class GoogleSignInService {
   late final GoogleSignIn _googleSignIn;
   
   // Backend API configuration
-  static const String _baseUrl = 'http://localhost:3000'; // Update with your backend URL
+  static const String _baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:3000/api',
+  );
   static const String _googleAuthEndpoint = '/auth/google';
   static const String _linkAccountEndpoint = '/auth/link-google';
   static const String _checkAccountEndpoint = '/auth/check-account';

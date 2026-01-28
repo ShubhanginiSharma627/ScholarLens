@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/animations/animations.dart';
+import 'package:scholar_lens/animations/animations.dart';
 
 void main() {
   // Initialize Flutter binding for tests
@@ -213,6 +213,8 @@ void main() {
         frameDropPercentage: 0.0,
         activeAnimations: 5,
         memoryUsage: 2.5,
+        cpuUsage: 30.0,
+        deviceTier: DevicePerformanceTier.high,
         timestamp: DateTime.now(),
       );
 
@@ -226,6 +228,8 @@ void main() {
         frameDropPercentage: 10.0,
         activeAnimations: 20,
         memoryUsage: 10.0,
+        cpuUsage: 80.0,
+        deviceTier: DevicePerformanceTier.low,
         timestamp: DateTime.now(),
       );
 
@@ -239,6 +243,8 @@ void main() {
         frameDropPercentage: 0.0,
         activeAnimations: 5,
         memoryUsage: 2.5,
+        cpuUsage: 30.0,
+        deviceTier: DevicePerformanceTier.high,
         timestamp: DateTime.now(),
       );
 
@@ -247,6 +253,8 @@ void main() {
         frameDropPercentage: 20.0,
         activeAnimations: 30,
         memoryUsage: 20.0,
+        cpuUsage: 90.0,
+        deviceTier: DevicePerformanceTier.low,
         timestamp: DateTime.now(),
       );
 

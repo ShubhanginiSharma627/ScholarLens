@@ -1,8 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:scholar_lens/models/models.dart';
-import 'package:scholar_lens/providers/providers.dart';
 import 'package:scholar_lens/services/offline_service.dart';
 import 'package:scholar_lens/services/network_service.dart';
 import 'package:scholar_lens/services/tutor_service.dart';
@@ -27,6 +24,21 @@ class MockNetworkService implements NetworkService {
   @override
   Future<bool> checkConnectivity() async {
     return _isConnected;
+  }
+
+  @override
+  Future<bool> isConnected() async {
+    return _isConnected;
+  }
+
+  @override
+  Future<void> activateOfflineMode() async {
+    // Mock implementation
+  }
+
+  @override
+  Future<void> deactivateOfflineMode() async {
+    // Mock implementation
   }
   
   @override
@@ -195,6 +207,27 @@ class MockTutorServiceWithFailure implements TutorService {
     }
     
     return 'Online AI response to: $question';
+  }
+
+  @override
+  Future<String> askChapterQuestion({
+    required String question,
+    required String textbookTitle,
+    required int chapterNumber,
+    required String sectionTitle,
+    required String sectionContent,
+    List<String>? highlights,
+  }) async {
+    if (_shouldFail) {
+      throw Exception('Network error: Unable to connect to server');
+    }
+    
+    return 'Online chapter response for: $question in $textbookTitle Chapter $chapterNumber';
+  }
+
+  @override
+  Future<bool> isServiceAvailable() async {
+    return !_shouldFail;
   }
 }
 

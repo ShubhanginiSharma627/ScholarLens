@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-import '../../lib/screens/profile_screen.dart';
-import '../../lib/providers/providers.dart';
-import '../../lib/models/models.dart';
+import 'package:scholar_lens/screens/profile_screen.dart';
+import 'package:scholar_lens/providers/providers.dart';
+import 'package:scholar_lens/models/models.dart';
 
 void main() {
   group('ProfileScreen Tests', () {

@@ -48,7 +48,7 @@ class _CameraAnimationUtils {
             final flashOpacity = flashAnimation.value * fadeAnimation.value;
             return Positioned.fill(
               child: Container(
-                color: flashColor.withOpacity(flashOpacity * 0.8),
+                color: flashColor.withValues(alpha: flashOpacity * 0.8),
               ),
             );
           },
@@ -81,7 +81,7 @@ class _CameraAnimationUtils {
             builder: (context, _) {
               return Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                 ),
                 child: Center(
                   child: SizedBox(
@@ -91,7 +91,7 @@ class _CameraAnimationUtils {
                       value: progressAnimation.value,
                       strokeWidth: strokeWidth,
                       valueColor: AlwaysStoppedAnimation<Color>(scanColor),
-                      backgroundColor: scanColor.withOpacity(0.2),
+                      backgroundColor: scanColor.withValues(alpha: 0.2),
                     ),
                   ),
                 ),
@@ -115,7 +115,7 @@ class _CameraAnimationUtils {
         child,
         Positioned.fill(
           child: Container(
-            color: Colors.black.withOpacity(0.7),
+            color: Colors.black.withValues(alpha: 0.7),
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -486,6 +486,49 @@ class CameraAnimations {
     return _CameraAnimationUtils.triggerRetakeAnimation(
       controller,
       retakeDuration: retakeDuration,
+    );
+  }
+
+  /// Triggers results reveal animation
+  static Future<void> triggerResultsReveal(AnimationController controller) async {
+    controller.reset();
+    await controller.forward();
+  }
+
+  /// Triggers success animation
+  static Future<void> triggerSuccessAnimation(AnimationController controller) async {
+    await HapticFeedback.mediumImpact();
+    controller.reset();
+    await controller.forward();
+  }
+
+  /// Creates enhanced results reveal animation
+  static Widget createEnhancedResultsReveal({
+    required Widget child,
+    required AnimationController controller,
+  }) {
+    final slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, 1.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: controller,
+      curve: Curves.easeOutBack,
+    ));
+
+    final fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: controller,
+      curve: Curves.easeOut,
+    ));
+
+    return SlideTransition(
+      position: slideAnimation,
+      child: FadeTransition(
+        opacity: fadeAnimation,
+        child: child,
+      ),
     );
   }
 }

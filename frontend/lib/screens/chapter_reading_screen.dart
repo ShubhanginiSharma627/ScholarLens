@@ -631,24 +631,26 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
       final highlightTexts = sectionHighlights.map((h) => h.highlightedText).toList();
 
       // Navigate to tutor with comprehensive context
-      await Navigator.pushNamed(
-        context,
-        '/tutor',
-        arguments: {
-          'textbook': widget.textbook,
-          'textbook_title': widget.textbook.title,
-          'chapter': widget.chapterNumber,
-          'chapter_number': widget.chapterNumber,
-          'section': currentSection,
-          'section_title': currentSection.title,
-          'section_content': currentSection.content,
-          'context': currentSection.content,
-          'highlights': highlightTexts,
-          'key_points': _readingState.keyPoints,
-          'reading_progress': _readingState.readingProgress,
-          'mode': 'chapter_reading', // Indicate this is from chapter reading
-        },
-      );
+      if (mounted) {
+        await Navigator.pushNamed(
+          context,
+          '/tutor',
+          arguments: {
+            'textbook': widget.textbook,
+            'textbook_title': widget.textbook.title,
+            'chapter': widget.chapterNumber,
+            'chapter_number': widget.chapterNumber,
+            'section': currentSection,
+            'section_title': currentSection.title,
+            'section_content': currentSection.content,
+            'context': currentSection.content,
+            'highlights': highlightTexts,
+            'key_points': _readingState.keyPoints,
+            'reading_progress': _readingState.readingProgress,
+            'mode': 'chapter_reading', // Indicate this is from chapter reading
+          },
+        );
+      }
     } catch (e) {
       debugPrint('Error opening AI tutor (attempt ${retryCount + 1}): $e');
       
@@ -1156,7 +1158,7 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.purple.withOpacity(0.1),
+        color: Colors.purple.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1209,7 +1211,7 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

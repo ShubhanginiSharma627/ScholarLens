@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/flashcard.dart';
 import '../services/flashcard_service.dart';
 import '../widgets/common/top_navigation_bar.dart';
-import 'flashcard_screen.dart';
 import 'create_flashcard_screen.dart';
 import 'all_cards_view_screen.dart';
 

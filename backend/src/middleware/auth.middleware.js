@@ -1,65 +1,107 @@
-const authService = require('../services/auth.service');
+const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
+const rateLimit = require('express-rate-limit');
 
-// JWT authentication middleware
-const authenticate = (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
+// JWT Authentication Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
-    const decoded = authService.verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ error: 'Invalid or expired token' });
-    }
-
-    req.user = decoded;
-    next();
-  } catch (error) {
-    res.status(401).json({ error: 'Authentication failed' });
+  if (!token) {
+    return res.status(401).json({ 
+      success: false, 
+      error: { message: 'Access token required' } 
+    });
   }
-};
 
-// Input validation middleware
-const validateInput = (requiredFields) => {
-  return (req, res, next) => {
-    const missingFields = requiredFields.filter(field => !req.body[field]);
-    if (missingFields.length > 0) {
-      return res.status(400).json({ error: `Missing required fields: ${missingFields.join(', ')}` });
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ 
+        success: false, 
+        error: { message: 'Invalid or expired token' } 
+      });
     }
+    req.user = user;
     next();
-  };
+  });
 };
 
-// Error handler middleware
-const errorHandler = (err, req, res, next) => {
-  console.error(err);
-  const status = err.status || 500;
-  const message = err.message || 'Internal server error';
-  res.status(status).json({ success: false, error: message });
+// Optional authentication (for public endpoints that can benefit from user context)
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token) {
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (!err) {
+        req.user = user;
+      }
+    });
+  }
+  next();
 };
 
-// Rate limiting middleware (basic implementation)
-const rateLimit = (maxRequests = 100, windowMs = 60000) => {
-  const requests = new Map();
-
-  return (req, res, next) => {
-    const ip = req.ip;
-    const now = Date.now();
-
-    if (!requests.has(ip)) {
-      requests.set(ip, []);
-    }
-
-    const timestamps = requests.get(ip).filter(t => now - t < windowMs);
-    if (timestamps.length >= maxRequests) {
-      return res.status(429).json({ error: 'Too many requests, please try again later' });
-    }
-
-    timestamps.push(now);
-    requests.set(ip, timestamps);
-    next();
-  };
+// Rate limiting middleware
+const createRateLimit = (windowMs = 15 * 60 * 1000, max = 100) => {
+  return rateLimit({
+    windowMs,
+    max,
+    message: {
+      success: false,
+      error: { message: 'Too many requests, please try again later' }
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
 };
 
-module.exports = { authenticate, validateInput, errorHandler, rateLimit };
+// Validation middleware
+const validateRequest = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      error: { 
+        message: 'Validation failed',
+        details: errors.array()
+      }
+    });
+  }
+  next();
+};
+
+// Common validation rules
+const authValidation = {
+  register: [
+    body('email').isEmail().normalizeEmail(),
+    body('password').isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
+    body('name').trim().isLength({ min: 2, max: 50 }),
+  ],
+  login: [
+    body('email').isEmail().normalizeEmail(),
+    body('password').notEmpty(),
+  ]
+};
+
+const aiValidation = {
+  generateText: [
+    body('prompt').trim().isLength({ min: 1, max: 5000 }),
+    body('taskType').optional().isIn([
+      'quick_explanation', 'detailed_analysis', 'flashcard_generation',
+      'quiz_creation', 'chat_response', 'study_plan', 'concept_explanation'
+    ]),
+    body('complexity').optional().isIn(['low', 'medium', 'high'])
+  ],
+  analyzeImage: [
+    body('prompt').trim().isLength({ min: 1, max: 2000 }),
+  ]
+};
+
+module.exports = {
+  authenticateToken,
+  optionalAuth,
+  createRateLimit,
+  validateRequest,
+  authValidation,
+  aiValidation
+};

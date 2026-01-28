@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../providers/providers.dart';
-import '../widgets/common/loading_animations.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
 import 'main_navigation_screen.dart';

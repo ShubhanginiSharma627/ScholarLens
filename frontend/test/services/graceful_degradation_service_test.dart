@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/services/graceful_degradation_service.dart';
+import 'package:scholar_lens/services/graceful_degradation_service.dart';
 
 void main() {
   group('GracefulDegradationService', () {

@@ -171,7 +171,7 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
                     color: _getMicrophoneColor(context),
                     boxShadow: [
                       BoxShadow(
-                        color: _getMicrophoneColor(context).withOpacity(0.3),
+                        color: _getMicrophoneColor(context).withValues(alpha: 0.3),
                         blurRadius: 10,
                         spreadRadius: 2,
                       ),
@@ -277,7 +277,7 @@ class WaveformPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.blue.withOpacity(0.6)
+      ..color = Colors.blue.withValues(alpha: 0.6)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
     
@@ -314,7 +314,7 @@ class WaveformPainter extends CustomPainter {
         Offset(circleX, circleY),
         radius,
         Paint()
-          ..color = Colors.blue.withOpacity(0.4)
+          ..color = Colors.blue.withValues(alpha: 0.4)
           ..style = PaintingStyle.fill,
       );
     }

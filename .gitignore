@@ -42,7 +42,7 @@ backend/.nyc_output/
 backend/jspm_packages/
 backend/typings/
 backend/.cache/
-
+backend/secrets/
 # Flutter Frontend
 frontend/.dart_tool/
 frontend/.flutter-plugins

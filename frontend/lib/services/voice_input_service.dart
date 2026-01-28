@@ -72,7 +72,7 @@ class SpeechToTextVoiceInputService implements VoiceInputService {
         onResult: _onSpeechResult,
         listenFor: const Duration(seconds: 30),
         pauseFor: const Duration(seconds: 3),
-        partialResults: true,
+        listenOptions: SpeechListenOptions(partialResults: true),
         localeId: 'en_US',
         onSoundLevelChange: _onSoundLevelChange,
       );

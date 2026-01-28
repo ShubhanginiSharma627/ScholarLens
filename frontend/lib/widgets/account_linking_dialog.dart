@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../providers/authentication_provider.dart';
 import '../theme/app_theme.dart';
-import '../services/form_validator.dart';
 
 class AccountLinkingDialog extends StatefulWidget {
   final String conflictEmail;

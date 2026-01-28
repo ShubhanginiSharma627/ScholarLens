@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'animation_config.dart';
 import 'animation_manager.dart';
 

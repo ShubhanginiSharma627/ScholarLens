@@ -17,7 +17,10 @@ class AuthenticationService {
   final NetworkService _networkService = NetworkService.instance;
 
   // Backend API configuration
-  static const String _baseUrl = 'http://localhost:3000'; // Update with your backend URL
+  static const String _baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:3000/api',
+  );
   static const String _registerEndpoint = '/auth/register';
   static const String _loginEndpoint = '/auth/login';
   static const String _logoutEndpoint = '/auth/logout';

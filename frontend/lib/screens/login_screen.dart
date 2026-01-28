@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/models.dart';
 import '../providers/providers.dart';
 import '../services/form_validator.dart';
 import '../theme/app_theme.dart';
-import '../widgets/common/loading_animations.dart';
 import '../animations/animated_form_input.dart';
 import 'signup_screen.dart';
 import 'password_reset_screen.dart';

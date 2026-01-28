@@ -3,10 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../lib/screens/tutor_chat_screen.dart';
-import '../../lib/providers/chat_provider.dart';
-import '../../lib/providers/progress_provider.dart';
-import '../../lib/models/chat_message.dart';
+import 'package:scholar_lens/screens/tutor_chat_screen.dart';
+import 'package:scholar_lens/providers/chat_provider.dart';
+import 'package:scholar_lens/providers/progress_provider.dart';
+import 'package:scholar_lens/models/chat_message.dart';
 
 void main() {
   group('TutorChatScreen', () {

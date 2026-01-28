@@ -18,7 +18,7 @@ enum HighlightColorType {
   /// Returns the HighlightColorType for a given color, defaults to yellow if not found
   static HighlightColorType fromColor(Color color) {
     for (final type in HighlightColorType.values) {
-      if (type.color.value == color.value) {
+      if (type.color.toARGB32 == color.toARGB32) {
         return type;
       }
     }

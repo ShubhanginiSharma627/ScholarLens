@@ -262,6 +262,12 @@ class PermissionHandler {
     if (currentStatus == PermissionStatus.permanentlyDenied) {
       final action = await showPermissionDeniedDialog(context, type);
       
+      if (!context.mounted) return PermissionResult(
+        status: PermissionStatus.permanentlyDenied,
+        canRequest: false,
+        message: 'Widget disposed during permission request',
+      );
+      
       switch (action) {
         case PermissionAction.openSettings:
           final opened = await openAppSettings();
@@ -291,6 +297,12 @@ class PermissionHandler {
       context,
       type,
       _getPermissionRationale(type),
+    );
+
+    if (!context.mounted) return PermissionResult(
+      status: currentStatus,
+      canRequest: false,
+      message: 'Widget disposed during permission request',
     );
 
     if (!shouldRequest) {

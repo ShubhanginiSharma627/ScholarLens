@@ -416,7 +416,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Switch(
                 value: switchValue,
                 onChanged: onSwitchChanged,
-                activeColor: Colors.purple,
+                activeThumbColor: Colors.purple,
               ),
             if (hasArrow)
               Icon(

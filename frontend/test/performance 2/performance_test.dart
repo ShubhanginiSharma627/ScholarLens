@@ -1,9 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/services.dart';
 import 'package:scholar_lens/services/image_processing_pipeline.dart';
 import 'package:image/image.dart' as img;
 import 'dart:io';
-import 'dart:typed_data';
 
 void main() {
   group('Performance Tests', () {

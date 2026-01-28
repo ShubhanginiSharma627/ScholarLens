@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../lib/screens/all_cards_view_screen.dart';
-import '../../lib/models/flashcard.dart';
-import '../../lib/theme/app_theme.dart';
+import 'package:scholar_lens/screens/all_cards_view_screen.dart';
+import 'package:scholar_lens/models/flashcard.dart';
+import 'package:scholar_lens/theme/app_theme.dart';
 
 void main() {
   group('AllCardsViewScreen', () {

@@ -210,7 +210,7 @@ class TextbookOverviewCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -222,7 +222,7 @@ class TextbookOverviewCard extends StatelessWidget {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -248,7 +248,7 @@ class TextbookOverviewCard extends StatelessWidget {
                 Text(
                   '${textbook.fileSize} • ${textbook.totalPages} pages',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 14,
                   ),
                 ),
@@ -282,7 +282,7 @@ class ProgressTrackingSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -499,7 +499,7 @@ class KeyTopicsSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -523,7 +523,7 @@ class KeyTopicsSection extends StatelessWidget {
             children: topics.map((topic) => Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -562,7 +562,7 @@ class ChapterNavigationSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -632,7 +632,7 @@ class ChapterListItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: isCurrent ? Colors.grey[50] : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            border: isCurrent ? Border.all(color: Theme.of(context).primaryColor.withOpacity(0.3)) : null,
+            border: isCurrent ? Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.3)) : null,
           ),
           child: Row(
             children: [

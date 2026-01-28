@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:scholar_lens/services/accessibility_service.dart';
 import 'package:scholar_lens/animations/animation_manager.dart';
 import 'package:scholar_lens/animations/performance_metrics.dart';
-import 'package:scholar_lens/animations/animation_config.dart';
 
 void main() {
   group('Accessibility and Performance Features', () {

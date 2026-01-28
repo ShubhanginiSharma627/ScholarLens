@@ -48,10 +48,10 @@ class StudyToolsBar extends StatelessWidget {
         child: Container(
           padding: ResponsiveChapterUtils.getContentPadding(context),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(ResponsiveChapterUtils.getCardBorderRadius(context)),
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
           child: isCompact 
@@ -163,10 +163,10 @@ class StudyToolsBar extends StatelessWidget {
     Color? foregroundColor;
     
     if (isDisabled) {
-      backgroundColor = colorScheme.surfaceVariant.withOpacity(0.3);
-      foregroundColor = colorScheme.onSurfaceVariant.withOpacity(0.4);
+      backgroundColor = colorScheme.surfaceContainerHighest.withValues(alpha: 0.3);
+      foregroundColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
     } else if (isActive) {
-      backgroundColor = colorScheme.primary.withOpacity(0.2);
+      backgroundColor = colorScheme.primary.withValues(alpha: 0.2);
       foregroundColor = colorScheme.primary;
     } else {
       backgroundColor = null;
@@ -239,10 +239,10 @@ class StudyToolsBar extends StatelessWidget {
     Color? foregroundColor;
     
     if (isDisabled) {
-      backgroundColor = colorScheme.surfaceVariant.withOpacity(0.3);
-      foregroundColor = colorScheme.onSurfaceVariant.withOpacity(0.4);
+      backgroundColor = colorScheme.surfaceContainerHighest.withValues(alpha: 0.3);
+      foregroundColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
     } else if (isActive) {
-      backgroundColor = colorScheme.primary.withOpacity(0.2);
+      backgroundColor = colorScheme.primary.withValues(alpha: 0.2);
       foregroundColor = colorScheme.primary;
     } else {
       backgroundColor = null;

@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/lesson_content.dart';
-import '../models/processed_image.dart';
-import 'performance_optimizer.dart';
 
 /// Exception thrown when tutor service operations fail
 class TutorServiceException implements Exception {

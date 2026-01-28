@@ -119,6 +119,23 @@ class MockTutorService implements TutorService {
   Future<String> askFollowUpQuestion(String question, String context) async {
     return 'Mock response to: $question';
   }
+
+  @override
+  Future<String> askChapterQuestion({
+    required String question,
+    required String textbookTitle,
+    required int chapterNumber,
+    required String sectionTitle,
+    required String sectionContent,
+    List<String>? highlights,
+  }) async {
+    return 'Mock chapter response for: $question in $textbookTitle Chapter $chapterNumber';
+  }
+
+  @override
+  Future<bool> isServiceAvailable() async {
+    return true;
+  }
 }
 
 void main() {

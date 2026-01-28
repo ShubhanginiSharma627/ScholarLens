@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import '../models/processed_image.dart';
-import 'camera_error_handler.dart';
 
 /// Comprehensive image processing pipeline for ScholarLens
 class ImageProcessingPipeline {

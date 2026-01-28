@@ -47,10 +47,140 @@
 	<true/>
 	<!-- Camera and microphone permissions for ScholarLens -->
 	<key>NSCameraUsageDescription</key>
-	<string>ScholarLens needs camera access to capture study materials for AI-powered explanations.</string>
+	<string>Scholar Lens needs camera access to capture study materials, textbooks, and handwritten notes for AI-powered analysis and explanations.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>ScholarLens needs microphone access for voice input and speech-to-text functionality.</string>
+	<string>Scholar Lens needs microphone access for voice input, speech-to-text functionality, and interactive tutoring sessions.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>ScholarLens needs photo library access to save and process captured images.</string>
+	<string>Scholar Lens needs photo library access to save captured study materials and access existing images for AI analysis.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Scholar Lens needs permission to save processed study materials and AI-generated content to your photo library.</string>
+	
+	<!-- File and document access permissions -->
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Scholar Lens needs access to documents to import and analyze syllabi, study materials, and educational content.</string>
+	
+	<!-- Network and internet access -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+	
+	<!-- Speech recognition permissions -->
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Scholar Lens uses speech recognition to convert your voice input into text for interactive tutoring and note-taking.</string>
+	
+	<!-- Location services (if needed for study session tracking) -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Scholar Lens may use location to provide context-aware study recommendations and track study sessions.</string>
+	
+	<!-- Contacts access (for study group features) -->
+	<key>NSContactsUsageDescription</key>
+	<string>Scholar Lens needs contacts access to help you create and manage study groups with your classmates.</string>
+	
+	<!-- Calendar access (for study scheduling) -->
+	<key>NSCalendarsUsageDescription</key>
+	<string>Scholar Lens needs calendar access to schedule study sessions and exam reminders based on your AI-generated study plans.</string>
+	
+	<!-- Reminders access (for study tasks) -->
+	<key>NSRemindersUsageDescription</key>
+	<string>Scholar Lens needs reminders access to create study task reminders and spaced repetition notifications.</string>
+	
+	<!-- Face ID / Touch ID for secure authentication -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Scholar Lens uses Face ID to securely authenticate and protect your study data and progress.</string>
+	
+	<!-- Background app refresh for notifications -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>background-fetch</string>
+		<string>background-processing</string>
+		<string>remote-notification</string>
+	</array>
+	
+	<!-- File sharing and document types -->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>PDF Document</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.adobe.pdf</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Image</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.image</string>
+				<string>public.jpeg</string>
+				<string>public.png</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Text Document</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.text</string>
+				<string>public.plain-text</string>
+			</array>
+		</dict>
+	</array>
+	
+	<!-- URL schemes for deep linking and authentication -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>scholar-lens-auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>scholar-lens</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google-auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.YOUR_REVERSED_CLIENT_ID</string>
+			</array>
+		</dict>
+	</array>
+	
+	<!-- Accessibility and user interface -->
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	
+	<!-- Privacy and data usage -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	
+	<!-- Minimum iOS version -->
+	<key>MinimumOSVersion</key>
+	<string>12.0</string>
 </dict>
 </plist>

@@ -315,7 +315,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Should show school icon in subject badge
-      expect(find.byIcon(Icons.school_outlined), findsAtLeastNWidget(1));
+      expect(find.byIcon(Icons.school_outlined), findsAtLeastNWidgets(1));
     });
 
     testWidgets('shows answer snippet with lightbulb icon', (WidgetTester tester) async {

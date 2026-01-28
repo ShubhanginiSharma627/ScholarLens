@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
-import 'dart:ui';
 
 import '../providers/providers.dart';
 import '../services/app_lifecycle_manager.dart';

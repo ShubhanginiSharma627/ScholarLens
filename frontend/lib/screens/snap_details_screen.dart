@@ -119,16 +119,18 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
                   : SingleChildScrollView(
                       child: CameraAnimations.createEnhancedResultsReveal(
                         controller: _revealController,
-                        children: [
-                          _buildImageSection(),
-                          _buildSubjectAndTime(),
-                          _buildDetectedQuestion(),
-                          _buildAISolution(),
-                          _buildFeedbackSection(),
-                          _buildActionButtons(),
-                          _buildSolveAnotherButton(),
-                          const SizedBox(height: 20),
-                        ],
+                        child: Column(
+                          children: [
+                            _buildImageSection(),
+                            _buildSubjectAndTime(),
+                            _buildDetectedQuestion(),
+                            _buildAISolution(),
+                            _buildFeedbackSection(),
+                            _buildActionButtons(),
+                            _buildSolveAnotherButton(),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
                     ),
             ),

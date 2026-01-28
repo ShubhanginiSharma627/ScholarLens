@@ -78,6 +78,24 @@ class MockTutorService implements TutorService {
     await Future.delayed(Duration(milliseconds: 300));
     return 'This is a follow-up response to: $question';
   }
+
+  @override
+  Future<String> askChapterQuestion({
+    required String question,
+    required String textbookTitle,
+    required int chapterNumber,
+    required String sectionTitle,
+    required String sectionContent,
+    List<String>? highlights,
+  }) async {
+    await Future.delayed(Duration(milliseconds: 300));
+    return 'Chapter response for: $question in $textbookTitle Chapter $chapterNumber';
+  }
+
+  @override
+  Future<bool> isServiceAvailable() async {
+    return true;
+  }
 }
 
 class MockOfflineService implements OfflineService {

@@ -12,13 +12,13 @@ void main() {
     late ChapterReadingState mockReadingState;
 
     setUp(() {
-      mockTextbook = const UploadedTextbook(
+      mockTextbook = UploadedTextbook(
         id: 'test-textbook-1',
         title: 'Test Textbook',
         fileName: 'test.pdf',
         fileSize: '10MB',
         status: TextbookStatus.ready,
-        uploadedAt: null,
+        uploadedAt: DateTime.now(),
         chapters: ['Chapter 1', 'Chapter 2'],
         totalPages: 100,
         keyTopics: ['topic1', 'topic2'],

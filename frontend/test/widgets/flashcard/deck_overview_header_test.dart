@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:frontend/widgets/flashcard/deck_overview_header.dart';
-import 'package:frontend/services/flashcard_service.dart';
-import 'package:frontend/theme/app_theme.dart';
+import 'package:scholar_lens/widgets/flashcard/deck_overview_header.dart';
+import 'package:scholar_lens/services/flashcard_service.dart';
+import 'package:scholar_lens/theme/app_theme.dart';
 
 void main() {
   group('DeckOverviewHeader', () {

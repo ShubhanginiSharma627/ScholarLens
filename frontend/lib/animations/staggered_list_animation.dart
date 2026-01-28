@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import 'animation_manager.dart';
 import 'animation_config.dart';
 

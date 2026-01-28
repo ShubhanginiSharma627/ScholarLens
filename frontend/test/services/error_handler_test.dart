@@ -1,10 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/material.dart';
-import '../../lib/services/error_handler.dart';
-import '../../lib/services/camera_error_handler.dart';
-import '../../lib/services/network_service.dart';
-import '../../lib/services/audio_service.dart';
-import '../../lib/services/voice_input_service.dart';
+import 'package:scholar_lens/services/error_handler.dart';
+import 'package:scholar_lens/services/camera_error_handler.dart';
+import 'package:scholar_lens/services/network_service.dart';
+import 'package:scholar_lens/services/audio_service.dart';
+import 'package:scholar_lens/services/voice_input_service.dart';
 
 void main() {
   group('ErrorHandler', () {

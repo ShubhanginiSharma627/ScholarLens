@@ -82,7 +82,7 @@ class DifficultyRatingBar extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
               decoration: BoxDecoration(
-                color: isSelected ? color.withOpacity(0.2) : Colors.grey[100],
+                color: isSelected ? color.withValues(alpha: 0.2) : Colors.grey[100],
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isSelected ? color : Colors.grey[300]!,
