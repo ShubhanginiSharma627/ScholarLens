@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
+import '../../animations/animations.dart';
 
 /// Settings section providing options for notifications, audio preferences, and app behavior
 class SettingsSection extends StatelessWidget {
@@ -202,28 +203,12 @@ class SettingsSection extends StatelessWidget {
   }
 
   void _showHelpDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Help & Support'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Need help with ScholarLens?'),
-            SizedBox(height: 16),
-            Text('• Check our FAQ section'),
-            Text('• Contact support at help@scholarlens.com'),
-            Text('• Visit our website for tutorials'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+    context.showEnhancedSuccess(
+      title: 'Help & Support',
+      message: 'Need help with ScholarLens?\n\n'
+          '• Check our FAQ section\n'
+          '• Contact support at help@scholarlens.com\n'
+          '• Visit our website for tutorials',
     );
   }
 
@@ -240,32 +225,30 @@ class SettingsSection extends StatelessWidget {
   }
 
   void _showPrivacyDialog(BuildContext context) {
-    showDialog(
+    ModalAnimations.showEnhancedAlertDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Privacy Policy'),
-        content: const SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Privacy Policy Summary:'),
-              SizedBox(height: 16),
-              Text('• We collect learning data to improve your experience'),
-              Text('• Your personal information is kept secure'),
-              Text('• We do not share data with third parties'),
-              Text('• You can delete your data at any time'),
-              SizedBox(height: 16),
-              Text('For the full privacy policy, visit our website.'),
-            ],
-          ),
+      title: const Text('Privacy Policy'),
+      content: const SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Privacy Policy Summary:'),
+            SizedBox(height: 16),
+            Text('• We collect learning data to improve your experience'),
+            Text('• Your personal information is kept secure'),
+            Text('• We do not share data with third parties'),
+            Text('• You can delete your data at any time'),
+            SizedBox(height: 16),
+            Text('For the full privacy policy, visit our website.'),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Close'),
+        ),
+      ],
     );
   }
 }

@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import '../providers/chat_provider.dart';
 import '../models/chat_message.dart';
 import '../widgets/chat_message_widget.dart';
+import '../widgets/chat_typing_indicator.dart';
 import '../widgets/common/top_navigation_bar.dart';
 import '../services/tutor_service.dart';
+import '../animations/animated_interactive_element.dart';
 
 /// Screen for chat interface with AI tutor
 class TutorChatScreen extends StatefulWidget {
@@ -116,8 +118,13 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
   }
 
   void _handleSuggestedTopic(String topic) {
+    // Animate transition from suggested topic to input field
     _textController.text = topic;
-    _sendMessage(topic);
+    
+    // Add a small delay to show the text appearing in the input field
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _sendMessage(topic);
+    });
   }
 
   @override
@@ -223,14 +230,26 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
                 return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),
-                  itemCount: chatProvider.messages.length + 1, // +1 for initial message
+                  itemCount: chatProvider.messages.length + 2, // +1 for initial message, +1 for typing indicator
                   itemBuilder: (context, index) {
                     if (index == 0) {
                       return _buildInitialMessage();
                     }
-                    final message = chatProvider.messages[index - 1];
+                    
+                    // Show typing indicator as the last item when sending
+                    if (index == chatProvider.messages.length + 1) {
+                      return ChatTypingIndicator(
+                        isVisible: chatProvider.isSending,
+                        message: "AI is thinking...",
+                      );
+                    }
+                    
+                    final messageIndex = index - 1;
+                    final message = chatProvider.messages[messageIndex];
                     return ChatMessageWidget(
                       message: message,
+                      messageIndex: messageIndex,
+                      enableStaggeredAnimation: true,
                       onRetry: message.hasFailed 
                           ? () => _sendMessage(message.content)
                           : null,
@@ -392,8 +411,9 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
           ..._suggestedTopics.map((topic) => Container(
             width: double.infinity,
             margin: const EdgeInsets.only(bottom: 12),
-            child: GestureDetector(
+            child: AnimatedInteractiveElement(
               onTap: () => _handleSuggestedTopic(topic),
+              borderRadius: BorderRadius.circular(12),
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(

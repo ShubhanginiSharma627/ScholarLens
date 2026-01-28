@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/voice_input_service.dart';
 import '../models/app_state.dart';
+import '../animations/animated_interactive_element.dart';
+import '../animations/animation_manager.dart';
+import '../animations/animation_config.dart';
 
 /// Widget for chat input with text field and microphone button
 class ChatInputBar extends StatefulWidget {
@@ -25,8 +28,17 @@ class ChatInputBar extends StatefulWidget {
 
 class _ChatInputBarState extends State<ChatInputBar>
     with TickerProviderStateMixin {
+  late final AnimationManager _animationManager;
   late AnimationController _micAnimationController;
+  late AnimationController _sendButtonController;
+  late AnimationController _statusController;
   late Animation<double> _micScaleAnimation;
+  late Animation<double> _sendButtonScaleAnimation;
+  late Animation<Color?> _statusColorAnimation;
+  
+  String? _micAnimationId;
+  String? _sendAnimationId;
+  String? _statusAnimationId;
   
   VoiceInputState _voiceState = VoiceInputState.idle;
   bool _hasText = false;
@@ -35,19 +47,25 @@ class _ChatInputBarState extends State<ChatInputBar>
   void initState() {
     super.initState();
     
-    // Initialize animation controller
+    _animationManager = AnimationManager();
+    
+    // Initialize animation controllers
     _micAnimationController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
     
-    _micScaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.2,
-    ).animate(CurvedAnimation(
-      parent: _micAnimationController,
-      curve: Curves.easeInOut,
-    ));
+    _sendButtonController = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    
+    _statusController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    _initializeAnimations();
     
     // Listen to text changes
     widget.controller.addListener(_onTextChanged);
@@ -57,9 +75,119 @@ class _ChatInputBarState extends State<ChatInputBar>
     _voiceState = widget.voiceInputService.currentState;
   }
 
+  void _initializeAnimations() {
+    // Register animations with manager if initialized
+    if (_animationManager.isInitialized) {
+      _registerAnimations();
+    } else {
+      _animationManager.initialize().then((_) {
+        if (mounted) {
+          _registerAnimations();
+        }
+      });
+    }
+    
+    // Create local animations as fallback
+    _createLocalAnimations();
+  }
+
+  void _registerAnimations() {
+    try {
+      // Register microphone animation
+      final micConfig = AnimationConfigs.buttonPress.copyWith(
+        scaleStart: 1.0,
+        scaleEnd: 1.2,
+      );
+      
+      _micAnimationId = _animationManager.registerController(
+        controller: _micAnimationController,
+        config: micConfig,
+        category: AnimationCategory.microInteraction,
+      );
+      
+      // Register send button animation
+      final sendConfig = AnimationConfigs.buttonPress;
+      _sendAnimationId = _animationManager.registerController(
+        controller: _sendButtonController,
+        config: sendConfig,
+        category: AnimationCategory.microInteraction,
+      );
+      
+      // Register status animation
+      final statusConfig = AnimationConfigs.focusTransition;
+      _statusAnimationId = _animationManager.registerController(
+        controller: _statusController,
+        config: statusConfig,
+        category: AnimationCategory.feedback,
+      );
+      
+      // Get managed animations
+      final micAnim = _animationManager.getAnimation(_micAnimationId!);
+      final sendAnim = _animationManager.getAnimation(_sendAnimationId!);
+      final statusAnim = _animationManager.getAnimation(_statusAnimationId!);
+      
+      if (micAnim != null && sendAnim != null && statusAnim != null) {
+        _micScaleAnimation = micAnim.animation as Animation<double>;
+        _sendButtonScaleAnimation = sendAnim.animation as Animation<double>;
+        // Status animation will be created locally as it needs color interpolation
+        _createStatusAnimation();
+      } else {
+        _createLocalAnimations();
+      }
+    } catch (e) {
+      debugPrint('Failed to register chat input animations: $e');
+      _createLocalAnimations();
+    }
+  }
+
+  void _createLocalAnimations() {
+    _micScaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.2,
+    ).animate(CurvedAnimation(
+      parent: _micAnimationController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _sendButtonScaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(
+      parent: _sendButtonController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _createStatusAnimation();
+  }
+
+  void _createStatusAnimation() {
+    _statusColorAnimation = ColorTween(
+      begin: Colors.grey[400],
+      end: Theme.of(context).primaryColor,
+    ).animate(CurvedAnimation(
+      parent: _statusController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
   @override
   void dispose() {
+    // Dispose animations through manager
+    if (_micAnimationId != null) {
+      _animationManager.disposeController(_micAnimationId!);
+    }
+    if (_sendAnimationId != null) {
+      _animationManager.disposeController(_sendAnimationId!);
+    }
+    if (_statusAnimationId != null) {
+      _animationManager.disposeController(_statusAnimationId!);
+    }
+    
+    // Dispose controllers
     _micAnimationController.dispose();
+    _sendButtonController.dispose();
+    _statusController.dispose();
+    
     widget.controller.removeListener(_onTextChanged);
     super.dispose();
   }
@@ -70,6 +198,17 @@ class _ChatInputBarState extends State<ChatInputBar>
       setState(() {
         _hasText = hasText;
       });
+      
+      // Animate send button state change
+      if (hasText) {
+        if (_statusAnimationId != null) {
+          _animationManager.startAnimation(_statusAnimationId!);
+        } else {
+          _statusController.forward();
+        }
+      } else {
+        _statusController.reverse();
+      }
     }
   }
 
@@ -79,6 +218,9 @@ class _ChatInputBarState extends State<ChatInputBar>
     });
     
     if (state == VoiceInputState.listening) {
+      if (_micAnimationId != null) {
+        _animationManager.startAnimation(_micAnimationId!);
+      }
       _micAnimationController.repeat(reverse: true);
     } else {
       _micAnimationController.stop();
@@ -89,6 +231,15 @@ class _ChatInputBarState extends State<ChatInputBar>
   void _handleSend() {
     final text = widget.controller.text.trim();
     if (text.isNotEmpty && !widget.isLoading) {
+      // Animate send button press
+      if (_sendAnimationId != null) {
+        _animationManager.startAnimation(_sendAnimationId!);
+      } else {
+        _sendButtonController.forward().then((_) {
+          _sendButtonController.reverse();
+        });
+      }
+      
       widget.onSend(text);
     }
   }
@@ -200,7 +351,7 @@ class _ChatInputBarState extends State<ChatInputBar>
                       scale: _voiceState == VoiceInputState.listening 
                           ? _micScaleAnimation.value 
                           : 1.0,
-                      child: GestureDetector(
+                      child: AnimatedInteractiveElement(
                         onTap: widget.isLoading ? null : _handleVoiceInput,
                         child: Container(
                           width: 48,
@@ -230,32 +381,38 @@ class _ChatInputBarState extends State<ChatInputBar>
                 const SizedBox(width: 8),
                 
                 // Send button
-                GestureDetector(
-                  onTap: (_hasText && !widget.isLoading) ? _handleSend : null,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: (_hasText && !widget.isLoading)
-                          ? Theme.of(context).primaryColor
-                          : Colors.grey[400],
-                    ),
-                    child: widget.isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : Icon(
-                            Icons.send,
-                            color: Colors.white,
-                            size: 24,
+                AnimatedBuilder(
+                  animation: Listenable.merge([_sendButtonScaleAnimation, _statusColorAnimation]),
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _sendButtonScaleAnimation.value,
+                      child: AnimatedInteractiveElement(
+                        onTap: (_hasText && !widget.isLoading) ? _handleSend : null,
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _statusColorAnimation.value ?? Colors.grey[400],
                           ),
-                  ),
+                          child: widget.isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.send,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

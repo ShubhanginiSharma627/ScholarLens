@@ -7,6 +7,8 @@ import '../providers/providers.dart';
 import '../services/app_lifecycle_manager.dart';
 import '../services/performance_optimizer.dart';
 import '../widgets/home/home_dashboard.dart';
+import '../widgets/navigation/animated_bottom_navigation.dart';
+import '../widgets/navigation/enhanced_speed_dial.dart';
 import 'tutor_chat_screen.dart';
 import 'flashcard_management_screen.dart';
 import 'analytics_screen.dart';
@@ -183,136 +185,36 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   }
 
   void _showSpeedDial(BuildContext context) {
-    final overlay = Overlay.of(context);
-    late OverlayEntry overlayEntry;
-    
-    overlayEntry = OverlayEntry(
-      builder: (context) {
-        final bottomNavHeight = MediaQuery.of(context).padding.bottom + 80;
-        
-        return Material(
-          color: Colors.transparent,
-          child: Stack(
-            children: [
-              // Blurry background overlay - only for main content area
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: bottomNavHeight,
-                child: GestureDetector(
-                  onTap: () => overlayEntry.remove(),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                    child: Container(
-                      color: Colors.black.withValues(alpha: 0.15),
-                    ),
-                  ),
-                ),
+    showEnhancedSpeedDial(
+      context,
+      actions: [
+        SpeedDialAction(
+          icon: Icons.camera_alt,
+          label: 'Snap & Solve',
+          backgroundColor: const Color(0xFF7C3AED), // Purple
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const SnapAndSolveScreen(),
               ),
-              // Speed dial buttons positioned above bottom nav
-              Positioned(
-                left: 40,
-                right: 40,
-                bottom: bottomNavHeight + 20,
-                child: TweenAnimationBuilder<double>(
-                  duration: const Duration(milliseconds: 250),
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, value, child) {
-                    return Transform.translate(
-                      offset: Offset(0, 30 * (1 - value)),
-                      child: Opacity(
-                        opacity: value,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildModernSpeedDialButton(
-                        icon: Icons.camera_alt,
-                        label: 'Snap & Solve',
-                        color: const Color(0xFF7C3AED), // Purple
-                        onTap: () {
-                          overlayEntry.remove();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const SnapAndSolveScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildModernSpeedDialButton(
-                        icon: Icons.menu_book,
-                        label: 'Scan Syllabus',
-                        color: const Color(0xFF14B8A6), // Teal
-                        onTap: () {
-                          overlayEntry.remove();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const SyllabusScannerScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    
-    overlay.insert(overlayEntry);
-  }
-
-  Widget _buildModernSpeedDialButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
+            );
+          },
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+        SpeedDialAction(
+          icon: Icons.menu_book,
+          label: 'Scan Syllabus',
+          backgroundColor: const Color(0xFF14B8A6), // Teal
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const SyllabusScannerScreen(),
               ),
-            ),
-          ],
+            );
+          },
         ),
-      ),
+      ],
+      backdropColor: Colors.black.withValues(alpha: 0.2),
+      blurSigma: 15.0,
     );
   }
 
@@ -342,105 +244,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
           );
         },
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: _tabs.asMap().entries.map((entry) {
-                final index = entry.key;
-                final tab = entry.value;
-                final isCenter = tab.isCenter ?? false;
-                
-                // Map current screen index back to tab index for selection state
-                bool isSelected = false;
-                if (!isCenter) {
-                  if (index < 2) {
-                    // Home (0) and Tutor (1) map directly
-                    isSelected = _currentIndex == index;
-                  } else {
-                    // Cards (3) and Analytics (4) map from screen indices 2 and 3
-                    isSelected = _currentIndex == (index - 1);
-                  }
-                }
-
-                if (isCenter) {
-                  return GestureDetector(
-                    onTap: () => _onTabTapped(index),
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: const BoxDecoration(
-                        color: Colors.purple,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                  );
-                }
-
-                return GestureDetector(
-                  onTap: () => _onTabTapped(index),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isSelected ? tab.activeIcon : tab.icon,
-                          color: isSelected ? Colors.purple : Colors.grey,
-                          size: 24,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          tab.label,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isSelected ? Colors.purple : Colors.grey,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ),
+      bottomNavigationBar: AnimatedBottomNavigation(
+        tabs: _tabs,
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped,
       ),
     );
   }
-}
-
-/// Navigation tab configuration
-class NavigationTab {
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-  final bool? isCenter;
-
-  const NavigationTab({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-    this.isCenter,
-  });
 }
 
 /// Home tab wrapper to handle home-specific initialization

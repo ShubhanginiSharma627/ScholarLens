@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/recent_snap.dart';
+import '../animations/camera_animations.dart';
 
 /// Detailed view screen for a specific snap showing AI solution and explanation
 class SnapDetailsScreen extends StatefulWidget {
@@ -17,20 +18,46 @@ class SnapDetailsScreen extends StatefulWidget {
   State<SnapDetailsScreen> createState() => _SnapDetailsScreenState();
 }
 
-class _SnapDetailsScreenState extends State<SnapDetailsScreen> {
+class _SnapDetailsScreenState extends State<SnapDetailsScreen>
+    with TickerProviderStateMixin {
   bool? wasHelpful;
   String detectedQuestion = '';
   String aiAnswer = '';
   String explanation = '';
   List<String> stepByStepSolution = [];
+  
+  late AnimationController _revealController;
+  late AnimationController _successController;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    
+    // Initialize animation controllers
+    _revealController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _successController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    
     _loadSnapDetails();
   }
 
-  void _loadSnapDetails() {
+  @override
+  void dispose() {
+    _revealController.dispose();
+    _successController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadSnapDetails() async {
+    // Simulate loading delay
+    await Future.delayed(const Duration(milliseconds: 500));
+    
     // TODO: Load actual snap details from backend using widget.snap.lessonId
     // For now, using mock data based on the subject
     setState(() {
@@ -67,7 +94,15 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen> {
           'Calculate the result: F = 20 N',
         ];
       }
+      _isLoading = false;
     });
+    
+    // Start reveal animation
+    await CameraAnimations.triggerResultsReveal(_revealController);
+    
+    // Show success animation after reveal
+    await Future.delayed(const Duration(milliseconds: 200));
+    await CameraAnimations.triggerSuccessAnimation(_successController);
   }
 
   @override
@@ -79,23 +114,47 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen> {
           children: [
             _buildHeader(context),
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _buildImageSection(),
-                    _buildSubjectAndTime(),
-                    _buildDetectedQuestion(),
-                    _buildAISolution(),
-                    _buildFeedbackSection(),
-                    _buildActionButtons(),
-                    _buildSolveAnotherButton(),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
+              child: _isLoading
+                  ? _buildLoadingState()
+                  : SingleChildScrollView(
+                      child: CameraAnimations.createEnhancedResultsReveal(
+                        controller: _revealController,
+                        children: [
+                          _buildImageSection(),
+                          _buildSubjectAndTime(),
+                          _buildDetectedQuestion(),
+                          _buildAISolution(),
+                          _buildFeedbackSection(),
+                          _buildActionButtons(),
+                          _buildSolveAnotherButton(),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7C3AED)),
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Processing your snap...',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+        ],
       ),
     );
   }

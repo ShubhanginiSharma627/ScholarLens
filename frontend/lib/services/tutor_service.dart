@@ -148,6 +148,61 @@ class HttpTutorService implements TutorService {
   }
 
   @override
+  Future<String> askFollowUpQuestion(String question, String context) async {
+    try {
+      final uri = Uri.parse('$baseUrl/follow-up');
+      
+      final requestData = {
+        'question': question,
+        'context': context,
+      };
+
+      final response = await _client
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: json.encode(requestData),
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body) as Map<String, dynamic>;
+        return jsonData['response'] as String;
+      } else {
+        throw TutorServiceException(
+          'Failed to get follow-up response',
+          statusCode: response.statusCode,
+          details: response.body,
+        );
+      }
+    } on SocketException catch (e) {
+      throw TutorServiceException(
+        'Network connection failed',
+        details: e.message,
+      );
+    } on http.ClientException catch (e) {
+      throw TutorServiceException(
+        'HTTP client error',
+        details: e.message,
+      );
+    } on FormatException catch (e) {
+      throw TutorServiceException(
+        'Invalid response format',
+        details: e.message,
+      );
+    } catch (e) {
+      if (e is TutorServiceException) rethrow;
+      throw TutorServiceException(
+        'Unexpected error during follow-up question',
+        details: e.toString(),
+      );
+    }
+  }
+
+  @override
   Future<String> askChapterQuestion({
     required String question,
     required String textbookTitle,

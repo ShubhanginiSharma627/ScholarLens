@@ -3,6 +3,7 @@ import 'package:camera/camera.dart';
 import '../services/camera_service.dart';
 import '../services/camera_error_handler.dart';
 import '../models/processed_image.dart';
+import '../animations/camera_animations.dart';
 
 /// Screen for camera capture with live preview and controls
 class CameraScreen extends StatefulWidget {
@@ -20,10 +21,20 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen> 
-    with WidgetsBindingObserver, CameraErrorHandlerMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver, CameraErrorHandlerMixin {
   late CameraService _cameraService;
+  late AnimationController _entranceController;
+  late AnimationController _captureController;
+  late AnimationController _scanningController;
+  late AnimationController _processingController;
+  late AnimationController _retakeController;
+  
   bool _isInitializing = true;
   bool _isCapturing = false;
+  bool _isScanning = false;
+  bool _isProcessing = false;
+  bool _showRetakeOption = false;
+  ProcessedImage? _capturedImage;
   String? _errorMessage;
 
   @override
@@ -31,6 +42,29 @@ class _CameraScreenState extends State<CameraScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _cameraService = CameraServiceImpl();
+    
+    // Initialize animation controllers
+    _entranceController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _captureController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scanningController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    );
+    _processingController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    );
+    _retakeController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    
     _initializeCamera();
   }
 
@@ -38,6 +72,11 @@ class _CameraScreenState extends State<CameraScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _cameraService.dispose();
+    _entranceController.dispose();
+    _captureController.dispose();
+    _scanningController.dispose();
+    _processingController.dispose();
+    _retakeController.dispose();
     super.dispose();
   }
 
@@ -65,6 +104,9 @@ class _CameraScreenState extends State<CameraScreen>
         setState(() {
           _isInitializing = false;
         });
+        
+        // Start entrance animation
+        _entranceController.forward();
       }
     } catch (e) {
       if (mounted) {
@@ -85,9 +127,41 @@ class _CameraScreenState extends State<CameraScreen>
         _errorMessage = null;
       });
 
+      // Trigger capture flash animation
+      await CameraAnimations.triggerCaptureEffect(_captureController);
+      
+      // Start scanning animation
+      setState(() {
+        _isScanning = true;
+      });
+      CameraAnimations.triggerScanningSequence(_scanningController);
+      
+      // Simulate scanning delay
+      await Future.delayed(const Duration(milliseconds: 1500));
+      
+      // Stop scanning and start processing
+      CameraAnimations.stopScanning(_scanningController);
+      setState(() {
+        _isScanning = false;
+        _isProcessing = true;
+      });
+      
+      CameraAnimations.triggerProcessingAnimation(_processingController);
+
       final processedImage = await _cameraService.captureAndProcess(
         cropTitle: widget.title ?? 'Crop Study Material',
       );
+
+      // Stop processing animation
+      CameraAnimations.stopProcessing(_processingController);
+      setState(() {
+        _isProcessing = false;
+        _capturedImage = processedImage;
+        _showRetakeOption = true;
+      });
+
+      // Show success animation briefly
+      await Future.delayed(const Duration(milliseconds: 500));
 
       if (mounted) {
         // Call callback if provided
@@ -97,9 +171,15 @@ class _CameraScreenState extends State<CameraScreen>
         Navigator.of(context).pop(processedImage);
       }
     } catch (e) {
+      // Stop all animations on error
+      CameraAnimations.stopScanning(_scanningController);
+      CameraAnimations.stopProcessing(_processingController);
+      
       if (mounted) {
         setState(() {
           _isCapturing = false;
+          _isScanning = false;
+          _isProcessing = false;
         });
         handleCameraError(e, onRetry: _captureImage);
       }
@@ -110,6 +190,16 @@ class _CameraScreenState extends State<CameraScreen>
         });
       }
     }
+  }
+
+  Future<void> _retakePhoto() async {
+    // Start retake animation
+    await CameraAnimations.triggerRetakeAnimation(_retakeController);
+    
+    setState(() {
+      _showRetakeOption = false;
+      _capturedImage = null;
+    });
   }
 
   @override
@@ -189,7 +279,8 @@ class _CameraScreenState extends State<CameraScreen>
       );
     }
 
-    return Stack(
+    // Build camera view with entrance animation
+    Widget cameraView = Stack(
       children: [
         // Camera preview
         Positioned.fill(
@@ -200,7 +291,35 @@ class _CameraScreenState extends State<CameraScreen>
         Positioned.fill(
           child: _buildCameraOverlay(),
         ),
+        
+        // Capture flash animation
+        if (_isCapturing)
+          CameraAnimations.createCaptureFlashAnimation(
+            child: Container(),
+            controller: _captureController,
+          ),
+        
+        // Scanning animation
+        if (_isScanning)
+          CameraAnimations.createScanningAnimation(
+            child: Container(),
+            controller: _scanningController,
+          ),
+        
+        // Processing animation
+        if (_isProcessing)
+          CameraAnimations.createProcessingAnimation(
+            child: Container(),
+            controller: _processingController,
+            message: 'Processing image...',
+          ),
       ],
+    );
+
+    // Wrap with entrance animation
+    return CameraAnimations.createCameraEntranceAnimation(
+      child: cameraView,
+      controller: _entranceController,
     );
   }
 
@@ -233,42 +352,108 @@ class _CameraScreenState extends State<CameraScreen>
         // Bottom controls
         Container(
           padding: const EdgeInsets.all(24),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // Cancel button
-              _buildControlButton(
-                icon: Icons.close,
-                onPressed: () => Navigator.of(context).pop(),
-                backgroundColor: Colors.black54,
-              ),
-              
-              // Capture button
-              _buildCaptureButton(),
-              
-              // Gallery button (placeholder for future implementation)
-              _buildControlButton(
-                icon: Icons.photo_library,
-                onPressed: () {
-                  // TODO: Implement gallery selection
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Gallery selection coming soon'),
-                    ),
-                  );
-                },
-                backgroundColor: Colors.black54,
-              ),
-            ],
-          ),
+          child: _showRetakeOption ? _buildRetakeControls() : _buildCameraControls(),
         ),
       ],
     );
   }
 
-  Widget _buildCaptureButton() {
-    return GestureDetector(
-      onTap: _isCapturing ? null : _captureImage,
+  Widget _buildCameraControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        // Cancel button
+        _buildControlButton(
+          icon: Icons.close,
+          onPressed: () => Navigator.of(context).pop(),
+          backgroundColor: Colors.black54,
+        ),
+        
+        // Capture button with animation
+        _buildAnimatedCaptureButton(),
+        
+        // Gallery button (placeholder for future implementation)
+        _buildControlButton(
+          icon: Icons.photo_library,
+          onPressed: () {
+            // TODO: Implement gallery selection
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Gallery selection coming soon'),
+              ),
+            );
+          },
+          backgroundColor: Colors.black54,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRetakeControls() {
+    return CameraAnimations.createRetakeTransition(
+      oldPhoto: _capturedImage != null 
+          ? Container(
+              width: double.infinity,
+              height: 100,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                image: DecorationImage(
+                  image: FileImage(_capturedImage!.file),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            )
+          : Container(),
+      newCameraView: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // Use photo button
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () {
+                if (_capturedImage != null) {
+                  widget.onImageCaptured?.call(_capturedImage!);
+                  Navigator.of(context).pop(_capturedImage);
+                }
+              },
+              icon: const Icon(Icons.check),
+              label: const Text('Use Photo'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Retake button
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: _retakePhoto,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retake'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      controller: _retakeController,
+    );
+  }
+
+  Widget _buildAnimatedCaptureButton() {
+    return CameraAnimations.createCameraButtonAnimation(
+      onPressed: _captureImage,
       child: Container(
         width: 80,
         height: 80,
@@ -280,7 +465,7 @@ class _CameraScreenState extends State<CameraScreen>
             width: 4,
           ),
         ),
-        child: _isCapturing
+        child: _isCapturing || _isScanning || _isProcessing
             ? const Padding(
                 padding: EdgeInsets.all(20),
                 child: CircularProgressIndicator(
@@ -309,8 +494,8 @@ class _CameraScreenState extends State<CameraScreen>
     required VoidCallback onPressed,
     Color backgroundColor = Colors.black54,
   }) {
-    return GestureDetector(
-      onTap: onPressed,
+    return CameraAnimations.createCameraButtonAnimation(
+      onPressed: onPressed,
       child: Container(
         width: 56,
         height: 56,

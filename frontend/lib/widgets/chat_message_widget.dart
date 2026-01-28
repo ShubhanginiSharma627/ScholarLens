@@ -1,30 +1,202 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/chat_message.dart';
+import '../animations/animation_manager.dart';
+import '../animations/animation_config.dart';
 
-/// Widget for displaying individual chat messages
-class ChatMessageWidget extends StatelessWidget {
+/// Widget for displaying individual chat messages with enhanced animations
+class ChatMessageWidget extends StatefulWidget {
   final ChatMessage message;
   final VoidCallback? onRetry;
+  final int? messageIndex;
+  final bool enableStaggeredAnimation;
+  final Duration? staggerDelay;
 
   const ChatMessageWidget({
     super.key,
     required this.message,
     this.onRetry,
+    this.messageIndex,
+    this.enableStaggeredAnimation = true,
+    this.staggerDelay,
   });
 
   @override
+  State<ChatMessageWidget> createState() => _ChatMessageWidgetState();
+}
+
+class _ChatMessageWidgetState extends State<ChatMessageWidget>
+    with TickerProviderStateMixin {
+  
+  late final AnimationManager _animationManager;
+  late AnimationController _slideController;
+  late AnimationController _fadeController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  String? _slideAnimationId;
+  String? _fadeAnimationId;
+  
+  bool _hasAnimated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _animationManager = AnimationManager();
+    _initializeAnimations();
+    
+    // Start animation after a brief delay for staggered effect
+    final delay = widget.enableStaggeredAnimation && widget.messageIndex != null
+        ? Duration(milliseconds: (widget.messageIndex! * 100).clamp(0, 500))
+        : (widget.staggerDelay ?? Duration.zero);
+    
+    Future.delayed(delay, () {
+      if (mounted && !_hasAnimated) {
+        _startAnimation();
+      }
+    });
+  }
+
+  void _initializeAnimations() {
+    // Initialize animation controllers
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    // Register animations with manager if initialized
+    if (_animationManager.isInitialized) {
+      _registerAnimations();
+    } else {
+      _animationManager.initialize().then((_) {
+        if (mounted) {
+          _registerAnimations();
+        }
+      });
+    }
+    
+    // Create local animations as fallback
+    _createLocalAnimations();
+  }
+
+  void _registerAnimations() {
+    try {
+      // Choose slide direction based on message sender
+      final slideConfig = widget.message.isUser 
+          ? AnimationConfigs.messageSlideInUser
+          : AnimationConfigs.messageSlideInAI;
+      
+      _slideAnimationId = _animationManager.registerController(
+        controller: _slideController,
+        config: slideConfig,
+        category: AnimationCategory.content,
+      );
+      
+      final fadeConfig = AnimationConfigs.fadeTransition;
+      _fadeAnimationId = _animationManager.registerController(
+        controller: _fadeController,
+        config: fadeConfig,
+        category: AnimationCategory.content,
+      );
+      
+      // Get managed animations
+      final slideAnim = _animationManager.getAnimation(_slideAnimationId!);
+      final fadeAnim = _animationManager.getAnimation(_fadeAnimationId!);
+      
+      if (slideAnim != null && fadeAnim != null) {
+        _slideAnimation = slideAnim.animation as Animation<Offset>;
+        _fadeAnimation = fadeAnim.animation as Animation<double>;
+      } else {
+        _createLocalAnimations();
+      }
+    } catch (e) {
+      debugPrint('Failed to register chat message animations: $e');
+      _createLocalAnimations();
+    }
+  }
+
+  void _createLocalAnimations() {
+    // Create directional slide animation based on sender
+    final slideStart = widget.message.isUser 
+        ? const Offset(0.3, 0.0)  // User messages slide in from right
+        : const Offset(-0.3, 0.0); // AI messages slide in from left
+    
+    _slideAnimation = Tween<Offset>(
+      begin: slideStart,
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOut,
+    ));
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  void _startAnimation() {
+    if (_hasAnimated || !mounted) return;
+    _hasAnimated = true;
+    
+    if (_slideAnimationId != null && _fadeAnimationId != null) {
+      _animationManager.startAnimation(_slideAnimationId!);
+      _animationManager.startAnimation(_fadeAnimationId!);
+    } else {
+      _slideController.forward();
+      _fadeController.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_slideAnimationId != null) {
+      _animationManager.disposeController(_slideAnimationId!);
+    }
+    if (_fadeAnimationId != null) {
+      _animationManager.disposeController(_fadeAnimationId!);
+    }
+    
+    _slideController.dispose();
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_slideAnimation, _fadeAnimation]),
+      builder: (context, child) {
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: _buildMessageContent(context),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMessageContent(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: message.isUser 
+        mainAxisAlignment: widget.message.isUser 
             ? MainAxisAlignment.end 
             : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // AI avatar (left side for AI messages)
-          if (!message.isUser) ...[
+          if (!widget.message.isUser) ...[
             _buildAvatar(context, false),
             const SizedBox(width: 8),
           ],
@@ -36,7 +208,7 @@ class ChatMessageWidget extends StatelessWidget {
                 maxWidth: MediaQuery.of(context).size.width * 0.75,
               ),
               child: Column(
-                crossAxisAlignment: message.isUser 
+                crossAxisAlignment: widget.message.isUser 
                     ? CrossAxisAlignment.end 
                     : CrossAxisAlignment.start,
                 children: [
@@ -51,10 +223,10 @@ class ChatMessageWidget extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: _getMessageColor(context),
                         borderRadius: BorderRadius.circular(20).copyWith(
-                          bottomRight: message.isUser 
+                          bottomRight: widget.message.isUser 
                               ? const Radius.circular(4)
                               : const Radius.circular(20),
-                          bottomLeft: !message.isUser 
+                          bottomLeft: !widget.message.isUser 
                               ? const Radius.circular(4)
                               : const Radius.circular(20),
                         ),
@@ -71,7 +243,7 @@ class ChatMessageWidget extends StatelessWidget {
                         children: [
                           // Message content
                           Text(
-                            message.content,
+                            widget.message.content,
                             style: TextStyle(
                               color: _getTextColor(context),
                               fontSize: 16,
@@ -80,7 +252,7 @@ class ChatMessageWidget extends StatelessWidget {
                           ),
                           
                           // Status indicator for user messages
-                          if (message.isUser) ...[
+                          if (widget.message.isUser) ...[
                             const SizedBox(height: 4),
                             Row(
                               mainAxisSize: MainAxisSize.min,
@@ -88,7 +260,7 @@ class ChatMessageWidget extends StatelessWidget {
                                 _buildStatusIcon(),
                                 const SizedBox(width: 4),
                                 Text(
-                                  message.formattedTime,
+                                  widget.message.formattedTime,
                                   style: TextStyle(
                                     color: _getTextColor(context).withValues(alpha: 0.7),
                                     fontSize: 12,
@@ -103,22 +275,22 @@ class ChatMessageWidget extends StatelessWidget {
                   ),
                   
                   // Timestamp and retry button for AI messages
-                  if (!message.isUser) ...[
+                  if (!widget.message.isUser) ...[
                     const SizedBox(height: 4),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          message.formattedTime,
+                          widget.message.formattedTime,
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 12,
                           ),
                         ),
-                        if (message.hasFailed && onRetry != null) ...[
+                        if (widget.message.hasFailed && widget.onRetry != null) ...[
                           const SizedBox(width: 8),
                           GestureDetector(
-                            onTap: onRetry,
+                            onTap: widget.onRetry,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -159,7 +331,7 @@ class ChatMessageWidget extends StatelessWidget {
           ),
           
           // User avatar (right side for user messages)
-          if (message.isUser) ...[
+          if (widget.message.isUser) ...[
             const SizedBox(width: 8),
             _buildAvatar(context, true),
           ],
@@ -187,7 +359,7 @@ class ChatMessageWidget extends StatelessWidget {
   }
 
   Color _getMessageColor(BuildContext context) {
-    if (message.isUser) {
+    if (widget.message.isUser) {
       return Theme.of(context).primaryColor;
     } else {
       return Colors.grey[100]!;
@@ -195,7 +367,7 @@ class ChatMessageWidget extends StatelessWidget {
   }
 
   Color _getTextColor(BuildContext context) {
-    if (message.isUser) {
+    if (widget.message.isUser) {
       return Colors.white;
     } else {
       return Colors.black87;
@@ -203,7 +375,7 @@ class ChatMessageWidget extends StatelessWidget {
   }
 
   Widget _buildStatusIcon() {
-    switch (message.status) {
+    switch (widget.message.status) {
       case MessageStatus.sending:
         return SizedBox(
           width: 12,
@@ -247,7 +419,7 @@ class ChatMessageWidget extends StatelessWidget {
               leading: const Icon(Icons.copy),
               title: const Text('Copy Message'),
               onTap: () {
-                Clipboard.setData(ClipboardData(text: message.content));
+                Clipboard.setData(ClipboardData(text: widget.message.content));
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -257,13 +429,13 @@ class ChatMessageWidget extends StatelessWidget {
                 );
               },
             ),
-            if (message.hasFailed && onRetry != null)
+            if (widget.message.hasFailed && widget.onRetry != null)
               ListTile(
                 leading: const Icon(Icons.refresh),
                 title: const Text('Retry Message'),
                 onTap: () {
                   Navigator.of(context).pop();
-                  onRetry?.call();
+                  widget.onRetry?.call();
                 },
               ),
             ListTile(
@@ -289,11 +461,11 @@ class ChatMessageWidget extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoRow('Sender', message.senderLabel),
-            _buildInfoRow('Status', message.status.displayName),
-            _buildInfoRow('Time', message.timestamp.toString()),
-            _buildInfoRow('ID', message.id),
-            _buildInfoRow('Length', '${message.content.length} characters'),
+            _buildInfoRow('Sender', widget.message.senderLabel),
+            _buildInfoRow('Status', widget.message.status.displayName),
+            _buildInfoRow('Time', widget.message.timestamp.toString()),
+            _buildInfoRow('ID', widget.message.id),
+            _buildInfoRow('Length', '${widget.message.content.length} characters'),
           ],
         ),
         actions: [

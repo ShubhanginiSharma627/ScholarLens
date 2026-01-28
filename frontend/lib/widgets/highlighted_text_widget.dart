@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import 'package:scholar_lens/models/text_highlight.dart';
-import 'package:scholar_lens/theme/app_theme.dart';
 
 /// A widget that displays text with highlighting support and text selection
 class HighlightedTextWidget extends StatefulWidget {
@@ -43,7 +42,6 @@ class HighlightedTextWidget extends StatefulWidget {
 }
 
 class _HighlightedTextWidgetState extends State<HighlightedTextWidget> {
-  final GlobalKey _textKey = GlobalKey();
   TextSelection? _currentSelection;
 
   @override
@@ -56,14 +54,8 @@ class _HighlightedTextWidgetState extends State<HighlightedTextWidget> {
 
     return SelectableText.rich(
       _buildTextSpan(context),
-      key: _textKey,
       style: widget.textStyle ?? defaultTextStyle,
       onSelectionChanged: widget.isHighlightMode ? _handleSelectionChanged : null,
-      selectionControls: widget.isHighlightMode 
-          ? _HighlightSelectionControls(
-              onHighlight: _handleHighlightSelection,
-            )
-          : null,
       contextMenuBuilder: widget.isHighlightMode 
           ? _buildHighlightContextMenu 
           : null,
@@ -95,7 +87,7 @@ class _HighlightedTextWidgetState extends State<HighlightedTextWidget> {
       spans.add(TextSpan(
         text: highlight.highlightedText,
         style: TextStyle(
-          backgroundColor: highlight.highlightColor.withOpacity(0.3),
+          backgroundColor: highlight.highlightColor.withValues(alpha: 0.3),
           color: _getContrastingTextColor(highlight.highlightColor),
         ),
         recognizer: widget.onHighlightTapped != null
@@ -192,53 +184,5 @@ class _HighlightedTextWidgetState extends State<HighlightedTextWidget> {
         ),
       ],
     );
-  }
-}
-
-/// Custom selection controls for highlighting
-class _HighlightSelectionControls extends TextSelectionControls {
-  final VoidCallback onHighlight;
-
-  _HighlightSelectionControls({required this.onHighlight});
-
-  @override
-  Widget buildHandle(BuildContext context, TextSelectionHandleType type, double textLineHeight, [VoidCallback? onTap]) {
-    return Container(
-      width: 20,
-      height: 20,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary,
-        shape: BoxShape.circle,
-      ),
-    );
-  }
-
-  @override
-  Widget buildToolbar(
-    BuildContext context,
-    Rect globalEditableRegion,
-    double textLineHeight,
-    Offset selectionMidpoint,
-    List<TextSelectionPoint> endpoints,
-    TextSelectionDelegate delegate,
-    ValueListenable<ClipboardStatus>? clipboardStatus,
-    Offset? lastSecondaryTapDownPosition,
-  ) {
-    return AdaptiveTextSelectionToolbar.buttonItems(
-      anchors: TextSelectionToolbarAnchors(
-        primaryAnchor: selectionMidpoint,
-      ),
-      buttonItems: [
-        ContextMenuButtonItem(
-          onPressed: onHighlight,
-          label: 'Highlight',
-        ),
-      ],
-    );
-  }
-
-  @override
-  Size getHandleSize(double textLineHeight) {
-    return const Size(20, 20);
   }
 }

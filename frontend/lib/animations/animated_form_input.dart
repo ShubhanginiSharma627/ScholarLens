@@ -140,10 +140,10 @@ class _AnimatedFormInputState extends State<AnimatedFormInput>
   late AnimationController _focusController;
   String? _focusAnimationId;
   
-  // Animation values
-  late Animation<Color?> _borderColorAnimation;
-  late Animation<Color?> _backgroundColorAnimation;
-  late Animation<Color?> _labelColorAnimation;
+  // Animation values - initialize with default values
+  Animation<Color?>? _borderColorAnimation;
+  Animation<Color?>? _backgroundColorAnimation;
+  Animation<Color?>? _labelColorAnimation;
   
   // State tracking
   bool _isFocused = false;
@@ -178,8 +178,7 @@ class _AnimatedFormInputState extends State<AnimatedFormInput>
       });
     }
     
-    // Create local animations as fallback
-    _createLocalAnimations();
+    // Don't create color animations here - wait for didChangeDependencies
   }
 
   void _registerAnimations() {
@@ -199,17 +198,18 @@ class _AnimatedFormInputState extends State<AnimatedFormInput>
         category: AnimationCategory.microInteraction,
       );
       
-      // Create color animations
-      _createColorAnimations();
+      // Color animations will be created in didChangeDependencies
     } catch (e) {
       // Fallback to local animations if registration fails
       debugPrint('Failed to register focus animations with manager: $e');
-      _createLocalAnimations();
     }
   }
 
   void _createLocalAnimations() {
-    _createColorAnimations();
+    // Only create color animations if we have access to theme
+    if (mounted) {
+      _createColorAnimations();
+    }
   }
 
   void _createColorAnimations() {
@@ -318,7 +318,7 @@ class _AnimatedFormInputState extends State<AnimatedFormInput>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Recreate color animations when theme changes
+    // Create color animations when theme is available
     _createColorAnimations();
   }
 
@@ -357,13 +357,13 @@ class _AnimatedFormInputState extends State<AnimatedFormInput>
       focusedErrorBorder: baseDecoration.focusedErrorBorder ?? inputTheme.focusedErrorBorder,
       
       // Animated background color
-      fillColor: widget.animateBackground ? _backgroundColorAnimation.value : baseDecoration.fillColor,
+      fillColor: widget.animateBackground ? _backgroundColorAnimation?.value : baseDecoration.fillColor,
       filled: widget.animateBackground || baseDecoration.filled == true,
       
       // Animated label color
       labelStyle: widget.animateLabel 
           ? (baseDecoration.labelStyle ?? theme.textTheme.bodyMedium)?.copyWith(
-              color: _labelColorAnimation.value,
+              color: _labelColorAnimation?.value,
             )
           : baseDecoration.labelStyle,
       
@@ -383,7 +383,7 @@ class _AnimatedFormInputState extends State<AnimatedFormInput>
   InputBorder? _buildAnimatedBorder(InputBorder? baseBorder, {bool focused = false}) {
     if (baseBorder == null) return null;
     
-    final animatedColor = _borderColorAnimation.value;
+    final animatedColor = _borderColorAnimation?.value;
     if (animatedColor == null) return baseBorder;
     
     // Handle different border types
@@ -408,12 +408,15 @@ class _AnimatedFormInputState extends State<AnimatedFormInput>
 
   @override
   Widget build(BuildContext context) {
+    // Create a list of non-null animations for the AnimatedBuilder
+    final animations = <Listenable>[
+      if (_borderColorAnimation != null) _borderColorAnimation!,
+      if (_backgroundColorAnimation != null) _backgroundColorAnimation!,
+      if (_labelColorAnimation != null) _labelColorAnimation!,
+    ];
+    
     return AnimatedBuilder(
-      animation: Listenable.merge([
-        _borderColorAnimation,
-        _backgroundColorAnimation,
-        _labelColorAnimation,
-      ]),
+      animation: animations.isNotEmpty ? Listenable.merge(animations) : _focusController,
       builder: (context, child) {
         return TextFormField(
           controller: widget.controller,

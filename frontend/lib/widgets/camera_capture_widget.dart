@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/camera_screen.dart';
 import '../models/processed_image.dart';
+import '../animations/camera_animations.dart';
 
 /// Widget for triggering camera capture functionality
 class CameraCaptureWidget extends StatelessWidget {
@@ -38,8 +39,8 @@ class CameraCaptureWidget extends StatelessWidget {
   Future<void> _openCamera(BuildContext context) async {
     try {
       final result = await Navigator.of(context).push<ProcessedImage>(
-        MaterialPageRoute(
-          builder: (context) => CameraScreen(
+        CameraAnimations.createCameraOpenTransition<ProcessedImage>(
+          CameraScreen(
             title: title,
             onImageCaptured: onImageCaptured,
           ),
@@ -87,8 +88,8 @@ class CameraCaptureFAB extends StatelessWidget {
   Future<void> _openCamera(BuildContext context) async {
     try {
       final result = await Navigator.of(context).push<ProcessedImage>(
-        MaterialPageRoute(
-          builder: (context) => CameraScreen(
+        CameraAnimations.createCameraOpenTransition<ProcessedImage>(
+          CameraScreen(
             title: title,
             onImageCaptured: onImageCaptured,
           ),

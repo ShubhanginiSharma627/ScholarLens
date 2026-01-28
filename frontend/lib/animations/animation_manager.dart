@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
-import '../theme/app_theme.dart';
+import '../services/accessibility_service.dart';
 import 'animation_config.dart';
 import 'managed_animation.dart';
 import 'performance_metrics.dart';
@@ -16,22 +15,30 @@ class AnimationManager {
   final AnimationRegistry _registry = AnimationRegistry();
   final AnimationPerformanceMonitor _performanceMonitor = 
       AnimationPerformanceMonitor();
+  final AccessibilityService _accessibilityService = AccessibilityService();
   
   bool _reducedMotion = false;
   double _performanceScale = 1.0;
   bool _isInitialized = false;
 
-  // Performance thresholds
-  static const double _performanceThresholdGood = 0.8;
-  static const double _performanceThresholdPoor = 0.4;
-  static const int _maxConcurrentAnimations = 20;
-
   /// Initializes the animation manager
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    // Check for reduced motion preference
-    await _checkReducedMotionPreference();
+    // Initialize accessibility service first
+    await _accessibilityService.initialize();
+    
+    // Initialize performance monitoring
+    _performanceMonitor.initialize();
+    
+    // Set up accessibility listeners
+    _setupAccessibilityListeners();
+    
+    // Set up performance listeners
+    _setupPerformanceListeners();
+
+    // Check for reduced motion preference from accessibility service
+    _reducedMotion = _accessibilityService.isReducedMotionEnabled;
     
     // Start performance monitoring
     _startPerformanceMonitoring();
@@ -41,7 +48,8 @@ class AnimationManager {
     if (kDebugMode) {
       debugPrint('AnimationManager initialized - '
           'reducedMotion: $_reducedMotion, '
-          'performanceScale: $_performanceScale');
+          'performanceScale: $_performanceScale, '
+          'deviceTier: ${_performanceMonitor.deviceTier}');
     }
   }
 
@@ -59,11 +67,13 @@ class AnimationManager {
     final id = customId ?? _generateAnimationId(category);
     
     // Apply performance scaling to duration
-    final scaledDuration = Duration(
-      milliseconds: (config.duration.inMilliseconds * _performanceScale).round(),
+    final optimizedDuration = PerformanceOptimizer.optimizeDuration(
+      originalDuration: config.duration,
+      quality: _performanceMonitor.currentQuality,
+      deviceTier: _performanceMonitor.deviceTier,
     );
     
-    final scaledConfig = config.copyWith(duration: scaledDuration);
+    final scaledConfig = config.copyWith(duration: optimizedDuration);
     
     // Create the animation with the scaled config
     final animation = _createAnimation(controller, scaledConfig);
@@ -82,7 +92,8 @@ class AnimationManager {
     _setupControllerListeners(managedAnimation);
     
     if (kDebugMode) {
-      debugPrint('Registered animation: $id (category: $category)');
+      debugPrint('Registered animation: $id (category: $category, '
+          'quality: ${_performanceMonitor.currentQuality})');
     }
     
     return id;
@@ -101,31 +112,68 @@ class AnimationManager {
     }
   }
 
-  /// Starts an animation
+  /// Starts an animation with accessibility considerations
   void startAnimation(String id) {
     final animation = _registry.getAnimation(id);
-    if (animation != null) {
-      // Check if reduced motion is enabled and animation respects it
-      if (_reducedMotion && animation.config.respectReducedMotion) {
-        // Skip animation or use reduced version
-        _handleReducedMotionAnimation(animation);
-        return;
-      }
+    if (animation == null) return;
 
-      // Check performance constraints
-      if (!_canStartAnimation(animation)) {
-        if (kDebugMode) {
-          debugPrint('Skipping animation $id due to performance constraints');
-        }
-        return;
-      }
+    // Check if animation should be skipped due to performance
+    final metrics = _performanceMonitor.getCurrentMetrics(_registry.activeCount);
+    if (PerformanceOptimizer.shouldSkipAnimation(
+      metrics: metrics,
+      animationPriority: animation.config.priority,
+    )) {
+      _completeAnimationInstantly(animation);
+      return;
+    }
 
-      animation.start();
-      animation.controller.forward();
-      
+    // Get accessibility configuration
+    final accessibleConfig = _getAccessibleAnimationConfig(animation);
+    
+    // Handle different accessibility alternatives
+    switch (accessibleConfig.alternative) {
+      case AnimationAlternative.skip:
+        // Skip animation entirely - just complete immediately
+        _completeAnimationInstantly(animation);
+        return;
+        
+      case AnimationAlternative.instant:
+        // Show final state immediately
+        _completeAnimationInstantly(animation);
+        return;
+        
+      case AnimationAlternative.simple:
+        // Use simplified animation
+        _startSimplifiedAnimation(animation, accessibleConfig);
+        return;
+        
+      case AnimationAlternative.fade:
+        // Convert to fade animation
+        _startFadeAlternative(animation, accessibleConfig);
+        return;
+        
+      case AnimationAlternative.normal:
+        // Use normal animation with accessibility adjustments
+        break;
+    }
+
+    // Check performance constraints
+    if (!_canStartAnimation(animation)) {
       if (kDebugMode) {
-        debugPrint('Started animation: $id');
+        debugPrint('Skipping animation $id due to performance constraints');
       }
+      return;
+    }
+
+    // Apply accessibility-adjusted timing
+    _applyAccessibilityTiming(animation, accessibleConfig);
+
+    animation.start();
+    animation.controller.forward();
+    
+    if (kDebugMode) {
+      debugPrint('Started animation: $id (accessibility: ${accessibleConfig.alternative}, '
+          'quality: ${_performanceMonitor.currentQuality})');
     }
   }
 
@@ -215,7 +263,13 @@ class AnimationManager {
   AnimationRegistry get registry => _registry;
 
   /// Whether reduced motion is enabled
-  bool get isReducedMotionEnabled => _reducedMotion;
+  bool get isReducedMotionEnabled => _accessibilityService.isReducedMotionEnabled;
+
+  /// Whether high contrast is enabled
+  bool get isHighContrastEnabled => _accessibilityService.isHighContrastEnabled;
+
+  /// Current text scale factor
+  double get textScaleFactor => _accessibilityService.textScaleFactor;
 
   /// Current performance scale
   double get performanceScale => _performanceScale;
@@ -223,10 +277,14 @@ class AnimationManager {
   /// Whether the manager is initialized
   bool get isInitialized => _isInitialized;
 
+  /// Gets the accessibility service
+  AccessibilityService get accessibilityService => _accessibilityService;
+
   /// Disposes the animation manager
   void dispose() {
     _registry.disposeAll();
-    _performanceMonitor.reset();
+    _performanceMonitor.dispose();
+    _accessibilityService.dispose();
     _isInitialized = false;
     
     if (kDebugMode) {
@@ -236,36 +294,164 @@ class AnimationManager {
 
   // Private methods
 
-  Future<void> _checkReducedMotionPreference() async {
-    try {
-      // Check system accessibility settings
-      // For now, we'll use a simplified approach that can be extended
-      // In a production app, you'd use platform channels or packages like
-      // accessibility_tools to check actual system preferences
-      
-      // Check if we're in a test environment
+  void _setupAccessibilityListeners() {
+    // Listen for reduced motion changes
+    _accessibilityService.addReducedMotionListener(() {
+      _reducedMotion = _accessibilityService.isReducedMotionEnabled;
       if (kDebugMode) {
-        // In debug mode, default to false unless explicitly set
-        _reducedMotion = false;
-      } else {
-        // In production, you would implement platform-specific checks here
-        // For now, default to false
-        _reducedMotion = false;
+        debugPrint('Reduced motion preference changed: $_reducedMotion');
       }
       
+      // Pause or adjust running animations based on new preference
+      _handleAccessibilityChange();
+    });
+    
+    // Listen for high contrast changes
+    _accessibilityService.addHighContrastListener(() {
       if (kDebugMode) {
-        debugPrint('Reduced motion preference: $_reducedMotion');
+        debugPrint('High contrast preference changed: ${_accessibilityService.isHighContrastEnabled}');
       }
-    } catch (e) {
+      // High contrast changes don't directly affect animations,
+      // but could be used for theme adjustments
+    });
+  }
+
+  void _setupPerformanceListeners() {
+    // Listen for animation quality changes
+    _performanceMonitor.addQualityChangeListener((quality) {
       if (kDebugMode) {
-        debugPrint('Error checking reduced motion preference: $e');
+        debugPrint('Animation quality changed to: $quality');
       }
-      _reducedMotion = false;
+      
+      // Adjust running animations based on new quality level
+      _handleQualityChange(quality);
+    });
+    
+    // Listen for memory pressure events
+    _performanceMonitor.addMemoryPressureListener(() {
+      if (kDebugMode) {
+        debugPrint('Memory pressure detected - reducing animation complexity');
+      }
+      
+      // Pause or simplify low-priority animations
+      _handleMemoryPressure();
+    });
+  }
+
+  void _handleQualityChange(AnimationQuality newQuality) {
+    // Adjust running animations based on new quality level
+    final runningAnimations = _registry.activeAnimations;
+    
+    for (final animation in runningAnimations) {
+      if (!newQuality.enableComplexEffects && _isComplexAnimation(animation)) {
+        // Convert complex animations to simpler ones
+        _convertToAccessibleAnimation(animation);
+      }
     }
+  }
+
+  void _handleMemoryPressure() {
+    // Pause low-priority animations during memory pressure
+    final lowPriorityAnimations = _registry.activeAnimations.where(
+      (animation) => animation.config.priority > 2
+    );
+    
+    for (final animation in lowPriorityAnimations) {
+      animation.pause();
+      animation.controller.stop();
+    }
+  }
+
+  void _handleAccessibilityChange() {
+    // If reduced motion was just enabled, pause complex animations
+    if (_reducedMotion) {
+      final complexAnimations = _registry.activeAnimations.where(
+        (animation) => animation.config.respectReducedMotion && 
+                      _isComplexAnimation(animation)
+      );
+      
+      for (final animation in complexAnimations) {
+        // Convert to simple fade or complete instantly
+        _convertToAccessibleAnimation(animation);
+      }
+    }
+  }
+
+  bool _isComplexAnimation(ManagedAnimation animation) {
+    final config = animation.config;
+    return (config.scaleStart != null && config.scaleEnd != null) ||
+           (config.slideStart != null && config.slideEnd != null) ||
+           config.duration.inMilliseconds > 300;
+  }
+
+  void _convertToAccessibleAnimation(ManagedAnimation animation) {
+    if (_accessibilityService.shouldSkipAnimation()) {
+      _completeAnimationInstantly(animation);
+    } else {
+      // Convert to simple fade
+      final accessibleConfig = _accessibilityService.createAccessibleConfig(
+        duration: animation.config.duration,
+        curve: animation.config.curve,
+        type: AnimationType.fade,
+        priority: animation.config.priority,
+      );
+      
+      _applyAccessibilityTiming(animation, accessibleConfig);
+    }
+  }
+
+  AccessibleAnimationConfig _getAccessibleAnimationConfig(ManagedAnimation animation) {
+    // Determine animation type based on config
+    AnimationType type = AnimationType.fade;
+    
+    if (animation.config.scaleStart != null && animation.config.scaleEnd != null) {
+      type = AnimationType.scale;
+    } else if (animation.config.slideStart != null && animation.config.slideEnd != null) {
+      type = AnimationType.slide;
+    }
+    
+    return _accessibilityService.createAccessibleConfig(
+      duration: animation.config.duration,
+      curve: animation.config.curve,
+      type: type,
+      priority: animation.config.priority,
+    );
+  }
+
+  void _completeAnimationInstantly(ManagedAnimation animation) {
+    // Set controller to end value immediately
+    animation.controller.value = 1.0;
+    animation.complete();
+    
+    if (kDebugMode) {
+      debugPrint('Completed animation instantly: ${animation.id}');
+    }
+  }
+
+  void _startSimplifiedAnimation(ManagedAnimation animation, AccessibleAnimationConfig config) {
+    // Use much shorter duration and simple curve
+    animation.controller.duration = config.effectiveDuration;
+    animation.start();
+    animation.controller.forward();
+  }
+
+  void _startFadeAlternative(ManagedAnimation animation, AccessibleAnimationConfig config) {
+    // Convert any animation to a simple fade
+    animation.controller.duration = config.effectiveDuration;
+    animation.start();
+    animation.controller.forward();
+  }
+
+  void _applyAccessibilityTiming(ManagedAnimation animation, AccessibleAnimationConfig config) {
+    // Apply accessibility-adjusted duration and curve
+    animation.controller.duration = config.effectiveDuration;
+    // Note: Curve changes would require recreating the animation, which is complex
+    // For now, we just adjust duration
   }
 
   /// Manually set reduced motion preference (for testing or user settings)
   void setReducedMotionPreference(bool enabled) {
+    _accessibilityService.setReducedMotionPreference(enabled);
     _reducedMotion = enabled;
     if (kDebugMode) {
       debugPrint('Manually set reduced motion preference: $_reducedMotion');
@@ -352,40 +538,26 @@ class AnimationManager {
   }
 
   bool _canStartAnimation(ManagedAnimation animation) {
-    // Check if we're at the concurrent animation limit
-    if (_registry.activeCount >= _maxConcurrentAnimations) {
+    // Check device-specific concurrent animation limits
+    final maxAnimations = _performanceMonitor.deviceTier.maxConcurrentAnimations;
+    if (_registry.activeCount >= maxAnimations) {
+      return false;
+    }
+    
+    // Check quality-specific limits
+    final qualityLimit = _performanceMonitor.currentQuality.maxSimultaneousAnimations;
+    if (_registry.activeCount >= qualityLimit) {
       return false;
     }
     
     // Check performance constraints
     final metrics = _performanceMonitor.latestMetrics;
-    if (metrics != null && !metrics.isPerformanceGood) {
+    if (metrics != null && metrics.isPerformancePoor) {
       // Only allow high priority animations when performance is poor
       return animation.config.priority <= 2;
     }
     
     return true;
-  }
-
-  void _handleReducedMotionAnimation(ManagedAnimation animation) {
-    // For reduced motion, we can either:
-    // 1. Skip the animation entirely
-    // 2. Use a much faster, simpler animation
-    // 3. Use a fade-only animation instead of complex movements
-    
-    // For now, we'll use a simple fade with very short duration
-    final reducedConfig = AnimationConfig(
-      duration: const Duration(milliseconds: 100),
-      curve: Curves.easeInOut,
-      fadeStart: 0.0,
-      fadeEnd: 1.0,
-      priority: animation.config.priority,
-    );
-    
-    // Update the animation to use reduced motion config
-    animation.controller.duration = reducedConfig.duration;
-    animation.start();
-    animation.controller.forward();
   }
 }
 
