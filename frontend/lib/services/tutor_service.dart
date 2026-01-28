@@ -31,6 +31,19 @@ abstract class TutorService {
 
   /// Asks a follow-up question with context
   Future<String> askFollowUpQuestion(String question, String context);
+
+  /// Asks a question about a specific chapter section with context
+  Future<String> askChapterQuestion({
+    required String question,
+    required String textbookTitle,
+    required int chapterNumber,
+    required String sectionTitle,
+    required String sectionContent,
+    List<String>? highlights,
+  });
+
+  /// Checks if the service is available
+  Future<bool> isServiceAvailable();
 }
 
 /// HTTP implementation of the tutor service
@@ -135,9 +148,27 @@ class HttpTutorService implements TutorService {
   }
 
   @override
-  Future<String> askFollowUpQuestion(String question, String context) async {
+  Future<String> askChapterQuestion({
+    required String question,
+    required String textbookTitle,
+    required int chapterNumber,
+    required String sectionTitle,
+    required String sectionContent,
+    List<String>? highlights,
+  }) async {
     try {
-      final uri = Uri.parse('$baseUrl/chat');
+      final uri = Uri.parse('$baseUrl/chapter-chat');
+      
+      // Build context with chapter information
+      final contextData = {
+        'question': question,
+        'textbook_title': textbookTitle,
+        'chapter_number': chapterNumber,
+        'section_title': sectionTitle,
+        'section_content': sectionContent,
+        if (highlights != null && highlights.isNotEmpty) 'highlights': highlights,
+      };
+
       final response = await _client
           .post(
             uri,
@@ -145,10 +176,7 @@ class HttpTutorService implements TutorService {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            body: json.encode({
-              'question': question,
-              'context': context,
-            }),
+            body: json.encode(contextData),
           )
           .timeout(timeout);
 
@@ -157,7 +185,7 @@ class HttpTutorService implements TutorService {
         return jsonData['response'] as String;
       } else {
         throw TutorServiceException(
-          'Failed to get follow-up response',
+          'Failed to get chapter-specific response',
           statusCode: response.statusCode,
           details: response.body,
         );
@@ -180,9 +208,24 @@ class HttpTutorService implements TutorService {
     } catch (e) {
       if (e is TutorServiceException) rethrow;
       throw TutorServiceException(
-        'Unexpected error during follow-up question',
+        'Unexpected error during chapter question',
         details: e.toString(),
       );
+    }
+  }
+
+  @override
+  Future<bool> isServiceAvailable() async {
+    try {
+      final uri = Uri.parse('$baseUrl/health');
+      final response = await _client
+          .get(uri)
+          .timeout(const Duration(seconds: 5));
+      
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Tutor service health check failed: $e');
+      return false;
     }
   }
 

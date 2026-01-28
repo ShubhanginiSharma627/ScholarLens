@@ -1,19 +1,19 @@
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
-import '../services/profile_service.dart';
+import '../services/profile_service.dart' as profile_service;
 
 /// Provider for managing user profile and achievements
 class ProfileProvider extends ChangeNotifier {
-  final ProfileService _profileService = ProfileService();
+  final profile_service.ProfileService _profileService = profile_service.ProfileService();
   
-  UserProfile? _userProfile;
-  List<UserAchievement> _achievements = [];
+  profile_service.UserProfile? _userProfile;
+  List<profile_service.UserAchievement> _achievements = [];
   bool _isLoading = false;
   String? _error;
 
   // Getters
-  UserProfile? get userProfile => _userProfile;
-  List<UserAchievement> get achievements => _achievements;
+  profile_service.UserProfile? get userProfile => _userProfile;
+  List<profile_service.UserAchievement> get achievements => _achievements;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -78,7 +78,7 @@ class ProfileProvider extends ChangeNotifier {
   }
 
   /// Check for new achievements based on user progress
-  Future<List<UserAchievement>> checkForNewAchievements(UserProgress progress) async {
+  Future<List<profile_service.UserAchievement>> checkForNewAchievements(UserProgress progress) async {
     try {
       final newAchievements = await _profileService.checkForNewAchievements(progress);
       if (newAchievements.isNotEmpty) {
@@ -143,12 +143,12 @@ class ProfileProvider extends ChangeNotifier {
   }
 
   /// Get achievements that are unlocked
-  List<UserAchievement> get unlockedAchievements {
+  List<profile_service.UserAchievement> get unlockedAchievements {
     return _achievements.where((achievement) => achievement.isUnlocked).toList();
   }
 
   /// Get achievements that are still locked
-  List<UserAchievement> get lockedAchievements {
+  List<profile_service.UserAchievement> get lockedAchievements {
     return _achievements.where((achievement) => !achievement.isUnlocked).toList();
   }
 

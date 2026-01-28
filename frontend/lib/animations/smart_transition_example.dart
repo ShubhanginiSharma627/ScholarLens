@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'smart_transition.dart';
+import 'animation_config.dart';
 
 /// Example usage of SmartTransition to replace MaterialPageRoute
 /// 

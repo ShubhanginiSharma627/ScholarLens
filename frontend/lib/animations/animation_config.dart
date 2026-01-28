@@ -244,6 +244,35 @@ class AnimationConfigs {
     curve: Curves.easeOut,
     priority: 4,
   );
+
+  // Search and filter animations
+  static const AnimationConfig searchFilter = AnimationConfig(
+    duration: Duration(milliseconds: 200),
+    curve: Curves.easeInOut,
+    fadeStart: 0.0,
+    fadeEnd: 1.0,
+    scaleStart: 0.8,
+    scaleEnd: 1.0,
+    priority: 2,
+  );
+
+  static const AnimationConfig searchSuggestions = AnimationConfig(
+    duration: Duration(milliseconds: 200),
+    curve: Curves.easeOut,
+    fadeStart: 0.0,
+    fadeEnd: 1.0,
+    slideStart: Offset(0.0, -0.1),
+    slideEnd: Offset.zero,
+    priority: 2,
+  );
+
+  static const AnimationConfig filterChip = AnimationConfig(
+    duration: Duration(milliseconds: 150),
+    curve: Curves.elasticOut,
+    scaleStart: 0.0,
+    scaleEnd: 1.0,
+    priority: 2,
+  );
 }
 
 /// Animation state enumeration

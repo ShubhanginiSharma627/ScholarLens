@@ -40,6 +40,7 @@ class AppTheme {
   static const double radiusM = 12.0;
   static const double radiusL = 16.0;
   static const double radiusXL = 24.0;
+  static const double radiusXXL = 32.0;
   
   // Elevation constants
   static const double elevationS = 2.0;

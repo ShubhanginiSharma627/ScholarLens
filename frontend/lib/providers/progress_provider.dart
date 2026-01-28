@@ -134,6 +134,16 @@ class ProgressProvider extends ChangeNotifier {
     }
   }
 
+  /// Update chapter progress for a specific textbook and chapter
+  Future<void> updateChapterProgress(String textbookId, int chapterNumber, double progress) async {
+    try {
+      await _progressService.saveChapterProgress(textbookId, chapterNumber, progress);
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to update chapter progress: $e');
+    }
+  }
+
   // Private helper methods
   void _setLoading(bool loading) {
     _isLoading = loading;

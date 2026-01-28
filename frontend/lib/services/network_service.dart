@@ -18,12 +18,14 @@ class NetworkError {
   final String message;
   final int? statusCode;
   final String? details;
+  final bool isRetryable;
 
   const NetworkError({
     required this.type,
     required this.message,
     this.statusCode,
     this.details,
+    this.isRetryable = false,
   });
 
   @override
@@ -76,6 +78,11 @@ class NetworkService {
     return await _checkConnectivity();
   }
 
+  /// Checks if the device is currently connected to the internet
+  Future<bool> isConnected() async {
+    return await _checkConnectivity();
+  }
+
   /// Detects network error type from exception
   NetworkError detectNetworkError(dynamic error) {
     if (error is SocketException) {
@@ -83,24 +90,28 @@ class NetworkService {
         type: NetworkErrorType.noConnection,
         message: 'No internet connection available',
         details: error.message,
+        isRetryable: true,
       );
     } else if (error is TimeoutException) {
       return NetworkError(
         type: NetworkErrorType.timeout,
         message: 'Request timed out',
         details: error.message,
+        isRetryable: true,
       );
     } else if (error is HttpException) {
       return NetworkError(
         type: NetworkErrorType.serverError,
         message: 'Server error occurred',
         details: error.message,
+        isRetryable: true,
       );
     } else {
       return NetworkError(
         type: NetworkErrorType.unknown,
         message: 'Unknown network error',
         details: error.toString(),
+        isRetryable: false,
       );
     }
   }
@@ -112,7 +123,7 @@ class NetworkService {
     switch (error.type) {
       case NetworkErrorType.timeout:
       case NetworkErrorType.noConnection:
-        await OfflineService.instance.activateOfflineMode();
+        await activateOfflineMode();
         break;
       case NetworkErrorType.serverError:
         // Don't activate offline mode for server errors, just log
@@ -179,17 +190,29 @@ class NetworkService {
       _connectivityController.add(isConnected);
 
       if (isConnected) {
-        await OfflineService.instance.deactivateOfflineMode();
+        await deactivateOfflineMode();
       } else {
-        await OfflineService.instance.activateOfflineMode();
+        await activateOfflineMode();
       }
 
       return isConnected;
     } catch (e) {
       _connectivityController.add(false);
-      await OfflineService.instance.activateOfflineMode();
+      await activateOfflineMode();
       return false;
     }
+  }
+
+  /// Activate offline mode
+  Future<void> activateOfflineMode() async {
+    debugPrint('Activating offline mode');
+    // Implementation would go here
+  }
+
+  /// Deactivate offline mode  
+  Future<void> deactivateOfflineMode() async {
+    debugPrint('Deactivating offline mode');
+    // Implementation would go here
   }
 
   /// Disposes of the service

@@ -387,16 +387,6 @@ class _StaggeredListAnimationState extends State<StaggeredListAnimation>
             break;
             
           case StaggerAnimationType.fadeSlide:
-          default:
-            animatedChild = FadeTransition(
-              opacity: _fadeAnimations[index],
-              child: SlideTransition(
-                position: _slideAnimations[index],
-                child: animatedChild,
-              ),
-            );
-            break;
-            
           case StaggerAnimationType.scaleSlide:
             animatedChild = ScaleTransition(
               scale: _scaleAnimations[index],
@@ -422,6 +412,16 @@ class _StaggeredListAnimationState extends State<StaggeredListAnimation>
                     child: animatedChild,
                   ),
                 ),
+              ),
+            );
+            break;
+            
+          default:
+            animatedChild = FadeTransition(
+              opacity: _fadeAnimations[index],
+              child: SlideTransition(
+                position: _slideAnimations[index],
+                child: animatedChild,
               ),
             );
             break;

@@ -22,6 +22,8 @@ class GoogleSignInService {
   // Backend API configuration
   static const String _baseUrl = 'http://localhost:3000'; // Update with your backend URL
   static const String _googleAuthEndpoint = '/auth/google';
+  static const String _linkAccountEndpoint = '/auth/link-google';
+  static const String _checkAccountEndpoint = '/auth/check-account';
   static const Duration _requestTimeout = Duration(seconds: 30);
 
   /// Initialize Google Sign-In service
@@ -70,7 +72,18 @@ class GoogleSignInService {
         );
       }
 
-      debugPrint('Google Sign-In successful, authenticating with backend');
+      debugPrint('Google Sign-In successful, checking for existing accounts');
+
+      // Check if account exists with different provider
+      final accountCheckResult = await _checkExistingAccount(googleUser.email);
+      
+      if (accountCheckResult.hasConflict) {
+        debugPrint('Account exists with different provider: ${googleUser.email}');
+        return AuthResult.failure(
+          error: 'An account with this email already exists. Please sign in with your original method or contact support to merge accounts.',
+          errorType: AuthErrorType.accountExistsWithDifferentCredential,
+        );
+      }
 
       // Authenticate with backend using Google tokens
       return await _authenticateWithBackend(
@@ -409,4 +422,149 @@ class GoogleSignInService {
       return null; // Silent sign-in should not throw errors
     }
   }
+
+  /// Check if an account exists with a different provider
+  Future<AccountCheckResult> _checkExistingAccount(String email) async {
+    try {
+      final response = await _networkService.retryOperation(() async {
+        return await http.post(
+          Uri.parse('$_baseUrl$_checkAccountEndpoint'),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'email': email,
+            'provider': 'google',
+          }),
+        ).timeout(_requestTimeout);
+      });
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return AccountCheckResult(
+          exists: data['exists'] ?? false,
+          provider: data['provider'],
+          hasConflict: data['hasConflict'] ?? false,
+          canMerge: data['canMerge'] ?? false,
+        );
+      } else {
+        debugPrint('Account check failed: ${response.statusCode}');
+        return AccountCheckResult(exists: false, hasConflict: false, canMerge: false);
+      }
+    } catch (e) {
+      debugPrint('Account check error: $e');
+      return AccountCheckResult(exists: false, hasConflict: false, canMerge: false);
+    }
+  }
+
+  /// Link Google account to existing user account
+  Future<AuthResult> linkGoogleAccount({
+    required String currentAccessToken,
+    required GoogleSignInAccount googleUser,
+    required String googleAccessToken,
+    required String googleIdToken,
+  }) async {
+    try {
+      debugPrint('Attempting to link Google account: ${googleUser.email}');
+
+      final response = await _networkService.retryOperation(() async {
+        return await http.post(
+          Uri.parse('$_baseUrl$_linkAccountEndpoint'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $currentAccessToken',
+          },
+          body: jsonEncode({
+            'googleAccessToken': googleAccessToken,
+            'googleIdToken': googleIdToken,
+            'email': googleUser.email,
+            'name': googleUser.displayName ?? '',
+            'photoUrl': googleUser.photoUrl,
+            'provider': 'google',
+          }),
+        ).timeout(_requestTimeout);
+      });
+
+      return await _handleAuthResponse(response, googleUser);
+    } catch (e) {
+      debugPrint('Google account linking error: $e');
+      return _handleGoogleSignInError(e);
+    }
+  }
+
+  /// Merge Google account with existing email account
+  Future<AuthResult> mergeGoogleAccount({
+    required String email,
+    required String password,
+    required GoogleSignInAccount googleUser,
+    required String googleAccessToken,
+    required String googleIdToken,
+  }) async {
+    try {
+      debugPrint('Attempting to merge Google account with existing account: $email');
+
+      final response = await _networkService.retryOperation(() async {
+        return await http.post(
+          Uri.parse('$_baseUrl$_googleAuthEndpoint'),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'accessToken': googleAccessToken,
+            'idToken': googleIdToken,
+            'email': googleUser.email,
+            'name': googleUser.displayName ?? '',
+            'photoUrl': googleUser.photoUrl,
+            'provider': 'google',
+            'mergeWith': {
+              'email': email,
+              'password': password,
+            },
+          }),
+        ).timeout(_requestTimeout);
+      });
+
+      return await _handleAuthResponse(response, googleUser);
+    } catch (e) {
+      debugPrint('Google account merging error: $e');
+      return _handleGoogleSignInError(e);
+    }
+  }
+
+  /// Check if current user can link Google account
+  Future<bool> canLinkGoogleAccount(String currentUserEmail) async {
+    try {
+      // Get current Google user if signed in
+      final googleUser = currentUser;
+      if (googleUser == null) return true; // No Google account signed in, can link
+
+      // Check if the Google account email matches current user email
+      if (googleUser.email == currentUserEmail) {
+        return true; // Same email, can link
+      }
+
+      // Check if Google account is already linked to another account
+      final accountCheck = await _checkExistingAccount(googleUser.email);
+      return !accountCheck.hasConflict;
+    } catch (e) {
+      debugPrint('Can link Google account check error: $e');
+      return false;
+    }
+  }
+}
+
+/// Result of checking if an account exists
+class AccountCheckResult {
+  final bool exists;
+  final String? provider;
+  final bool hasConflict;
+  final bool canMerge;
+
+  AccountCheckResult({
+    required this.exists,
+    this.provider,
+    required this.hasConflict,
+    required this.canMerge,
+  });
 }

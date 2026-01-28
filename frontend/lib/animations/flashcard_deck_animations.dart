@@ -515,7 +515,7 @@ class _AnimatedFlashcardDeckState extends State<AnimatedFlashcardDeck>
             child: FlashcardWidget(
               flashcard: widget.flashcards[index],
               isFlipped: false, // This should be managed by parent
-              onFlip: widget.onFlip,
+              onFlip: widget.onFlip ?? () {}, // Provide empty callback if null
               onSwipeLeft: widget.onSwipeLeft,
               onSwipeRight: widget.onSwipeRight,
               onDifficultyRated: widget.onDifficultyRated,

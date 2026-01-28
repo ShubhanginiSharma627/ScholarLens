@@ -48,11 +48,15 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
           barrierLabel: barrierLabel,
           barrierDismissible: barrierDismissible,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return _buildTransition(
+            return SmartTransition._buildTransitionStatic(
               context,
               animation,
               secondaryAnimation,
               child,
+              type,
+              slideDirection,
+              curve,
+              animationManager,
             );
           },
         );
@@ -180,16 +184,21 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
     );
   }
 
-  Widget _buildTransition(
+  /// Static method to build transitions (used in constructor)
+  static Widget _buildTransitionStatic(
     BuildContext context,
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
+    TransitionType type,
+    Offset? slideDirection,
+    Curve curve,
+    AnimationManager? animationManager,
   ) {
     // Check if reduced motion is enabled
     final manager = animationManager ?? AnimationManager();
-    if (manager.isReducedMotionEnabled) {
-      return _buildReducedMotionTransition(animation, child);
+    if (manager.isInitialized && manager.isReducedMotionEnabled) {
+      return _buildReducedMotionTransitionStatic(animation, child);
     }
 
     // Apply performance scaling if available
@@ -206,21 +215,142 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
           )
         : animation;
 
-    switch (_getEffectiveTransitionType(context)) {
+    switch (_getEffectiveTransitionTypeStatic(context, type)) {
       case TransitionType.slide:
-        return _buildSlideTransition(scaledAnimation, secondaryAnimation, child);
+        return _buildSlideTransitionStatic(scaledAnimation, secondaryAnimation, child, slideDirection, curve);
       case TransitionType.fade:
-        return _buildFadeTransition(scaledAnimation, child);
+        return _buildFadeTransitionStatic(scaledAnimation, child, curve);
       case TransitionType.scale:
-        return _buildScaleTransition(scaledAnimation, child);
+        return _buildScaleTransitionStatic(scaledAnimation, child, curve);
       case TransitionType.slideUp:
-        return _buildSlideUpTransition(scaledAnimation, child);
+        return _buildSlideUpTransitionStatic(scaledAnimation, child, curve);
       case TransitionType.custom:
-        return _buildCustomTransition(scaledAnimation, secondaryAnimation, child);
+        return _buildFadeTransitionStatic(scaledAnimation, child, curve); // Default to fade for custom
       case TransitionType.adaptive:
       default:
-        return _buildAdaptiveTransition(context, scaledAnimation, secondaryAnimation, child);
+        return _buildAdaptiveTransitionStatic(context, scaledAnimation, secondaryAnimation, child, slideDirection, curve);
     }
+  }
+
+  static Widget _buildReducedMotionTransitionStatic(Animation<double> animation, Widget child) {
+    // For reduced motion, use a simple fade with very short duration
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+          parent: animation,
+          curve: const Interval(0.0, 0.3, curve: Curves.easeInOut),
+        ),
+      ),
+      child: child,
+    );
+  }
+
+  static Widget _buildSlideTransitionStatic(
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+    Offset? slideDirection,
+    Curve curve,
+  ) {
+    final slideOffset = slideDirection ?? const Offset(1.0, 0.0);
+    
+    // Primary slide animation
+    final primarySlide = SlideTransition(
+      position: Tween<Offset>(
+        begin: slideOffset,
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: animation, curve: curve)),
+      child: child,
+    );
+
+    // Secondary slide animation for the previous page
+    final secondarySlide = SlideTransition(
+      position: Tween<Offset>(
+        begin: Offset.zero,
+        end: Offset(-slideOffset.dx * 0.3, -slideOffset.dy * 0.3),
+      ).animate(CurvedAnimation(parent: secondaryAnimation, curve: curve)),
+      child: primarySlide,
+    );
+
+    return secondarySlide;
+  }
+
+  static Widget _buildFadeTransitionStatic(Animation<double> animation, Widget child, Curve curve) {
+    return FadeTransition(
+      opacity: CurvedAnimation(parent: animation, curve: curve),
+      child: child,
+    );
+  }
+
+  static Widget _buildScaleTransitionStatic(Animation<double> animation, Widget child, Curve curve) {
+    return ScaleTransition(
+      scale: Tween<double>(begin: 0.8, end: 1.0).animate(
+        CurvedAnimation(parent: animation, curve: curve),
+      ),
+      child: FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: curve),
+        child: child,
+      ),
+    );
+  }
+
+  static Widget _buildSlideUpTransitionStatic(Animation<double> animation, Widget child, Curve curve) {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0.0, 1.0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: animation, curve: curve)),
+      child: child,
+    );
+  }
+
+  static Widget _buildAdaptiveTransitionStatic(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+    Offset? slideDirection,
+    Curve curve,
+  ) {
+    final adaptiveType = _determineAdaptiveTransition(context, false);
+    
+    switch (adaptiveType) {
+      case TransitionType.slide:
+        return _buildSlideTransitionStatic(animation, secondaryAnimation, child, slideDirection, curve);
+      case TransitionType.fade:
+        return _buildFadeTransitionStatic(animation, child, curve);
+      case TransitionType.scale:
+        return _buildScaleTransitionStatic(animation, child, curve);
+      case TransitionType.slideUp:
+        return _buildSlideUpTransitionStatic(animation, child, curve);
+      default:
+        return _buildFadeTransitionStatic(animation, child, curve);
+    }
+  }
+
+  static TransitionType _getEffectiveTransitionTypeStatic(BuildContext context, TransitionType type) {
+    if (type == TransitionType.adaptive) {
+      return _determineAdaptiveTransition(context, false);
+    }
+    return type;
+  }
+
+  Widget _buildTransition(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return _buildTransitionStatic(
+      context,
+      animation,
+      secondaryAnimation,
+      child,
+      type,
+      slideDirection,
+      curve,
+      animationManager,
+    );
   }
 
   Widget _buildReducedMotionTransition(Animation<double> animation, Widget child) {
@@ -435,7 +565,7 @@ extension SmartNavigationExtensions on NavigatorState {
     RouteSettings? settings,
   }) {
     return push<T>(
-      SmartTransition.slide<T>(
+      SmartTransition<T>.slide(
         child: child,
         direction: direction,
         duration: duration,
@@ -453,7 +583,7 @@ extension SmartNavigationExtensions on NavigatorState {
     RouteSettings? settings,
   }) {
     return push<T>(
-      SmartTransition.fade<T>(
+      SmartTransition<T>.fade(
         child: child,
         duration: duration,
         curve: curve,
@@ -470,7 +600,7 @@ extension SmartNavigationExtensions on NavigatorState {
     RouteSettings? settings,
   }) {
     return push<T>(
-      SmartTransition.scale<T>(
+      SmartTransition<T>.scale(
         child: child,
         duration: duration,
         curve: curve,
@@ -487,7 +617,7 @@ extension SmartNavigationExtensions on NavigatorState {
     RouteSettings? settings,
   }) {
     return push<T>(
-      SmartTransition.slideUp<T>(
+      SmartTransition<T>.slideUp(
         child: child,
         duration: duration,
         curve: curve,
@@ -505,7 +635,7 @@ extension SmartNavigationExtensions on NavigatorState {
     RouteSettings? settings,
   }) {
     return push<T>(
-      SmartTransition.hero<T>(
+      SmartTransition<T>.hero(
         child: child,
         heroTag: heroTag,
         duration: duration,
@@ -525,7 +655,7 @@ extension SmartNavigationExtensions on NavigatorState {
     bool fullscreenDialog = false,
   }) {
     return push<T>(
-      SmartTransition.adaptive<T>(
+      SmartTransition<T>.adaptive(
         child: child,
         context: context,
         duration: duration,
@@ -664,7 +794,7 @@ extension SmartContextNavigationExtensions on BuildContext {
 class SmartTransitionConfigs {
   /// Bottom navigation tab transitions
   static SmartTransition<T> bottomNavTab<T>(Widget child) {
-    return SmartTransition.slide<T>(
+    return SmartTransition<T>.slide(
       child: child,
       direction: const Offset(1.0, 0.0),
       duration: const Duration(milliseconds: 300),
@@ -674,7 +804,7 @@ class SmartTransitionConfigs {
 
   /// Modal presentation transitions
   static SmartTransition<T> modal<T>(Widget child) {
-    return SmartTransition.slideUp<T>(
+    return SmartTransition<T>.slideUp(
       child: child,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
@@ -683,7 +813,7 @@ class SmartTransitionConfigs {
 
   /// Camera screen transitions
   static SmartTransition<T> camera<T>(Widget child) {
-    return SmartTransition.fade<T>(
+    return SmartTransition<T>.fade(
       child: child,
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeInOut,
@@ -692,7 +822,7 @@ class SmartTransitionConfigs {
 
   /// Back navigation transitions
   static SmartTransition<T> back<T>(Widget child) {
-    return SmartTransition.slide<T>(
+    return SmartTransition<T>.slide(
       child: child,
       direction: const Offset(-1.0, 0.0),
       duration: const Duration(milliseconds: 300),
@@ -702,7 +832,7 @@ class SmartTransitionConfigs {
 
   /// Dialog transitions
   static SmartTransition<T> dialog<T>(Widget child) {
-    return SmartTransition.scale<T>(
+    return SmartTransition<T>.scale(
       child: child,
       duration: const Duration(milliseconds: 300),
       curve: Curves.elasticOut,

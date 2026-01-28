@@ -9,6 +9,9 @@ import 'package:scholar_lens/providers/progress_provider.dart';
 import 'package:scholar_lens/services/progress_service.dart';
 import 'package:scholar_lens/services/tutor_service.dart';
 import 'package:scholar_lens/services/flashcard_service.dart';
+import 'package:scholar_lens/widgets/chapter_reading_header.dart';
+import 'package:scholar_lens/widgets/study_tools_bar.dart';
+import 'package:scholar_lens/widgets/highlighted_text_widget.dart';
 
 /// Main screen for reading textbook chapters with integrated study tools
 class ChapterReadingScreen extends StatefulWidget {
@@ -32,6 +35,7 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
   
   // State management
   late ChapterReadingState _readingState;
+  late _AppLifecycleObserver _lifecycleObserver;
   
   // Services
   late ProgressService _progressService;
@@ -62,11 +66,14 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
   }
 
   void _setupLifecycleListeners() {
-    // Listen to app lifecycle changes for background saving
-    WidgetsBinding.instance.addObserver(_AppLifecycleObserver(
+    // Create lifecycle observer
+    _lifecycleObserver = _AppLifecycleObserver(
       onPaused: _handleAppPaused,
       onResumed: _handleAppResumed,
-    ));
+    );
+    
+    // Listen to app lifecycle changes for background saving
+    WidgetsBinding.instance.addObserver(_lifecycleObserver);
   }
 
   void _handleAppPaused() {
@@ -80,7 +87,7 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
   }
   void _initializeServices() {
     _progressService = ProgressService();
-    _tutorService = TutorService();
+    _tutorService = TutorServiceFactory.createProduction(); // Use factory to create concrete implementation
     _flashcardService = FlashcardService();
   }
 
@@ -433,6 +440,207 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
     }
   }
 
+  /// Check if the current section is bookmarked
+  bool _isCurrentSectionBookmarked() {
+    final currentSection = _readingState.currentSection;
+    if (currentSection == null) return false;
+    
+    return _readingState.bookmarks.any((bookmark) =>
+        bookmark.sectionNumber == currentSection.sectionNumber);
+  }
+
+  /// Check if AI tutor service is available
+  bool _isAITutorAvailable() {
+    // In a real implementation, this would check service status
+    // For now, assume it's available unless there's an error
+    return true;
+  }
+
+  /// Enhanced AI tutor integration with chapter context
+  Future<void> _openAITutor() async {
+    try {
+      final currentSection = _readingState.currentSection;
+      if (currentSection == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No section content available')),
+        );
+        return;
+      }
+
+      // Check service availability first
+      final isAvailable = await _tutorService.isServiceAvailable();
+      if (!isAvailable) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('AI Tutor is temporarily unavailable')),
+        );
+        return;
+      }
+
+      // Get current section highlights for additional context
+      final sectionHighlights = _getSectionHighlights(currentSection.sectionNumber);
+      final highlightTexts = sectionHighlights.map((h) => h.highlightedText).toList();
+
+      // Navigate to tutor with comprehensive context
+      await Navigator.pushNamed(
+        context,
+        '/tutor',
+        arguments: {
+          'textbook': widget.textbook,
+          'textbook_title': widget.textbook.title,
+          'chapter': widget.chapterNumber,
+          'chapter_number': widget.chapterNumber,
+          'section': currentSection,
+          'section_title': currentSection.title,
+          'section_content': currentSection.content,
+          'context': currentSection.content,
+          'highlights': highlightTexts,
+          'key_points': _readingState.keyPoints,
+          'reading_progress': _readingState.readingProgress,
+          'mode': 'chapter_reading', // Indicate this is from chapter reading
+        },
+      );
+    } catch (e) {
+      debugPrint('Error opening AI tutor: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to open AI Tutor: ${e.toString()}'),
+          action: SnackBarAction(
+            label: 'Retry',
+            onPressed: _openAITutor,
+          ),
+        ),
+      );
+    }
+  }
+
+  /// Get highlights for a specific section
+  List<TextHighlight> _getSectionHighlights(int sectionNumber) {
+    return _readingState.highlights
+        .where((highlight) => highlight.sectionNumber == sectionNumber)
+        .toList();
+  }
+
+  /// Show options for a tapped highlight
+  void _showHighlightOptions(TextHighlight highlight) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => _buildHighlightOptionsSheet(highlight),
+    );
+  }
+
+  /// Build the highlight options bottom sheet
+  Widget _buildHighlightOptionsSheet(TextHighlight highlight) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Highlight Options',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+              color: highlight.highlightColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              highlight.getPreview(maxLength: 100),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _changeHighlightColor(highlight);
+                  },
+                  icon: const Icon(Icons.palette),
+                  label: const Text('Change Color'),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _removeHighlight(highlight.id);
+                  },
+                  icon: const Icon(Icons.delete),
+                  label: const Text('Remove'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  /// Show color picker for changing highlight color
+  void _changeHighlightColor(TextHighlight highlight) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Choose Highlight Color'),
+        content: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: HighlightColorType.values.map((colorType) {
+            return GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+                _updateHighlightColor(highlight, colorType.color);
+              },
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colorType.color,
+                  shape: BoxShape.circle,
+                  border: highlight.highlightColor == colorType.color
+                      ? Border.all(
+                          color: Theme.of(context).colorScheme.primary,
+                          width: 3,
+                        )
+                      : null,
+                ),
+                child: highlight.highlightColor == colorType.color
+                    ? const Icon(Icons.check, color: Colors.white)
+                    : null,
+              ),
+            );
+          }).toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Update highlight color
+  void _updateHighlightColor(TextHighlight highlight, Color newColor) {
+    final updatedHighlight = highlight.copyWith(highlightColor: newColor);
+    final updatedState = _readingState.updateHighlight(updatedHighlight);
+    _updateReadingState(updatedState);
+  }
+
   // Study tools integration
   Future<void> _createFlashcards() async {
     try {
@@ -494,100 +702,21 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Back navigation
-          Row(
-            children: [
-              IconButton(
-                onPressed: _handleBackNavigation,
-                icon: const Icon(Icons.arrow_back),
-                tooltip: 'Back to ${widget.textbook.title}',
-              ),
-              Expanded(
-                child: Text(
-                  'Back to ${widget.textbook.title}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 8),
-          
-          // Chapter title and completion status
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Chapter ${widget.chapterNumber}',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              if (_readingState.isChapterCompleted)
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: 24,
-                ),
-            ],
-          ),
-          
-          const SizedBox(height: 8),
-          
-          // Progress bar
-          _buildProgressBar(),
-        ],
-      ),
+    // Get chapter metadata from initial progress or mock data
+    final chapterTitle = widget.initialProgress?.chapterTitle ?? 'Chapter ${widget.chapterNumber}';
+    final pageRange = widget.initialProgress?.pageRange ?? 'pp. 1-25';
+    final estimatedReadingTime = widget.initialProgress?.estimatedReadingTimeMinutes ?? 15;
+    
+    return ChapterReadingHeader(
+      textbook: widget.textbook,
+      readingState: _readingState,
+      onBackPressed: _handleBackNavigation,
+      chapterTitle: chapterTitle,
+      pageRange: pageRange,
+      estimatedReadingTime: estimatedReadingTime,
+      isChapterCompleted: _readingState.isChapterCompleted,
     );
   }
-  Widget _buildProgressBar() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Progress: ${_readingState.progressPercentage.toStringAsFixed(0)}%',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            Text(
-              'Reading time: ${_readingState.formattedReadingTime}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        LinearProgressIndicator(
-          value: _readingState.readingProgress,
-          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
-          valueColor: AlwaysStoppedAnimation<Color>(
-            Theme.of(context).colorScheme.primary,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildMainContent() {
     return SingleChildScrollView(
       controller: _scrollController,
@@ -595,8 +724,17 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Study tools bar placeholder
-          _buildStudyToolsPlaceholder(),
+          // Study tools bar
+          StudyToolsBar(
+            isHighlightMode: _readingState.isHighlightMode,
+            onHighlightToggle: () {
+              _updateReadingState(_readingState.toggleHighlightMode());
+            },
+            onBookmarkPressed: _addBookmark,
+            onAITutorPressed: _openAITutor,
+            isCurrentSectionBookmarked: _isCurrentSectionBookmarked(),
+            isAITutorAvailable: _isAITutorAvailable(),
+          ),
           
           const SizedBox(height: 16),
           
@@ -619,70 +757,6 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
           _buildStudyActionButtonsPlaceholder(),
         ],
       ),
-    );
-  }
-  Widget _buildStudyToolsPlaceholder() {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildToolButton(
-            icon: Icons.highlight_alt,
-            label: 'Highlight',
-            isActive: _readingState.isHighlightMode,
-            onPressed: () {
-              _updateReadingState(_readingState.toggleHighlightMode());
-            },
-          ),
-          _buildToolButton(
-            icon: Icons.bookmark_add,
-            label: 'Bookmark',
-            onPressed: _addBookmark,
-          ),
-          _buildToolButton(
-            icon: Icons.psychology,
-            label: 'Ask AI',
-            onPressed: _openAITutor,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildToolButton({
-    required IconData icon,
-    required String label,
-    bool isActive = false,
-    required VoidCallback onPressed,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          onPressed: onPressed,
-          icon: Icon(icon),
-          style: IconButton.styleFrom(
-            backgroundColor: isActive 
-                ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-                : null,
-            foregroundColor: isActive 
-                ? Theme.of(context).colorScheme.primary
-                : null,
-          ),
-        ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
     );
   }
   Widget _buildKeyPointsPlaceholder() {
@@ -768,9 +842,13 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              currentSection.content,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            HighlightedTextWidget(
+              text: currentSection.content,
+              highlights: _getSectionHighlights(currentSection.sectionNumber),
+              isHighlightMode: _readingState.isHighlightMode,
+              onTextHighlighted: _addHighlight,
+              onHighlightTapped: _showHighlightOptions,
+              textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 height: 1.6,
               ),
             ),
@@ -874,10 +952,7 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
     _saveState();
     
     // Remove lifecycle observer
-    WidgetsBinding.instance.removeObserver(_AppLifecycleObserver(
-      onPaused: _handleAppPaused,
-      onResumed: _handleAppResumed,
-    ));
+    WidgetsBinding.instance.removeObserver(_lifecycleObserver);
     
     // Dispose controllers
     _fadeController.dispose();
@@ -885,5 +960,33 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen>
     _restorationId.dispose();
     
     super.dispose();
+  }
+}
+
+/// Helper class to observe app lifecycle changes
+class _AppLifecycleObserver with WidgetsBindingObserver {
+  final VoidCallback onPaused;
+  final VoidCallback onResumed;
+
+  _AppLifecycleObserver({
+    required this.onPaused,
+    required this.onResumed,
+  });
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+        onPaused();
+        break;
+      case AppLifecycleState.resumed:
+        onResumed();
+        break;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        // Handle other states if needed
+        break;
+    }
   }
 }

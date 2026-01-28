@@ -15,3 +15,6 @@ export 'text_highlight.dart';
 export 'uploaded_textbook.dart';
 export 'user.dart';
 export 'user_progress.dart';
+
+// Re-export auth error types from services
+export '../services/auth_error_handler.dart' show AuthErrorInfo, UserAction, UserActionType;

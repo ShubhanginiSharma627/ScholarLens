@@ -250,6 +250,28 @@ class ProgressService {
     }
   }
 
+  /// Get chapter progress for a specific textbook and chapter
+  Future<double?> getChapterProgress(String textbookId, int chapterNumber) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'chapter_progress_${textbookId}_$chapterNumber';
+      return prefs.getDouble(key);
+    } catch (e) {
+      throw Exception('Failed to get chapter progress: $e');
+    }
+  }
+
+  /// Save chapter progress for a specific textbook and chapter
+  Future<void> saveChapterProgress(String textbookId, int chapterNumber, double progress) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'chapter_progress_${textbookId}_$chapterNumber';
+      await prefs.setDouble(key, progress.clamp(0.0, 1.0));
+    } catch (e) {
+      throw Exception('Failed to save chapter progress: $e');
+    }
+  }
+
   /// Helper method to format date as YYYY-MM-DD
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month}-${date.day}';

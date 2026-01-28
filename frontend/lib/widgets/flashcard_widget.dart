@@ -566,9 +566,8 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                     child: Opacity(
                       opacity: _difficultyAnimation.value,
                       child: DifficultyRatingBar(
-                        currentDifficulty: _selectedDifficulty ?? widget.flashcard.difficulty,
-                        onDifficultyChanged: _handleDifficultySelected,
-                        animated: true,
+                        onRatingSelected: _handleDifficultySelected,
+                        selectedRating: _selectedDifficulty ?? widget.flashcard.difficulty,
                       ),
                     ),
                   );

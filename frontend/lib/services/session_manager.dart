@@ -50,6 +50,11 @@ class SessionManager {
     try {
       debugPrint('Initializing session manager');
       
+      // Perform automatic session cleanup if due
+      if (await _secureStorage.isSessionCleanupDue()) {
+        await _secureStorage.performSessionCleanup();
+      }
+
       // Check if we have stored authentication data
       final hasAuth = await _secureStorage.hasAuthenticationData();
       if (!hasAuth) {
@@ -89,17 +94,15 @@ class SessionManager {
     bool rememberMe = false,
   }) async {
     try {
-      debugPrint('Starting new session for user: $userId');
+      debugPrint('Starting new session for user: $userId (rememberMe: $rememberMe)');
 
-      // Store tokens and session data
+      // Store tokens and session data with remember me preference
       await _secureStorage.storeTokens(
         accessToken: accessToken,
         refreshToken: refreshToken,
         userId: userId,
+        rememberMe: rememberMe,
       );
-
-      // Store remember me preference
-      await _secureStorage.setRememberMe(rememberMe);
 
       // Update session state
       _currentUserId = userId;
@@ -110,7 +113,7 @@ class SessionManager {
       _startSessionMonitoring();
       _startTokenRefreshTimer(accessToken);
 
-      debugPrint('Session started successfully');
+      debugPrint('Session started successfully with ${rememberMe ? "long-term" : "short-term"} expiry');
     } catch (e) {
       debugPrint('Error starting session: $e');
       _sessionErrorController.add(AuthErrorType.sessionTerminated);
@@ -149,8 +152,8 @@ class SessionManager {
       // Stop timers
       _stopTimers();
 
-      // Clear all stored data
-      await _secureStorage.clearAll();
+      // Perform secure wipe of all data
+      await _secureStorage.secureWipeAll();
 
       // Update state
       _currentUserId = null;
@@ -178,13 +181,21 @@ class SessionManager {
       final token = await _secureStorage.getAccessToken();
       if (token == null) return false;
 
+      // Check if session has expired based on stored expiry time
+      final isExpired = await _secureStorage.isSessionExpired();
+      if (isExpired) {
+        debugPrint('Session expired based on stored expiry time');
+        await _terminateSession(AuthErrorType.sessionTerminated);
+        return false;
+      }
+
       // Check if token is expired
       if (JwtDecoder.isExpired(token)) {
         debugPrint('Access token expired, attempting refresh');
         return await _attemptTokenRefresh();
       }
 
-      // Check session duration
+      // Check session duration as fallback
       final lastLogin = await _secureStorage.getLastLogin();
       if (lastLogin != null) {
         final sessionAge = DateTime.now().difference(lastLogin);
@@ -234,6 +245,20 @@ class SessionManager {
       
       if (token == null || userId == null) return false;
 
+      // Check remember me preference
+      final rememberMe = await _secureStorage.getRememberMe();
+      if (!rememberMe) {
+        debugPrint('Remember me not enabled, cannot restore session');
+        return false;
+      }
+
+      // Check if session has expired
+      final isExpired = await _secureStorage.isSessionExpired();
+      if (isExpired) {
+        debugPrint('Stored session has expired');
+        return false;
+      }
+
       // Check if token is still valid or can be refreshed
       if (JwtDecoder.isExpired(token)) {
         final refreshed = await _attemptTokenRefresh();
@@ -245,6 +270,7 @@ class SessionManager {
       _lastActivity = await _secureStorage.getLastLogin() ?? DateTime.now();
       _updateSessionState(true);
 
+      debugPrint('Session restored successfully for user: $userId');
       return true;
     } catch (e) {
       debugPrint('Error restoring session: $e');
@@ -378,5 +404,28 @@ class SessionManager {
     _sessionStateController.close();
     _sessionErrorController.close();
     debugPrint('Session manager disposed');
+  }
+
+  /// Get security metrics for monitoring
+  Future<Map<String, dynamic>> getSecurityMetrics() async {
+    try {
+      final storageMetrics = await _secureStorage.getSecurityMetrics();
+      
+      return {
+        ...storageMetrics,
+        'sessionActive': _isSessionActive,
+        'currentUserId': _currentUserId != null ? 'present' : 'none',
+        'lastActivity': _lastActivity?.toIso8601String(),
+        'sessionAge': _lastActivity != null 
+            ? DateTime.now().difference(_lastActivity!).inMinutes 
+            : null,
+      };
+    } catch (e) {
+      debugPrint('Error getting session security metrics: $e');
+      return {
+        'error': 'Failed to retrieve session metrics',
+        'sessionHealth': 'error',
+      };
+    }
   }
 }

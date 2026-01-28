@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../models/models.dart';
 import '../services/authentication_service.dart';
@@ -244,6 +245,28 @@ class AuthenticationProvider extends ChangeNotifier {
         
         debugPrint('Google Sign-In successful: ${result.user!.email}');
       } else {
+        // Handle account conflict scenarios
+        if (result.errorType == AuthErrorType.accountExistsWithDifferentCredential) {
+          // Store the conflict information for potential UI handling
+          _lastErrorInfo = AuthErrorInfo(
+            type: result.errorType!,
+            message: result.error!,
+            context: 'google_signin',
+            metadata: {
+              'conflictEmail': result.error?.contains('@') == true 
+                  ? result.error!.split(' ').firstWhere((word) => word.contains('@'), orElse: () => '')
+                  : '',
+              'conflictProvider': 'email',
+            },
+            isRetryable: false,
+            requiresReauthentication: false,
+            recoverySuggestions: ['Try signing in with email/password instead'],
+            userActions: [],
+            errorCount: 1,
+            lastOccurrence: DateTime.now(),
+          );
+        }
+        
         _handleAuthErrorWithHandler(
           result.error ?? 'Google Sign-In failed',
           result.errorType ?? AuthErrorType.googleSignInFailed,
@@ -253,6 +276,161 @@ class AuthenticationProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Google Sign-In error: $e');
       _handleAuthErrorWithHandler(e, AuthErrorType.googleSignInFailed, context: 'google_signin');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Link Google account to current user
+  Future<void> linkGoogleAccount() async {
+    try {
+      debugPrint('Attempting to link Google account');
+      _setLoading(true);
+      _clearError();
+
+      // Check if user is authenticated
+      if (!isAuthenticated || _currentUser == null) {
+        _handleAuthError('Must be signed in to link Google account', AuthErrorType.validationError);
+        return;
+      }
+
+      // Get current access token
+      final currentToken = await _sessionManager.getValidAccessToken();
+      if (currentToken == null) {
+        _handleAuthError('Invalid session. Please sign in again.', AuthErrorType.tokenInvalid);
+        return;
+      }
+
+      // Check if Google account can be linked
+      final canLink = await _googleSignInService.canLinkGoogleAccount(_currentUser!.email);
+      if (!canLink) {
+        _handleAuthError(
+          'Cannot link Google account. It may already be linked to another account.',
+          AuthErrorType.accountExistsWithDifferentCredential,
+        );
+        return;
+      }
+
+      // Trigger Google Sign-In for linking
+      final googleSignIn = GoogleSignIn();
+      final googleUser = await googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        _handleAuthError('Google Sign-In cancelled', AuthErrorType.userCancelled);
+        return;
+      }
+
+      final googleAuth = await googleUser.authentication;
+      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+        _handleAuthError('Failed to get Google authentication tokens', AuthErrorType.googleSignInFailed);
+        return;
+      }
+
+      // Link the Google account
+      final result = await _googleSignInService.linkGoogleAccount(
+        currentAccessToken: currentToken,
+        googleUser: googleUser,
+        googleAccessToken: googleAuth.accessToken!,
+        googleIdToken: googleAuth.idToken!,
+      );
+
+      if (result.success && result.user != null) {
+        // Update current user with linked account information
+        _currentUser = result.user;
+        
+        // Cache updated user data
+        await _offlineHandler.cacheUserData(result.user!, currentToken);
+        
+        debugPrint('Google account linked successfully: ${result.user!.email}');
+      } else {
+        _handleAuthErrorWithHandler(
+          result.error ?? 'Failed to link Google account',
+          result.errorType ?? AuthErrorType.googleSignInFailed,
+          context: 'google_account_linking',
+        );
+      }
+    } catch (e) {
+      debugPrint('Google account linking error: $e');
+      _handleAuthErrorWithHandler(e, AuthErrorType.googleSignInFailed, context: 'google_account_linking');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Merge Google account with existing email account
+  Future<void> mergeGoogleAccount({
+    required String email,
+    required String password,
+    bool rememberMe = false,
+  }) async {
+    try {
+      debugPrint('Attempting to merge Google account with existing account: $email');
+      _setLoading(true);
+      _clearError();
+
+      // Validate input
+      final emailError = FormValidator.validateEmail(email);
+      if (emailError != null) {
+        _handleAuthError(emailError, AuthErrorType.validationError);
+        return;
+      }
+
+      if (password.isEmpty) {
+        _handleAuthError('Password is required', AuthErrorType.validationError);
+        return;
+      }
+
+      // Trigger Google Sign-In for merging
+      final googleSignIn = GoogleSignIn();
+      final googleUser = await googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        _handleAuthError('Google Sign-In cancelled', AuthErrorType.userCancelled);
+        return;
+      }
+
+      final googleAuth = await googleUser.authentication;
+      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+        _handleAuthError('Failed to get Google authentication tokens', AuthErrorType.googleSignInFailed);
+        return;
+      }
+
+      // Merge the accounts
+      final result = await _googleSignInService.mergeGoogleAccount(
+        email: email,
+        password: password,
+        googleUser: googleUser,
+        googleAccessToken: googleAuth.accessToken!,
+        googleIdToken: googleAuth.idToken!,
+      );
+
+      if (result.success && result.user != null && result.accessToken != null) {
+        // Start session with merged account
+        await _sessionManager.startSession(
+          accessToken: result.accessToken!,
+          refreshToken: result.refreshToken,
+          userId: result.user!.id,
+          rememberMe: rememberMe,
+        );
+
+        // Cache user data for offline use
+        await _offlineHandler.cacheUserData(result.user!, result.accessToken!);
+
+        _currentUser = result.user;
+        _rememberMe = rememberMe;
+        _setState(AuthenticationState.authenticated);
+        
+        debugPrint('Google account merged successfully: ${result.user!.email}');
+      } else {
+        _handleAuthErrorWithHandler(
+          result.error ?? 'Failed to merge Google account',
+          result.errorType ?? AuthErrorType.googleSignInFailed,
+          context: 'google_account_merging',
+        );
+      }
+    } catch (e) {
+      debugPrint('Google account merging error: $e');
+      _handleAuthErrorWithHandler(e, AuthErrorType.googleSignInFailed, context: 'google_account_merging');
     } finally {
       _setLoading(false);
     }

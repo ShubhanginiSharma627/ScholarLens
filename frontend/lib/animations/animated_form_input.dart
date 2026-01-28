@@ -558,6 +558,7 @@ class AnimatedFormInputConfigs {
     Widget? suffixIcon,
     String? Function(String?)? validator,
     void Function(String)? onChanged,
+    void Function(String)? onFieldSubmitted,
   }) {
     return AnimatedFormInput(
       controller: controller,
@@ -571,6 +572,7 @@ class AnimatedFormInputConfigs {
       textInputAction: TextInputAction.done,
       validator: validator,
       onChanged: onChanged,
+      onFieldSubmitted: onFieldSubmitted,
       animationDuration: const Duration(milliseconds: 200),
       animationCurve: Curves.easeInOut,
       enableHapticFeedback: true,
