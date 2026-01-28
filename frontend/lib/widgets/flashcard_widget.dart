@@ -1,18 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../models/flashcard.dart';
+import '../animations/animation_manager.dart';
+import '../animations/animation_config.dart';
+import '../widgets/difficulty_rating_bar.dart';
 
-/// Widget that displays a flashcard with flip animation
+/// Widget that displays a flashcard with enhanced flip animation and swipe gestures
 class FlashcardWidget extends StatefulWidget {
   final Flashcard flashcard;
   final bool isFlipped;
   final VoidCallback onFlip;
+  final VoidCallback? onSwipeLeft;
+  final VoidCallback? onSwipeRight;
+  final Function(Difficulty)? onDifficultyRated;
+  final bool enableSwipeGestures;
+  final bool showDifficultyRating;
 
   const FlashcardWidget({
     super.key,
     required this.flashcard,
     required this.isFlipped,
     required this.onFlip,
+    this.onSwipeLeft,
+    this.onSwipeRight,
+    this.onDifficultyRated,
+    this.enableSwipeGestures = true,
+    this.showDifficultyRating = true,
   });
 
   @override
@@ -20,64 +34,335 @@ class FlashcardWidget extends StatefulWidget {
 }
 
 class _FlashcardWidgetState extends State<FlashcardWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+    with TickerProviderStateMixin {
+  late AnimationController _flipController;
+  late AnimationController _swipeController;
+  late AnimationController _difficultyController;
   late Animation<double> _flipAnimation;
+  late Animation<Offset> _swipeAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _rotationAnimation;
+  late Animation<double> _difficultyAnimation;
+  
+  final AnimationManager _animationManager = AnimationManager();
+  String? _flipAnimationId;
+  String? _swipeAnimationId;
+  String? _difficultyAnimationId;
+  
+  // Swipe gesture tracking
+  double _swipeStartX = 0.0;
+  double _currentSwipeOffset = 0.0;
+  bool _isSwipeActive = false;
+  bool _hasSwipeThreshold = false;
+  
+  // Difficulty rating state
+  Difficulty? _selectedDifficulty;
+  bool _showDifficultyRating = false;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
+    
+    // Initialize animation manager
+    _animationManager.initialize();
+    
+    // Create flip animation controller with improved timing
+    _flipController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
+    
+    // Create swipe animation controller for momentum-based navigation
+    _swipeController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    
+    // Create difficulty rating animation controller
+    _difficultyController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    // Enhanced flip animation with elasticOut curve for natural feel
     _flipAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _animationController,
+      parent: _flipController,
+      curve: Curves.elasticOut,
+      reverseCurve: Curves.easeInOut,
+    ));
+    
+    // Swipe animation for momentum-based card navigation
+    _swipeAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(1.2, 0.0),
+    ).animate(CurvedAnimation(
+      parent: _swipeController,
+      curve: Curves.easeOut,
+    ));
+    
+    // Scale animation for interactive feedback during swipe
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(
+      parent: _swipeController,
       curve: Curves.easeInOut,
     ));
+    
+    // Rotation animation for swipe feedback
+    _rotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 0.1,
+    ).animate(CurvedAnimation(
+      parent: _swipeController,
+      curve: Curves.easeInOut,
+    ));
+    
+    // Difficulty rating animation
+    _difficultyAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _difficultyController,
+      curve: Curves.elasticOut,
+    ));
+    
+    // Register animations with the animation manager
+    _registerAnimations();
+    
+    // Listen for animation status changes
+    _swipeController.addStatusListener(_handleSwipeStatus);
+    _flipController.addStatusListener(_handleFlipStatus);
+  }
+
+  void _registerAnimations() {
+    if (_animationManager.isInitialized) {
+      _flipAnimationId = _animationManager.registerController(
+        controller: _flipController,
+        config: AnimationConfigs.flashcardFlip.copyWith(
+          curve: Curves.elasticOut,
+          duration: const Duration(milliseconds: 600),
+        ),
+        category: AnimationCategory.gesture,
+      );
+      
+      _swipeAnimationId = _animationManager.registerController(
+        controller: _swipeController,
+        config: AnimationConfigs.flashcardSwipe.copyWith(
+          duration: const Duration(milliseconds: 400),
+        ),
+        category: AnimationCategory.gesture,
+      );
+      
+      _difficultyAnimationId = _animationManager.registerController(
+        controller: _difficultyController,
+        config: AnimationConfigs.difficultyRating.copyWith(
+          curve: Curves.elasticOut,
+        ),
+        category: AnimationCategory.microInteraction,
+      );
+    }
   }
 
   @override
   void didUpdateWidget(FlashcardWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isFlipped != oldWidget.isFlipped) {
+      // Add haptic feedback for flip action
+      HapticFeedback.lightImpact();
+      
       if (widget.isFlipped) {
-        _animationController.forward();
+        _flipController.forward();
+        // Show difficulty rating after flip animation completes
+        if (widget.showDifficultyRating) {
+          Future.delayed(const Duration(milliseconds: 400), () {
+            if (mounted) {
+              setState(() {
+                _showDifficultyRating = true;
+              });
+              _difficultyController.forward();
+            }
+          });
+        }
       } else {
-        _animationController.reverse();
+        _flipController.reverse();
+        _hideDifficultyRating();
       }
     }
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    // Dispose animations through manager if registered
+    if (_flipAnimationId != null) {
+      _animationManager.disposeController(_flipAnimationId!);
+    }
+    if (_swipeAnimationId != null) {
+      _animationManager.disposeController(_swipeAnimationId!);
+    }
+    if (_difficultyAnimationId != null) {
+      _animationManager.disposeController(_difficultyAnimationId!);
+    }
+    
+    // Dispose controllers
+    _flipController.dispose();
+    _swipeController.dispose();
+    _difficultyController.dispose();
+    
     super.dispose();
+  }
+
+  void _handleSwipeStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed) {
+      // Determine swipe direction and trigger appropriate callback
+      if (_currentSwipeOffset > 0) {
+        widget.onSwipeRight?.call();
+      } else {
+        widget.onSwipeLeft?.call();
+      }
+      
+      // Reset swipe state
+      _resetSwipeState();
+    }
+  }
+
+  void _handleFlipStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed && widget.isFlipped) {
+      // Provide subtle haptic feedback when flip completes
+      HapticFeedback.selectionClick();
+    }
+  }
+
+  void _handlePanStart(DragStartDetails details) {
+    if (!widget.enableSwipeGestures) return;
+    
+    _swipeStartX = details.globalPosition.dx;
+    _isSwipeActive = true;
+    _hasSwipeThreshold = false;
+  }
+
+  void _handlePanUpdate(DragUpdateDetails details) {
+    if (!widget.enableSwipeGestures || !_isSwipeActive) return;
+    
+    final deltaX = details.globalPosition.dx - _swipeStartX;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final normalizedOffset = deltaX / screenWidth;
+    
+    setState(() {
+      _currentSwipeOffset = normalizedOffset.clamp(-1.0, 1.0);
+    });
+    
+    // Update swipe animation progress
+    final progress = math.min(1.0, _currentSwipeOffset.abs() * 2);
+    _swipeController.value = progress;
+    
+    // Provide haptic feedback at threshold
+    if (!_hasSwipeThreshold && _currentSwipeOffset.abs() > 0.3) {
+      _hasSwipeThreshold = true;
+      HapticFeedback.mediumImpact();
+    }
+  }
+
+  void _handlePanEnd(DragEndDetails details) {
+    if (!widget.enableSwipeGestures || !_isSwipeActive) return;
+    
+    final velocity = details.velocity.pixelsPerSecond.dx;
+    final shouldSwipe = _currentSwipeOffset.abs() > 0.3 || velocity.abs() > 500;
+    
+    if (shouldSwipe) {
+      // Complete the swipe animation
+      _swipeController.forward();
+    } else {
+      // Snap back to center
+      _resetSwipeState();
+    }
+    
+    _isSwipeActive = false;
+  }
+
+  void _resetSwipeState() {
+    setState(() {
+      _currentSwipeOffset = 0.0;
+    });
+    _swipeController.reset();
+  }
+
+  void _handleDifficultySelected(Difficulty difficulty) {
+    setState(() {
+      _selectedDifficulty = difficulty;
+    });
+    
+    // Provide haptic feedback
+    HapticFeedback.lightImpact();
+    
+    // Animate difficulty selection
+    _difficultyController.forward().then((_) {
+      _difficultyController.reverse();
+    });
+    
+    // Call the callback
+    widget.onDifficultyRated?.call(difficulty);
+    
+    // Hide difficulty rating after selection
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _hideDifficultyRating();
+    });
+  }
+
+  void _hideDifficultyRating() {
+    if (_showDifficultyRating) {
+      setState(() {
+        _showDifficultyRating = false;
+      });
+      _difficultyController.reset();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: widget.onFlip,
+      onPanStart: _handlePanStart,
+      onPanUpdate: _handlePanUpdate,
+      onPanEnd: _handlePanEnd,
       child: AnimatedBuilder(
-        animation: _flipAnimation,
+        animation: Listenable.merge([
+          _flipAnimation,
+          _swipeAnimation,
+          _scaleAnimation,
+          _rotationAnimation,
+        ]),
         builder: (context, child) {
           final isShowingFront = _flipAnimation.value < 0.5;
-          return Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.001)
-              ..rotateY(_flipAnimation.value * math.pi),
-            child: isShowingFront
-                ? _buildFrontCard(context)
-                : Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.identity()..rotateY(math.pi),
-                    child: _buildBackCard(context),
-                  ),
+          
+          // Apply swipe transformations
+          return Transform.translate(
+            offset: Offset(
+              _currentSwipeOffset * MediaQuery.of(context).size.width * 0.8,
+              0,
+            ),
+            child: Transform.scale(
+              scale: 1.0 - (_currentSwipeOffset.abs() * 0.05),
+              child: Transform.rotate(
+                angle: _currentSwipeOffset * 0.1,
+                child: Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.identity()
+                    ..setEntry(3, 2, 0.001)
+                    ..rotateY(_flipAnimation.value * math.pi),
+                  child: isShowingFront
+                      ? _buildFrontCard(context)
+                      : Transform(
+                          alignment: Alignment.center,
+                          transform: Matrix4.identity()..rotateY(math.pi),
+                          child: _buildBackCard(context),
+                        ),
+                ),
+              ),
+            ),
           );
         },
       ),
@@ -99,8 +384,8 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Theme.of(context).primaryColor.withOpacity(0.1),
-              Theme.of(context).primaryColor.withOpacity(0.05),
+              Theme.of(context).primaryColor.withValues(alpha: 0.1),
+              Theme.of(context).primaryColor.withValues(alpha: 0.05),
             ],
           ),
         ),
@@ -143,23 +428,48 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             ),
             const SizedBox(height: 32),
             
-            // Tap to reveal hint
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            // Interaction hints
+            Column(
               children: [
-                Icon(
-                  Icons.touch_app,
-                  size: 16,
-                  color: Colors.grey[600],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.touch_app,
+                      size: 16,
+                      color: Colors.grey[600],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Tap to reveal answer',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  'Tap to reveal answer',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
+                if (widget.enableSwipeGestures) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.swipe,
+                        size: 16,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Swipe to navigate',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+                ],
               ],
             ),
           ],
@@ -183,8 +493,8 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.green.withOpacity(0.1),
-              Colors.green.withOpacity(0.05),
+              Colors.green.withValues(alpha: 0.1),
+              Colors.green.withValues(alpha: 0.05),
             ],
           ),
         ),
@@ -244,6 +554,27 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                 ),
               ],
             ),
+            
+            // Animated difficulty rating
+            if (_showDifficultyRating && widget.showDifficultyRating) ...[
+              const SizedBox(height: 24),
+              AnimatedBuilder(
+                animation: _difficultyAnimation,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: _difficultyAnimation.value,
+                    child: Opacity(
+                      opacity: _difficultyAnimation.value,
+                      child: DifficultyRatingBar(
+                        currentDifficulty: _selectedDifficulty ?? widget.flashcard.difficulty,
+                        onDifficultyChanged: _handleDifficultySelected,
+                        animated: true,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),

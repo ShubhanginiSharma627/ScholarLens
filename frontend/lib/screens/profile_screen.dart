@@ -475,30 +475,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out? This will clear all your local data.'),
+        content: const Text('Are you sure you want to sign out?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final appState = context.read<AppStateProvider>();
-              await appState.clearData();
-              await _profileService.clearAllUserData();
-              
-              if (context.mounted) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Signed out successfully')),
-                );
-              }
+          Consumer<AuthenticationProvider>(
+            builder: (context, authProvider, child) {
+              return ElevatedButton(
+                onPressed: authProvider.isLoading
+                    ? null
+                    : () async {
+                        // Sign out using authentication provider
+                        await authProvider.signOut();
+                        
+                        // Clear app state data
+                        final appState = context.read<AppStateProvider>();
+                        await appState.clearData();
+                        await _profileService.clearAllUserData();
+                        
+                        if (context.mounted) {
+                          Navigator.of(context).pop();
+                          // Navigation will be handled automatically by AuthWrapper
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red[600],
+                  foregroundColor: Colors.white,
+                ),
+                child: authProvider.isLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text('Sign Out'),
+              );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[600],
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Sign Out'),
           ),
         ],
       ),

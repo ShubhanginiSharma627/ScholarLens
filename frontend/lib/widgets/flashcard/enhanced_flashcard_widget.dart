@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math_64.dart' as vector_math;
 import 'dart:math' as math;
 import '../../models/flashcard.dart';
 import '../../theme/app_theme.dart';
@@ -35,31 +36,43 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
   late AnimationController _animationController;
   late Animation<double> _flipAnimation;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _depthAnimation;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600), // Optimized timing for better UX
       vsync: this,
     );
     
-    // Create flip animation with smooth easing
+    // Create flip animation with enhanced easeInOut curve for smoother motion
     _flipAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeInOutCubic, // More sophisticated easing curve
+      reverseCurve: Curves.easeInOutCubic, // Consistent reverse animation
     ));
     
-    // Add subtle scale animation for enhanced feedback
+    // Enhanced scale animation with better timing intervals
     _scaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 0.95,
+      end: 0.98, // Subtle scale for premium feel
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: const Interval(0.0, 0.5, curve: Curves.easeInOut),
+      curve: const Interval(0.0, 0.4, curve: Curves.easeInOutQuart),
+      reverseCurve: const Interval(0.6, 1.0, curve: Curves.easeInOutQuart),
+    ));
+    
+    // Add depth animation for enhanced 3D effect
+    _depthAnimation = Tween<double>(
+      begin: 0.0,
+      end: 20.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: const Interval(0.2, 0.8, curve: Curves.easeInOutSine),
     ));
     
     // Set initial state based on isFlipped
@@ -82,6 +95,8 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
 
   @override
   void dispose() {
+    // Critical: Dispose animation controller to prevent memory leaks
+    // This ensures all animation resources are properly cleaned up
     _animationController.dispose();
     super.dispose();
   }
@@ -100,18 +115,24 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
           animation: _animationController,
           builder: (context, child) {
             final isShowingFront = _flipAnimation.value < 0.5;
+            final rotationValue = _flipAnimation.value * math.pi;
+            
+            // Enhanced 3D transformation with depth and perspective
+            final transform = vector_math.Matrix4.identity()
+              ..setEntry(3, 2, 0.0008) // Enhanced perspective for more pronounced 3D effect
+              ..translateByVector3(vector_math.Vector3(0.0, 0.0, -_depthAnimation.value)) // Add depth translation
+              ..rotateY(rotationValue);
+            
             return Transform.scale(
               scale: _scaleAnimation.value,
               child: Transform(
                 alignment: Alignment.center,
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.001) // Add perspective
-                  ..rotateY(_flipAnimation.value * math.pi),
+                transform: transform,
                 child: isShowingFront
                     ? _buildQuestionCard(context)
                     : Transform(
                         alignment: Alignment.center,
-                        transform: Matrix4.identity()..rotateY(math.pi),
+                        transform: vector_math.Matrix4.identity()..rotateY(math.pi),
                         child: _buildAnswerCard(context),
                       ),
               ),

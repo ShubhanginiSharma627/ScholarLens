@@ -4,6 +4,7 @@ import '../../theme/app_icons.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/responsive.dart';
 import 'loading_animations.dart';
+import '../../animations/animated_form_input.dart';
 
 /// Collection of polished UI components with consistent styling and micro-interactions
 class PolishedComponents {
@@ -134,7 +135,7 @@ class PolishedComponents {
           ),
           const SizedBox(height: AppTheme.spacingS),
         ],
-        TextFormField(
+        AnimatedFormInput(
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
@@ -156,25 +157,12 @@ class PolishedComponents {
               horizontal: AppTheme.spacingM,
               vertical: AppTheme.spacingM,
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusS),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusS),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusS),
-              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusS),
-              borderSide: const BorderSide(color: AppTheme.errorColor),
-            ),
-            filled: true,
-            fillColor: AppTheme.surfaceColor,
           ),
+          animationDuration: const Duration(milliseconds: 200),
+          animationCurve: Curves.easeInOut,
+          animateBackground: true,
+          animateBorder: true,
+          animateLabel: true,
         ),
       ],
     );

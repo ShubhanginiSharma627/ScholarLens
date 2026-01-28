@@ -4,6 +4,7 @@ import '../services/flashcard_service.dart';
 import '../widgets/common/top_navigation_bar.dart';
 import 'flashcard_screen.dart';
 import 'create_flashcard_screen.dart';
+import 'all_cards_view_screen.dart';
 
 /// Screen for managing flashcards with organization and filtering
 class FlashcardManagementScreen extends StatefulWidget {
@@ -272,13 +273,42 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
             color: Colors.black,
           ),
         ),
-        trailing: Text(
-          '${deck['count']}',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey[600],
-          ),
+        subtitle: Row(
+          children: [
+            Text(
+              '${deck['count']} cards',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(width: 16),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => AllCardsViewScreen(
+                      subject: deck['name'] as String,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.list_rounded, size: 16),
+              label: const Text('All Cards'),
+              style: TextButton.styleFrom(
+                foregroundColor: deck['color'] as Color,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
+        ),
+        trailing: Icon(
+          Icons.play_arrow_rounded,
+          color: deck['color'] as Color,
+          size: 28,
         ),
         onTap: () {
           // Navigate to deck study screen

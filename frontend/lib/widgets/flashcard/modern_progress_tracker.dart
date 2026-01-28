@@ -172,13 +172,23 @@ class ModernProgressTracker extends StatelessWidget {
                 fontSize: isMobile ? 14 : 16,
               ),
             ),
-            Text(
-              '${(completionPercentage * 100).round()}%',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppTheme.primaryColor,
-                fontWeight: FontWeight.bold,
-                fontSize: isMobile ? 14 : 16,
+            TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeInOutCubic,
+              tween: Tween<double>(
+                begin: 0.0,
+                end: completionPercentage * 100,
               ),
+              builder: (context, animatedPercentage, child) {
+                return Text(
+                  '${animatedPercentage.round()}%',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: isMobile ? 14 : 16,
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -197,31 +207,41 @@ class ModernProgressTracker extends StatelessWidget {
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(progressHeight / 2),
       ),
-      child: FractionallySizedBox(
-        alignment: Alignment.centerLeft,
-        widthFactor: completionPercentage.clamp(0.0, 1.0),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.primaryColor,
-                AppTheme.secondaryColor,
-                AppTheme.accentColor,
-              ],
-              stops: const [0.0, 0.6, 1.0],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-            borderRadius: BorderRadius.circular(progressHeight / 2),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
+      child: TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOutCubic,
+        tween: Tween<double>(
+          begin: 0.0,
+          end: completionPercentage.clamp(0.0, 1.0),
         ),
+        builder: (context, animatedValue, child) {
+          return FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: animatedValue,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryColor,
+                    AppTheme.secondaryColor,
+                    AppTheme.accentColor,
+                  ],
+                  stops: const [0.0, 0.6, 1.0],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(progressHeight / 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -300,13 +320,20 @@ class ModernProgressTracker extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                isPercentage ? '$count%' : count.toString(),
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: isMobile ? 12 : 14,
-                ),
+              TweenAnimationBuilder<int>(
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeInOutCubic,
+                tween: IntTween(begin: 0, end: count),
+                builder: (context, animatedCount, child) {
+                  return Text(
+                    isPercentage ? '$animatedCount%' : animatedCount.toString(),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: isMobile ? 12 : 14,
+                    ),
+                  );
+                },
               ),
               Text(
                 label,

@@ -20,9 +20,15 @@ class FlashcardScreen extends StatefulWidget {
   State<FlashcardScreen> createState() => _FlashcardScreenState();
 }
 
-class _FlashcardScreenState extends State<FlashcardScreen> {
+class _FlashcardScreenState extends State<FlashcardScreen> 
+    with TickerProviderStateMixin {
   late PageController _pageController;
   late StudySessionProgress _sessionProgress;
+  late AnimationController _progressAnimationController;
+  late AnimationController _uiElementsController;
+  late Animation<double> _progressAnimation;
+  late Animation<double> _fadeAnimation;
+  
   int _currentIndex = 0;
   bool _isFlipped = false;
   final Map<int, Difficulty?> _ratings = {};
@@ -35,11 +41,46 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       totalCards: widget.flashcards.length,
       subject: widget.subject,
     );
+    
+    // Initialize animation controllers for smooth transitions
+    _progressAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    _uiElementsController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    
+    // Create animations for smooth progress updates
+    _progressAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _progressAnimationController,
+      curve: Curves.easeInOutCubic,
+    ));
+    
+    // Create fade animation for UI elements
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _uiElementsController,
+      curve: Curves.easeInOut,
+    ));
+    
+    // Start initial animations
+    _progressAnimationController.forward();
+    _uiElementsController.forward();
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _progressAnimationController.dispose();
+    _uiElementsController.dispose();
     super.dispose();
   }
 
@@ -59,6 +100,10 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       );
     });
     
+    // Animate progress update
+    _progressAnimationController.reset();
+    _progressAnimationController.forward();
+    
     // Auto-advance to next card after rating
     if (_currentIndex < widget.flashcards.length - 1) {
       _nextCard();
@@ -67,30 +112,54 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
   void _nextCard() {
     if (_currentIndex < widget.flashcards.length - 1) {
-      setState(() {
-        _currentIndex++;
-        _isFlipped = false;
-        // Update session progress for navigation
-        _sessionProgress = _sessionProgress.nextCard();
+      // Fade out UI elements before transition
+      _uiElementsController.reverse().then((_) {
+        setState(() {
+          _currentIndex++;
+          _isFlipped = false;
+          // Update session progress for navigation
+          _sessionProgress = _sessionProgress.nextCard();
+        });
+        
+        // Animate progress update
+        _progressAnimationController.reset();
+        _progressAnimationController.forward();
+        
+        // Fade UI elements back in
+        _uiElementsController.forward();
       });
+      
+      // Enhanced page transition with custom curve
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOutCubic,
       );
     }
   }
 
   void _previousCard() {
     if (_currentIndex > 0) {
-      setState(() {
-        _currentIndex--;
-        _isFlipped = false;
-        // Update session progress for navigation
-        _sessionProgress = _sessionProgress.previousCard();
+      // Fade out UI elements before transition
+      _uiElementsController.reverse().then((_) {
+        setState(() {
+          _currentIndex--;
+          _isFlipped = false;
+          // Update session progress for navigation
+          _sessionProgress = _sessionProgress.previousCard();
+        });
+        
+        // Animate progress update
+        _progressAnimationController.reset();
+        _progressAnimationController.forward();
+        
+        // Fade UI elements back in
+        _uiElementsController.forward();
       });
+      
+      // Enhanced page transition with custom curve
       _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOutCubic,
       );
     }
   }
@@ -102,6 +171,51 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       // Update session progress when page changes
       _sessionProgress = _sessionProgress.jumpToCard(index);
     });
+    
+    // Animate progress update for manual page changes
+    _progressAnimationController.reset();
+    _progressAnimationController.forward();
+  }
+
+  Widget _buildAnimatedNavButton({
+    required VoidCallback? onPressed,
+    required IconData icon,
+    required String tooltip,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: onPressed,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: onPressed != null 
+                  ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
+                  : Colors.grey.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: onPressed != null 
+                    ? Theme.of(context).primaryColor.withValues(alpha: 0.3)
+                    : Colors.grey.withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              icon,
+              size: 28,
+              color: onPressed != null 
+                  ? Theme.of(context).primaryColor
+                  : Colors.grey,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -156,84 +270,137 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       ),
       body: Column(
         children: [
-          // Modern progress tracker with real-time updates
-          ModernProgressTracker(
-            totalCards: widget.flashcards.length,
-            masteredCards: _sessionProgress.easyCount + _sessionProgress.mediumCount,
-            correctCount: _sessionProgress.correctCount,
-            incorrectCount: _sessionProgress.incorrectCount,
-            completionPercentage: _sessionProgress.completionPercentage,
-            showCounters: true,
-            showMasteryStats: false, // Hide mastery stats during study session
+          // Modern progress tracker with smooth animated updates
+          AnimatedBuilder(
+            animation: _progressAnimation,
+            builder: (context, child) {
+              return ModernProgressTracker(
+                totalCards: widget.flashcards.length,
+                masteredCards: (_sessionProgress.easyCount + _sessionProgress.mediumCount),
+                correctCount: _sessionProgress.correctCount,
+                incorrectCount: _sessionProgress.incorrectCount,
+                completionPercentage: _sessionProgress.completionPercentage * _progressAnimation.value,
+                showCounters: true,
+                showMasteryStats: false, // Hide mastery stats during study session
+              );
+            },
           ),
           
-          // Flashcard display
+          // Flashcard display with enhanced PageView
           Expanded(
             child: PageView.builder(
               controller: _pageController,
               onPageChanged: _onPageChanged,
               itemCount: widget.flashcards.length,
+              // Enhanced physics for smoother scrolling
+              physics: const BouncingScrollPhysics(),
               itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: EnhancedFlashcardWidget(
-                    flashcard: widget.flashcards[index],
-                    isFlipped: _isFlipped,
-                    onFlip: _onFlip,
-                    onDifficultyRated: _onDifficultyRated,
-                  ),
+                return AnimatedBuilder(
+                  animation: _pageController,
+                  builder: (context, child) {
+                    double value = 1.0;
+                    if (_pageController.position.haveDimensions) {
+                      value = _pageController.page! - index;
+                      value = (1 - (value.abs() * 0.1)).clamp(0.0, 1.0);
+                    }
+                    
+                    return Transform.scale(
+                      scale: value,
+                      child: Opacity(
+                        opacity: value,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: EnhancedFlashcardWidget(
+                            flashcard: widget.flashcards[index],
+                            isFlipped: index == _currentIndex ? _isFlipped : false,
+                            onFlip: index == _currentIndex ? _onFlip : () {},
+                            onDifficultyRated: index == _currentIndex ? _onDifficultyRated : (_) {},
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
           ),
           
-          // Card counter display
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              'Card ${_currentIndex + 1} of ${widget.flashcards.length}',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).primaryColor,
+          // Card counter display with fade animation
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                'Card ${_currentIndex + 1} of ${widget.flashcards.length}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).primaryColor,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
           ),
           
-          // Navigation controls
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                IconButton(
-                  onPressed: _currentIndex > 0 ? _previousCard : null,
-                  icon: const Icon(Icons.arrow_back_ios),
-                  iconSize: 32,
-                ),
-                IconButton(
-                  onPressed: _onFlip,
-                  icon: Icon(_isFlipped ? Icons.visibility_off : Icons.visibility),
-                  iconSize: 32,
-                ),
-                IconButton(
-                  onPressed: _currentIndex < widget.flashcards.length - 1 ? _nextCard : null,
-                  icon: const Icon(Icons.arrow_forward_ios),
-                  iconSize: 32,
-                ),
-              ],
-            ),
-          ),
-          
-          // Difficulty rating (only show when flipped)
-          if (_isFlipped)
-            Container(
+          // Navigation controls with fade animation
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: Container(
               padding: const EdgeInsets.all(16),
-              child: DifficultyRatingBar(
-                onRatingSelected: _onDifficultyRated,
-                selectedRating: _ratings[_currentIndex],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildAnimatedNavButton(
+                    onPressed: _currentIndex > 0 ? _previousCard : null,
+                    icon: Icons.arrow_back_ios,
+                    tooltip: 'Previous Card',
+                  ),
+                  _buildAnimatedNavButton(
+                    onPressed: _onFlip,
+                    icon: _isFlipped ? Icons.visibility_off : Icons.visibility,
+                    tooltip: _isFlipped ? 'Hide Answer' : 'Show Answer',
+                  ),
+                  _buildAnimatedNavButton(
+                    onPressed: _currentIndex < widget.flashcards.length - 1 ? _nextCard : null,
+                    icon: Icons.arrow_forward_ios,
+                    tooltip: 'Next Card',
+                  ),
+                ],
               ),
             ),
+          ),
+          
+          // Difficulty rating with slide animation (only show when flipped)
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.0, 1.0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeInOutCubic,
+                )),
+                child: FadeTransition(
+                  opacity: animation,
+                  child: child,
+                ),
+              );
+            },
+            child: _isFlipped
+                ? Container(
+                    key: const ValueKey('difficulty_rating'),
+                    padding: const EdgeInsets.all(16),
+                    child: DifficultyRatingBar(
+                      onRatingSelected: _onDifficultyRated,
+                      selectedRating: _ratings[_currentIndex],
+                    ),
+                  )
+                : Container(
+                    key: const ValueKey('empty_space'),
+                    height: 0,
+                  ),
+          ),
         ],
       ),
     );

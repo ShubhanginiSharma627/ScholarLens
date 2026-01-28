@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/providers.dart';
+import 'screens/auth_wrapper.dart';
+import 'screens/login_screen.dart';
+import 'screens/signup_screen.dart';
+import 'screens/password_reset_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'theme/app_theme.dart';
 import 'services/performance_optimizer.dart';
@@ -38,6 +42,7 @@ class ScholarLensApp extends StatelessWidget {
             return provider;
           },
         ),
+        ChangeNotifierProvider(create: (_) => AuthenticationProvider.instance),
         ChangeNotifierProvider(create: (_) => ProgressProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
@@ -51,7 +56,12 @@ class ScholarLensApp extends StatelessWidget {
             themeMode: appState.settings.darkModeEnabled 
                 ? ThemeMode.dark 
                 : ThemeMode.light,
-            home: const MainNavigationScreen(),
+            home: const AuthWrapper(),
+            routes: {
+              LoginScreen.routeName: (context) => const LoginScreen(),
+              SignupScreen.routeName: (context) => const SignupScreen(),
+              PasswordResetScreen.routeName: (context) => const PasswordResetScreen(),
+            },
           );
         },
       ),
