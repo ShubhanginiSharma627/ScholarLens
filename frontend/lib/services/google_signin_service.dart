@@ -22,7 +22,7 @@ class GoogleSignInService {
   // Backend API configuration
   static const String _baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://172.20.10.5:3000/api',
+    defaultValue: 'https://scholarlens-afvx.onrender.com/api',
   );
   static const String _googleAuthEndpoint = '/auth/google';
   static const String _linkAccountEndpoint = '/auth/link-google';

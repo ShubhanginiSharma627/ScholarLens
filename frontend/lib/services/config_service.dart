@@ -9,7 +9,7 @@ class ConfigService {
   // API Configuration
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: kDebugMode ? 'http://172.20.10.5:3000/api' : 'https://your-production-api.com/api',
+    defaultValue: kDebugMode ? 'https://scholarlens-afvx.onrender.com/api' : 'https://your-production-api.com/api',
   );
   
   static const int apiTimeout = int.fromEnvironment(

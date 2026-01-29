@@ -19,7 +19,7 @@ class AuthenticationService {
   // Backend API configuration
   static const String _baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://172.20.10.5:3000/api',
+    defaultValue: 'https://scholarlens-afvx.onrender.com/api',
   );
   static const String _registerEndpoint = '/auth/register';
   static const String _loginEndpoint = '/auth/login';

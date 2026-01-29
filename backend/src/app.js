@@ -92,7 +92,7 @@ app.use((err, req, res, next) => {
 });
 
 const HOST = "0.0.0.0";
-const PORT = 3000;
+const PORT = process.env.PORT || "3000";
 
 
 
