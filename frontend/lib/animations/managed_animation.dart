@@ -87,10 +87,8 @@ class ManagedAnimation {
       if (!controller.isDismissed && !controller.isCompleted) {
         controller.stop();
       }
-      // Check if controller is already disposed by checking if it throws
-      if (!controller.isDisposed) {
-        controller.dispose();
-      }
+      // Try to dispose the controller - it will throw if already disposed
+      controller.dispose();
     } catch (e) {
       // Controller may already be disposed, log but don't crash
       if (kDebugMode) {
