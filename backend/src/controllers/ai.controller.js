@@ -392,7 +392,7 @@ const analyzeSyllabusDocument = async (req, res) => {
 
     // Log interaction if user is authenticated
     if (userId) {
-      await db.collection('interactions').add({
+      const interactionData = prepareFirestoreData({
         type: 'syllabus_analysis',
         userId,
         courseLevel,
@@ -400,6 +400,7 @@ const analyzeSyllabusDocument = async (req, res) => {
         analysisType,
         timestamp: new Date(),
       });
+      await db.collection('interactions').add(interactionData);
     }
 
     res.json({
@@ -442,7 +443,7 @@ const analyzeEducationalImage = async (req, res) => {
 
     // Log interaction if user is authenticated
     if (userId) {
-      await db.collection('interactions').add({
+      const interactionData = prepareFirestoreData({
         type: 'image_analysis',
         userId,
         analysisType,
@@ -450,6 +451,7 @@ const analyzeEducationalImage = async (req, res) => {
         language,
         timestamp: new Date(),
       });
+      await db.collection('interactions').add(interactionData);
     }
 
     res.json({
@@ -490,7 +492,7 @@ const createQuizQuestions = async (req, res) => {
 
     // Log interaction if user is authenticated
     if (userId) {
-      await db.collection('interactions').add({
+      const interactionData = prepareFirestoreData({
         type: 'quiz_generation',
         userId,
         topic,
@@ -498,6 +500,7 @@ const createQuizQuestions = async (req, res) => {
         questionType: type || 'multiple_choice',
         timestamp: new Date(),
       });
+      await db.collection('interactions').add(interactionData);
     }
 
     res.json({
