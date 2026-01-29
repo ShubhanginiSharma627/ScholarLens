@@ -12,6 +12,7 @@ const path = require('path');
 const authRoutes = require('./routes/auth.routes');
 const flashcardRoutes = require('./routes/flashcard.routes');
 const aiRoutes = require('./routes/ai.routes');
+const enhancedAiRoutes = require('./routes/enhanced-ai.routes');
 const planRoutes = require('./routes/plan.routes');
 const explainRoutes = require('./routes/explain.routes');
 const syllabusRoutes = require('./routes/syllabus.routes');
@@ -39,6 +40,9 @@ if (gcsConfig.initialized) {
   console.warn('   Check GOOGLE_CLOUD_PROJECT and GOOGLE_APPLICATION_CREDENTIALS');
 }
 
+// Trust proxy for rate limiting (required for Render, Heroku, etc.)
+app.set('trust proxy', 1);
+
 // Security and middleware
 app.use(helmet());
 app.use(cors({}));
@@ -62,6 +66,7 @@ app.get('/', (req, res) => res.json({
 app.use('/api/auth', authRoutes);
 app.use('/api/flashcards', flashcardRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/enhanced-ai', enhancedAiRoutes);
 app.use('/api/generate-plan', planRoutes);
 app.use('/api/explain-topic', explainRoutes);
 app.use('/api/syllabi', syllabusRoutes);
