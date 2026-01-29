@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/chat_provider.dart';
@@ -7,6 +8,7 @@ import '../widgets/chat_typing_indicator.dart';
 import '../widgets/common/top_navigation_bar.dart';
 import '../services/tutor_service.dart';
 import '../animations/animated_interactive_element.dart';
+import '../utils/performance_utils.dart';
 
 /// Screen for chat interface with AI tutor
 class TutorChatScreen extends StatefulWidget {
@@ -42,6 +44,11 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
 
   @override
   void dispose() {
+    // Cancel any active tutor requests to prevent memory leaks
+    if (_tutorService is HttpTutorService) {
+      (_tutorService as HttpTutorService).cancelActiveRequests();
+    }
+    
     _scrollController.dispose();
     _textController.dispose();
     super.dispose();
@@ -63,10 +70,10 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
     final chatProvider = context.read<ChatProvider>();
     
     try {
-      // Clear input
+      // Clear input immediately for better UX
       _textController.clear();
       
-      // Send user message
+      // Send user message (this should be fast)
       chatProvider.setSending(true);
       final userMessage = await chatProvider.sendUserMessage(content);
       
@@ -76,11 +83,27 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
       // Get conversation context for AI
       final context = chatProvider.getConversationContext();
       
-      // Get AI response
-      final aiResponse = await _tutorService.askFollowUpQuestion(content, context);
+      // Get AI response with timeout handling
+      String aiResponse;
+      try {
+        // Add a shorter timeout for better UX
+        aiResponse = await _tutorService.askFollowUpQuestion(content, context)
+            .timeout(
+              const Duration(seconds: 20), // Even shorter timeout for UI
+              onTimeout: () {
+                throw TimeoutException('The tutor is taking too long to respond. Please try a simpler question or try again later.');
+              },
+            );
+      } on TimeoutException catch (e) {
+        aiResponse = e.message ?? 'Request timed out. Please try again with a simpler question.';
+        // Mark user message as failed
+        await chatProvider.updateMessageStatus(userMessage.id, MessageStatus.failed);
+      }
       
-      // Update user message status to delivered
-      await chatProvider.updateMessageStatus(userMessage.id, MessageStatus.delivered);
+      // Update user message status to delivered (only if not failed)
+      if (!userMessage.hasFailed) {
+        await chatProvider.updateMessageStatus(userMessage.id, MessageStatus.delivered);
+      }
       
       // Add AI response
       await chatProvider.addAIResponse(aiResponse);
@@ -89,6 +112,8 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
       
     } catch (e) {
+      debugPrint('Error in _sendMessage: $e');
+      
       // Handle error - mark user message as failed
       final failedMessages = chatProvider.getFailedMessages();
       if (failedMessages.isNotEmpty) {
@@ -98,12 +123,20 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
         );
       }
       
-      // Show error message
+      // Show error message with shorter, more user-friendly text
       if (mounted) {
+        String errorMessage = 'Failed to send message';
+        if (e is TutorServiceException) {
+          errorMessage = e.message;
+        } else if (e is TimeoutException) {
+          errorMessage = 'Request timed out. Please try again.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to send message: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3), // Shorter duration
             action: SnackBarAction(
               label: 'Retry',
               textColor: Colors.white,
@@ -129,44 +162,46 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: const TopNavigationBar(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header section
-            const Text(
-              'AI Tutor',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+    return PerformanceMonitor(
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: const TopNavigationBar(),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header section
+              const Text(
+                'AI Tutor',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Learn through guided discovery',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
+              const SizedBox(height: 4),
+              Text(
+                'Learn through guided discovery',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Chat area with fixed height
-            _buildChatArea(),
-            const SizedBox(height: 24),
-            
-            // Suggested Topics section (always visible)
-            _buildSuggestedTopicsSection(),
-            const SizedBox(height: 24),
-            
-            // How it works section (always visible)
-            _buildHowItWorksSection(),
-          ],
+              const SizedBox(height: 24),
+              
+              // Chat area with fixed height
+              _buildChatArea(),
+              const SizedBox(height: 24),
+              
+              // Suggested Topics section (always visible)
+              _buildSuggestedTopicsSection(),
+              const SizedBox(height: 24),
+              
+              // How it works section (always visible)
+              _buildHowItWorksSection(),
+            ],
+          ),
         ),
       ),
     );

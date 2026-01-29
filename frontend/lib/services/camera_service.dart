@@ -32,6 +32,12 @@ class CameraServiceImpl implements CameraService {
   @override
   Future<void> initialize() async {
     try {
+      // Dispose any existing controller first
+      if (_controller != null) {
+        await _controller!.dispose();
+        _controller = null;
+      }
+
       _cameras = await availableCameras();
       if (_cameras == null || _cameras!.isEmpty) {
         throw ScholarLensCameraException('No cameras available', 'No camera devices found on this device');
@@ -44,12 +50,22 @@ class CameraServiceImpl implements CameraService {
         firstCamera,
         ResolutionPreset.high,
         enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg, // Ensure JPEG format
       );
 
       await _controller!.initialize();
       _isInitialized = true;
     } catch (e) {
-      throw ScholarLensCameraException('Camera initialization failed', e.toString());
+      _isInitialized = false;
+      _controller = null;
+      
+      if (e.toString().contains('permission')) {
+        throw ScholarLensCameraException('Camera permission denied', 'Please grant camera permission in device settings');
+      } else if (e.toString().contains('camera')) {
+        throw ScholarLensCameraException('Camera unavailable', 'Camera is being used by another app or is not available');
+      } else {
+        throw ScholarLensCameraException('Camera initialization failed', e.toString());
+      }
     }
   }
 
@@ -60,9 +76,34 @@ class CameraServiceImpl implements CameraService {
     }
 
     try {
+      // Ensure camera is still initialized
+      if (_controller == null || !_controller!.value.isInitialized) {
+        throw ScholarLensCameraException('Camera not ready', 'Camera controller is not properly initialized');
+      }
+
+      // Check if camera is taking a picture already
+      if (_controller!.value.isTakingPicture) {
+        throw ScholarLensCameraException('Camera busy', 'Camera is already taking a picture');
+      }
+
       final XFile image = await _controller!.takePicture();
-      return File(image.path);
+      final file = File(image.path);
+      
+      // Verify the file was created and has content
+      if (!file.existsSync()) {
+        throw ScholarLensCameraException('Image capture failed', 'Image file was not created');
+      }
+      
+      final fileSize = await file.length();
+      if (fileSize == 0) {
+        throw ScholarLensCameraException('Image capture failed', 'Image file is empty');
+      }
+
+      return file;
     } catch (e) {
+      if (e is ScholarLensCameraException) {
+        rethrow;
+      }
       throw ScholarLensCameraException('Image capture failed', e.toString());
     }
   }

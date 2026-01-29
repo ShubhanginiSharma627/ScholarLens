@@ -136,7 +136,7 @@ async function generateText(prompt, taskType = 'general', complexity = 'medium',
   // Validate model parameter and provide fallback
   if (!model || model.trim() === '') {
     logger.error(`Empty model parameter for taskType: ${taskType}, complexity: ${complexity}`);
-    model = 'gemini-2.5-pro'; // Hard-coded fallback
+    model = 'gemini-1.5-pro'; // Hard-coded fallback
     logger.warn(`Using fallback model: ${model}`);
   }
   
@@ -184,12 +184,20 @@ async function generateText(prompt, taskType = 'general', complexity = 'medium',
     if (text.length === 0) {
       logger.error('Generated text is empty');
       logger.debug('Full response object:', JSON.stringify(response, null, 2));
+      throw new Error('Generated response is empty');
     }
     
     return text;
   } catch (error) {
     logger.error(`Text generation failed: ${error.message}`);
     logger.error('Stack trace:', error.stack);
+    
+    // Provide a fallback response for tutor chat to prevent "no generated response" error
+    if (taskType === 'chat_response' || taskType === 'tutor_chat') {
+      logger.warn('Providing fallback tutor response due to generation failure');
+      return "I apologize, but I'm experiencing technical difficulties right now. Please try asking your question again, or contact support if the issue persists.";
+    }
+    
     throw error;
   }
 }

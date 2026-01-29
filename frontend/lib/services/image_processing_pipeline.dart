@@ -28,9 +28,28 @@ class ImageProcessingPipeline {
         );
       }
 
-      // Read and decode image
-      final Uint8List originalBytes = await inputFile.readAsBytes();
-      final img.Image? originalImage = img.decodeImage(originalBytes);
+      // Check file size before processing
+      final fileStat = await inputFile.stat();
+      if (fileStat.size == 0) {
+        throw ImageProcessingException(
+          'Empty image file',
+          'The image file is empty or corrupted',
+        );
+      }
+
+      // Read and decode image with memory management
+      Uint8List? originalBytes;
+      img.Image? originalImage;
+      
+      try {
+        originalBytes = await inputFile.readAsBytes();
+        originalImage = img.decodeImage(originalBytes);
+      } catch (e) {
+        throw ImageProcessingException(
+          'Failed to read image',
+          'Could not read or decode the image file: $e',
+        );
+      }
       
       if (originalImage == null) {
         throw ImageProcessingException(
@@ -56,6 +75,10 @@ class ImageProcessingPipeline {
 
       // If already under size limit, return as-is
       if (originalSizeKB <= maxSizeKB) {
+        // Clear memory
+        originalBytes = null;
+        originalImage = null;
+        
         return ProcessedImage(
           file: inputFile,
           sizeKB: originalSizeKB,
@@ -71,6 +94,10 @@ class ImageProcessingPipeline {
         maxSizeKB,
         maintainAspectRatio,
       );
+
+      // Clear original image from memory
+      originalImage = null;
+      originalBytes = null;
 
       // Create output file
       final outputFile = await _saveProcessedImage(processedResult.bytes);

@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/lesson_content.dart';
+import '../utils/performance_utils.dart';
 import 'api_service.dart';
 
 /// Exception thrown when tutor service operations fail
@@ -49,15 +50,15 @@ abstract class TutorService {
 class HttpTutorService implements TutorService {
   final String baseUrl;
   final Duration timeout;
-  final http.Client _client;
   final ApiService _apiService;
+  
+  // Track active requests for cancellation
+  final Map<String, Completer<String>> _activeRequests = {};
 
   HttpTutorService({
     required this.baseUrl,
-    this.timeout = const Duration(seconds: 30),
-    http.Client? client,
-  }) : _client = client ?? http.Client(),
-       _apiService = ApiService();
+    this.timeout = const Duration(seconds: 15), // Reduced timeout
+  }) : _apiService = ApiService();
 
   @override
   Future<LessonContent> analyzeImage(File image, {String? userPrompt}) async {
@@ -94,13 +95,11 @@ class HttpTutorService implements TutorService {
       
       // Convert the API response to LessonContent format
       final lessonContent = LessonContent(
-        title: response['title'] as String? ?? 'Image Analysis',
-        content: response['analysis'] as String? ?? response['explanation'] as String? ?? 'Analysis completed',
-        keyPoints: (response['keyPoints'] as List?)?.cast<String>() ?? [],
-        difficulty: response['difficulty'] as String? ?? 'medium',
-        estimatedReadTime: response['estimatedReadTime'] as int? ?? 5,
-        tags: (response['tags'] as List?)?.cast<String>() ?? [],
-        relatedTopics: (response['relatedTopics'] as List?)?.cast<String>() ?? [],
+        lessonTitle: response['title'] as String? ?? 'Image Analysis',
+        summaryMarkdown: response['analysis'] as String? ?? response['explanation'] as String? ?? 'Analysis completed',
+        audioTranscript: response['audioTranscript'] as String? ?? '',
+        quiz: [], // Empty quiz for image analysis
+        createdAt: DateTime.now(),
       );
       
       return lessonContent;
@@ -124,62 +123,100 @@ class HttpTutorService implements TutorService {
 
   @override
   Future<String> askFollowUpQuestion(String question, String context) async {
+    final requestId = DateTime.now().millisecondsSinceEpoch.toString();
+    final completer = Completer<String>();
+    _activeRequests[requestId] = completer;
+    
     try {
       debugPrint('Asking follow-up question via API service: $question');
       
-      // Use the API service's chatWithTutor method for follow-up questions
-      final response = await _apiService.chatWithTutor(
-        message: question,
-        sessionType: 'follow_up',
-        conversationHistory: [
-          {
-            'role': 'assistant',
-            'content': context,
-          },
-          {
-            'role': 'user', 
-            'content': question,
-          }
-        ],
-      );
+      // Create a timeout future
+      final timeoutFuture = Future.delayed(timeout, () {
+        throw TimeoutException('Request timed out after ${timeout.inSeconds} seconds', timeout);
+      });
       
-      // Extract the response text from the API response
-      final responseText = response['response'] as String? ?? 
-                          response['message'] as String? ??
-                          'I apologize, but I couldn\'t process your follow-up question at the moment.';
+      // Race between the API call and timeout
+      final apiCallFuture = _makeApiCall(question, context);
       
-      debugPrint('Successfully received follow-up response');
-      return responseText;
+      final result = await Future.any([
+        apiCallFuture,
+        timeoutFuture,
+      ]);
       
-    } on ApiException catch (e) {
-      debugPrint('API error during follow-up: $e');
-      throw TutorServiceException(
-        'Failed to get follow-up response: ${e.message}',
-        statusCode: e.statusCode,
-        details: e.toString(),
-      );
+      completer.complete(result);
+      return result;
+      
     } catch (e) {
-      throw TutorServiceException(
-        'Network connection failed',
-        details: e.message,
-      );
-    } on http.ClientException catch (e) {
-      throw TutorServiceException(
-        'HTTP client error',
-        details: e.message,
-      );
-    } on FormatException catch (e) {
-      throw TutorServiceException(
-        'Invalid response format',
-        details: e.message,
-      );
-    } catch (e) {
-      if (e is TutorServiceException) rethrow;
-      throw TutorServiceException(
-        'Unexpected error during follow-up question',
-        details: e.toString(),
-      );
+      debugPrint('Error during follow-up question: $e');
+      
+      if (e is TimeoutException) {
+        completer.completeError(TutorServiceException(
+          'Request timed out. The tutor service is taking too long to respond.',
+          statusCode: 408,
+          details: e.toString(),
+        ));
+      } else if (e is ApiException) {
+        String errorMessage = 'Failed to get follow-up response: ${e.message}';
+        if (e.statusCode == 500) {
+          errorMessage = 'The tutor service is temporarily unavailable. Please try again in a moment.';
+        } else if (e.statusCode == 403) {
+          errorMessage = 'Access denied. Please check your authentication and try again.';
+        } else if (e.statusCode == 429) {
+          errorMessage = 'Too many requests. Please wait a moment before trying again.';
+        }
+        
+        completer.completeError(TutorServiceException(
+          errorMessage,
+          statusCode: e.statusCode,
+          details: e.toString(),
+        ));
+      } else {
+        completer.completeError(TutorServiceException(
+          'An unexpected error occurred while processing your question. Please try again.',
+          details: e.toString(),
+        ));
+      }
+      
+      rethrow;
+    } finally {
+      _activeRequests.remove(requestId);
     }
+  }
+  
+  Future<String> _makeApiCall(String question, String context) async {
+    return await PerformanceUtils.measureAsync(
+      'Tutor API Call',
+      () async {
+        // Use the API service's chatWithTutor method for follow-up questions
+        final response = await _apiService.chatWithTutor(
+          message: question,
+          sessionType: 'follow_up',
+          conversationHistory: [
+            {
+              'role': 'assistant',
+              'content': context,
+            },
+            {
+              'role': 'user', 
+              'content': question,
+            }
+          ],
+        );
+        
+        // Extract the response text from the API response
+        final responseText = response['response'] as String? ?? 
+                            response['message'] as String? ??
+                            'I apologize, but I couldn\'t process your follow-up question at the moment.';
+        
+        // Validate that we got a meaningful response
+        if (responseText.trim().isEmpty) {
+          throw TutorServiceException('Received empty response from tutor service');
+        }
+        
+        debugPrint('Successfully received follow-up response: ${responseText.length} characters');
+        return responseText;
+      },
+    );
   }
 
   @override
@@ -228,7 +265,12 @@ Question: $question
                           response['message'] as String? ??
                           'I apologize, but I couldn\'t process your chapter question at the moment.';
       
-      debugPrint('Successfully received chapter response');
+      // Validate that we got a meaningful response
+      if (responseText.trim().isEmpty) {
+        throw TutorServiceException('Received empty response from tutor service');
+      }
+      
+      debugPrint('Successfully received chapter response: ${responseText.length} characters');
       return responseText;
       
     } on ApiException catch (e) {
@@ -264,11 +306,19 @@ Question: $question
     final segments = path.split('/');
     return segments.isNotEmpty ? segments.last : 'image.jpg';
   }
-
-  /// Disposes of the HTTP client
-  void dispose() {
-    _client.close();
+  
+  /// Cancel all active requests
+  void cancelActiveRequests() {
+    for (final completer in _activeRequests.values) {
+      if (!completer.isCompleted) {
+        completer.completeError(TutorServiceException('Request cancelled by user'));
+      }
+    }
+    _activeRequests.clear();
   }
+  
+  /// Get count of active requests
+  int get activeRequestCount => _activeRequests.length;
 }
 
 /// Factory for creating tutor service instances
@@ -286,12 +336,10 @@ class TutorServiceFactory {
   static TutorService createForTesting({
     required String baseUrl,
     Duration? timeout,
-    http.Client? client,
   }) {
     return HttpTutorService(
       baseUrl: baseUrl,
       timeout: timeout ?? const Duration(seconds: 5),
-      client: client,
     );
   }
 }

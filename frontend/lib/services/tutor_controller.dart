@@ -169,8 +169,6 @@ class TutorController {
 
   /// Disposes of the controller and its services
   void dispose() {
-    if (_tutorService is HttpTutorService) {
-      (_tutorService as HttpTutorService).dispose();
-    }
+    // HttpTutorService no longer needs disposal as it uses ApiService
   }
 }

@@ -36,6 +36,8 @@ class GoogleSignInService {
   }) {
     _googleSignIn = GoogleSignIn(
       scopes: scopes,
+      // Let Google Sign-In use the Android client configuration from google-services.json
+      // serverClientId is only needed for server-side authentication
     );
     
     debugPrint('Google Sign-In service initialized');
@@ -199,8 +201,8 @@ class GoogleSignInService {
             'Content-Type': 'application/json',
           },
           body: jsonEncode({
-            'accessToken': accessToken,
-            'idToken': idToken,
+            'idToken': idToken, // Backend expects idToken, not accessToken
+            'clientType': 'android', // Specify client type for backend
             'email': googleUser.email,
             'name': googleUser.displayName ?? '',
             'photoUrl': googleUser.photoUrl,
@@ -478,8 +480,8 @@ class GoogleSignInService {
             'Authorization': 'Bearer $currentAccessToken',
           },
           body: jsonEncode({
-            'googleAccessToken': googleAccessToken,
-            'googleIdToken': googleIdToken,
+            'idToken': googleIdToken, // Backend expects idToken
+            'clientType': 'android',
             'email': googleUser.email,
             'name': googleUser.displayName ?? '',
             'photoUrl': googleUser.photoUrl,
@@ -513,8 +515,8 @@ class GoogleSignInService {
             'Content-Type': 'application/json',
           },
           body: jsonEncode({
-            'accessToken': googleAccessToken,
-            'idToken': googleIdToken,
+            'idToken': googleIdToken, // Backend expects idToken
+            'clientType': 'android',
             'email': googleUser.email,
             'name': googleUser.displayName ?? '',
             'photoUrl': googleUser.photoUrl,

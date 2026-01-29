@@ -10,7 +10,7 @@ class ApiService {
     defaultValue: 'https://scholarlens-afvx.onrender.com/api',
   );
   
-  static const int _timeoutSeconds = 30;
+  static const int _timeoutSeconds = 15; // Reduced from 30 to 15 seconds
   
   String? _accessToken;
   String? _refreshToken;

@@ -147,6 +147,7 @@ class _AnimatedFormInputState extends State<AnimatedFormInput>
   
   // State tracking
   bool _isFocused = false;
+  bool _isDisposed = false;
 
   @override
   void initState() {
@@ -279,7 +280,7 @@ class _AnimatedFormInputState extends State<AnimatedFormInput>
   }
 
   void _handleFocusChange() {
-    if (!mounted) return;
+    if (!mounted || _isDisposed) return;
     
     final wasFocused = _isFocused;
     final isFocused = _focusNode.hasFocus;
@@ -324,12 +325,10 @@ class _AnimatedFormInputState extends State<AnimatedFormInput>
 
   @override
   void dispose() {
-    // Dispose animations through manager if registered
-    if (_focusAnimationId != null) {
-      _animationManager.disposeController(_focusAnimationId!);
-    }
+    if (_isDisposed) return;
+    _isDisposed = true;
     
-    // Remove focus listener
+    // Remove focus listener first
     _focusNode.removeListener(_handleFocusChange);
     
     // Dispose focus node if we created it
@@ -337,8 +336,16 @@ class _AnimatedFormInputState extends State<AnimatedFormInput>
       _focusNode.dispose();
     }
     
-    // Dispose controller
-    _focusController.dispose();
+    // Dispose animations through manager if registered, otherwise dispose directly
+    if (_focusAnimationId != null) {
+      _animationManager.disposeController(_focusAnimationId!);
+    } else {
+      // Only dispose controller if it wasn't managed by AnimationManager
+      if (_focusController.isAnimating || !_focusController.isDismissed) {
+        _focusController.stop();
+      }
+      _focusController.dispose();
+    }
     
     super.dispose();
   }

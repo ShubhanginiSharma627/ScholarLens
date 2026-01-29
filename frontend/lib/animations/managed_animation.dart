@@ -73,10 +73,15 @@ class ManagedAnimation {
     if (state != AnimationState.disposed) {
       // Safely dispose the controller
       try {
+        if (!controller.isDismissed && !controller.isCompleted) {
+          controller.stop();
+        }
         controller.dispose();
       } catch (e) {
         // Controller may already be disposed, ignore the error
-        debugPrint('Animation controller already disposed: $id');
+        if (kDebugMode) {
+          debugPrint('Animation controller already disposed: $id - $e');
+        }
       }
       state = AnimationState.disposed;
       endTime ??= DateTime.now();

@@ -7,10 +7,10 @@ import '../models/models.dart';
 import '../services/authentication_service.dart';
 import '../services/google_signin_service.dart';
 import '../services/session_manager.dart';
-import '../services/form_validator.dart';
+import '../services/form_validator.dart' as form_validator;
 import '../services/auth_error_handler.dart';
 import '../services/offline_auth_handler.dart';
-import '../services/api_service.dart';
+import '../services/api_service.dart' as api;
 
 class AuthenticationProvider extends ChangeNotifier {
   static AuthenticationProvider? _instance;
@@ -26,7 +26,7 @@ class AuthenticationProvider extends ChangeNotifier {
   final SessionManager _sessionManager = SessionManager.instance;
   final AuthErrorHandler _errorHandler = AuthErrorHandler.instance;
   final OfflineAuthHandler _offlineHandler = OfflineAuthHandler.instance;
-  final ApiService _apiService = ApiService();
+  final api.ApiService _apiService = api.ApiService();
 
   // State
   AuthenticationState _state = AuthenticationState.unauthenticated;
@@ -39,7 +39,7 @@ class AuthenticationProvider extends ChangeNotifier {
   bool _isOfflineMode = false;
 
   // Form validation state
-  final FormValidationState _formValidationState = FormValidationState();
+  final form_validator.FormValidationState _formValidationState = form_validator.FormValidationState();
 
   // Stream subscriptions
   StreamSubscription<bool>? _sessionStateSubscription;
@@ -55,7 +55,7 @@ class AuthenticationProvider extends ChangeNotifier {
   bool get isAuthenticated => _state == AuthenticationState.authenticated;
   bool get rememberMe => _rememberMe;
   bool get isOfflineMode => _isOfflineMode;
-  FormValidationState get formValidationState => _formValidationState;
+  form_validator.FormValidationState get formValidationState => _formValidationState;
 
   /// Initialize the authentication provider
   Future<void> _initialize() async {
@@ -108,9 +108,9 @@ class AuthenticationProvider extends ChangeNotifier {
       _clearError();
 
       // Validate input
-      final emailError = FormValidator.validateEmail(email);
-      final passwordError = FormValidator.validatePassword(password);
-      final nameError = FormValidator.validateName(name);
+      final emailError = form_validator.FormValidator.validateEmail(email);
+      final passwordError = form_validator.FormValidator.validatePassword(password);
+      final nameError = form_validator.FormValidator.validateName(name);
 
       if (emailError != null || passwordError != null || nameError != null) {
         _handleAuthError(
@@ -173,18 +173,6 @@ class AuthenticationProvider extends ChangeNotifier {
       debugPrint('Attempting to sign in user: $email');
       _setLoading(true);
       _clearError();
-
-      // Validate input
-      final emailError = FormValidator.validateEmail(email);
-      if (emailError != null) {
-        _handleAuthError(emailError, AuthErrorType.validationError);
-        return;
-      }
-
-      if (password.isEmpty) {
-        _handleAuthError('Password is required', AuthErrorType.validationError);
-        return;
-      }
 
       // Attempt login
       final result = await _authService.signInWithEmail(
@@ -386,7 +374,7 @@ class AuthenticationProvider extends ChangeNotifier {
       _clearError();
 
       // Validate input
-      final emailError = FormValidator.validateEmail(email);
+      final emailError = form_validator.FormValidator.validateEmail(email);
       if (emailError != null) {
         _handleAuthError(emailError, AuthErrorType.validationError);
         return;
@@ -513,7 +501,7 @@ class AuthenticationProvider extends ChangeNotifier {
       _clearError();
 
       // Validate email
-      final emailError = FormValidator.validateEmail(email);
+      final emailError = form_validator.FormValidator.validateEmail(email);
       if (emailError != null) {
         _handleAuthErrorWithHandler(emailError, AuthErrorType.validationError, context: 'password_reset');
         return;
@@ -615,29 +603,29 @@ class AuthenticationProvider extends ChangeNotifier {
 
   /// Update form field validation
   void updateFormField(String fieldName, String value) {
-    ValidationResult result;
+    form_validator.ValidationResult result;
 
     switch (fieldName) {
       case 'email':
-        result = FormValidator.validateEmailRealTime(value);
+        result = form_validator.FormValidator.validateEmailRealTime(value);
         break;
       case 'password':
-        result = FormValidator.validatePasswordRealTime(value);
+        result = form_validator.FormValidator.validatePasswordRealTime(value);
         break;
       case 'name':
-        result = FormValidator.validateNameRealTime(value);
+        result = form_validator.FormValidator.validateNameRealTime(value);
         break;
       case 'confirmPassword':
         final password = _formValidationState.getFieldValue('password') ?? '';
-        final error = FormValidator.validateConfirmPassword(password, value);
-        result = ValidationResult(
+        final error = form_validator.FormValidator.validateConfirmPassword(password, value);
+        result = form_validator.ValidationResult(
           isValid: error == null,
           message: error,
           showError: value.isNotEmpty,
         );
         break;
       default:
-        result = ValidationResult(isValid: true, showError: false);
+        result = form_validator.ValidationResult(isValid: true, showError: false);
         break;
     }
 

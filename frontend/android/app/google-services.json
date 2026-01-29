@@ -15,15 +15,7 @@
       "oauth_client": [
         {
           "client_id": "380583167322-q33v7h1h4og7orlms1ppnsfsisgogkga.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.scholar_lens",
-            "certificate_hash": "7b29a55e066fc6de570f8fb9ad93c17bdbe98e4a"
-          }
-        },
-        {
-          "client_id": "380583167322-vcbjpgjg4nage2pquukeh78h10ep2nrc.apps.googleusercontent.com",
-          "client_type": 3
+          "client_type": 1
         }
       ],
       "api_key": [

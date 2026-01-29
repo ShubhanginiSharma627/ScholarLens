@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -11,6 +13,8 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
 }
 
+
+
 android {
     namespace = "com.example.scholar_lens"
     compileSdk = flutter.compileSdkVersion
@@ -22,7 +26,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "17"
     }
 
     defaultConfig {
@@ -38,7 +42,7 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
+            // TODO: Add the signingConfig for a release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }

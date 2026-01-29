@@ -188,6 +188,8 @@ const chatWithTutor = async (req, res) => {
       });
     }
 
+    logger.info(`Processing tutor chat request for message: "${message.substring(0, 50)}..."`);
+
     const tutorResponse = await generateTutorResponse(message, {
       subject,
       studentLevel,
@@ -195,6 +197,15 @@ const chatWithTutor = async (req, res) => {
       learningGoals,
       sessionType: sessionType || 'general_chat'
     });
+
+    // Validate that we got a response
+    if (!tutorResponse || tutorResponse.trim() === '') {
+      logger.error('Empty tutor response received');
+      return res.status(500).json({
+        success: false,
+        error: { message: 'Failed to generate response. Please try again.' }
+      });
+    }
 
     // Log interaction if user is authenticated
     if (userId) {
@@ -208,6 +219,8 @@ const chatWithTutor = async (req, res) => {
       });
     }
 
+    logger.info(`Tutor response generated successfully, length: ${tutorResponse.length}`);
+
     res.json({
       success: true,
       data: { 
@@ -219,9 +232,23 @@ const chatWithTutor = async (req, res) => {
 
   } catch (error) {
     logger.error('Tutor chat error:', error);
+    
+    // Provide specific error messages based on error type
+    let errorMessage = 'Failed to generate tutor response';
+    
+    if (error.message.includes('BILLING_DISABLED')) {
+      errorMessage = 'AI service is temporarily unavailable due to billing configuration. Please contact support.';
+    } else if (error.message.includes('NOT_FOUND')) {
+      errorMessage = 'AI model is temporarily unavailable. Please try again later.';
+    } else if (error.message.includes('model parameter must not be empty')) {
+      errorMessage = 'AI service configuration error. Please contact support.';
+    } else if (error.message.includes('Generated response is empty')) {
+      errorMessage = 'Unable to generate a response. Please rephrase your question and try again.';
+    }
+    
     res.status(500).json({
       success: false,
-      error: { message: 'Failed to generate tutor response' }
+      error: { message: errorMessage }
     });
   }
 };
