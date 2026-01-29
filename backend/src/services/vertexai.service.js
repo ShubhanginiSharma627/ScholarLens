@@ -578,6 +578,7 @@ async function generateTutorResponse(message, options = {}) {
     
     logger.info(`[${requestId}] Tutor response generated successfully`, {
       responseLength: response.length,
+      response:response,
       duration,
       isEmpty: response.trim().length === 0
     });
