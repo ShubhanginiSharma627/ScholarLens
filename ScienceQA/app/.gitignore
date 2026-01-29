@@ -1,0 +1,32 @@
+# --- Python Basics ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+build/
+dist/
+*.egg-info/
+
+# --- Environment Variables (CRITICAL) ---
+.env
+.env.local
+
+# --- Project Data (Too big for GitHub) ---
+# We ignore the raw data and the vector DB
+data/raw_exam_data.csv
+data/cleaned_exam.json
+data/images/
+vector_store/
+
+# --- IDE Settings ---
+.vscode/
+.idea/
+*.swp
+
+# --- OS Junk ---
+.DS_Store
+Thumbs.db
