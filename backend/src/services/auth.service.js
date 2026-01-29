@@ -73,7 +73,7 @@ const authService = {
 
       return { ...user, token };
     } catch (error) {
-      console.error('❌ Registration failed:', error.message);
+      console.error('❌ Registration failed:', error);
       throw error;
     }
   },

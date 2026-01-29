@@ -1,26 +1,51 @@
 {
   "project_info": {
-    "project_number": "1083187333171",
-    "project_id": "scholar-lens-f5b8b",
-    "storage_bucket": "scholar-lens-f5b8b.firebasestorage.app"
+    "project_number": "380583167322",
+    "project_id": "scholar-lens-fa555",
+    "storage_bucket": "scholar-lens-fa555.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1083187333171:android:5c94fac96d4acfeeb67b46",
+        "mobilesdk_app_id": "1:380583167322:android:390269cb56d21ad7e25f63",
         "android_client_info": {
           "package_name": "com.example.scholar_lens"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "380583167322-q33v7h1h4og7orlms1ppnsfsisgogkga.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.scholar_lens",
+            "certificate_hash": "7b29a55e066fc6de570f8fb9ad93c17bdbe98e4a"
+          }
+        },
+        {
+          "client_id": "380583167322-vcbjpgjg4nage2pquukeh78h10ep2nrc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyAsWGYCxN0xhFg1MIrxNb07PtLw1vyrCsU"
+          "current_key": "AIzaSyB2rXBmVaYriPuOEPAIgm26vFrUSUX01dQ"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "380583167322-vcbjpgjg4nage2pquukeh78h10ep2nrc.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "380583167322-pu2raaavo6qmfr817o4l3qsjvnaf60tj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.scholarlens"
+              }
+            }
+          ]
         }
       }
     }
