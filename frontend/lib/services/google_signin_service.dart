@@ -55,7 +55,7 @@ class GoogleSignInService {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       
       if (googleUser == null) {
-        // User cancelled the sign-in
+        // User cancelled the sign-in - this is normal behavior, not an error
         debugPrint('Google Sign-In cancelled by user');
         return AuthResult.failure(
           error: 'Sign-in cancelled',

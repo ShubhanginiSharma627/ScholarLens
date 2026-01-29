@@ -74,7 +74,7 @@ const validateRequest = (req, res, next) => {
 const authValidation = {
   register: [
     body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
     body('name').trim().isLength({ min: 2, max: 50 }),
   ],
   login: [

@@ -20,6 +20,7 @@ class AnimationManager {
   bool _reducedMotion = false;
   double _performanceScale = 1.0;
   bool _isInitialized = false;
+  int _animationCounter = 0; // Add counter for unique IDs
 
   /// Initializes the animation manager
   Future<void> initialize() async {
@@ -65,6 +66,20 @@ class AnimationManager {
     }
 
     final id = customId ?? _generateAnimationId(category);
+    
+    // Check if ID already exists and generate a new one if needed
+    if (_registry.getAnimation(id) != null) {
+      final newId = _generateAnimationId(category);
+      if (kDebugMode) {
+        debugPrint('Animation ID collision detected, using new ID: $newId instead of $id');
+      }
+      return registerController(
+        controller: controller,
+        config: config,
+        category: category,
+        customId: newId,
+      );
+    }
     
     // Apply performance scaling to duration
     final optimizedDuration = PerformanceOptimizer.optimizeDuration(
@@ -486,8 +501,9 @@ class AnimationManager {
   }
 
   String _generateAnimationId(AnimationCategory category) {
+    _animationCounter++;
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    return '${category.name}_$timestamp';
+    return '${category.name}_${timestamp}_$_animationCounter';
   }
 
   Animation _createAnimation(AnimationController controller, AnimationConfig config) {

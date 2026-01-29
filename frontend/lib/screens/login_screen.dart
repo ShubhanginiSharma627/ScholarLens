@@ -380,13 +380,15 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _handleLogin(AuthenticationProvider authProvider) {
+  void _handleLogin(AuthenticationProvider authProvider) async {
     if (_formKey.currentState?.validate() ?? false) {
-      authProvider.signInWithEmail(
+      await authProvider.signInWithEmail(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         rememberMe: _rememberMe,
       );
+      
+      // No manual navigation needed - AuthWrapper handles this automatically
     }
   }
 

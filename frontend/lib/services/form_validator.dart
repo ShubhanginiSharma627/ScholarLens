@@ -14,7 +14,7 @@ class FormValidator {
   static final RegExp _nameRegex = RegExp(r"^[a-zA-Z\s\-']+$");
 
   // Minimum password length
-  static const int _minPasswordLength = 8;
+  static const int _minPasswordLength = 6;
   static const int _maxPasswordLength = 128;
 
   // Name constraints
@@ -66,18 +66,6 @@ class FormValidator {
 
     if (password.length > _maxPasswordLength) {
       return 'Password is too long (max $_maxPasswordLength characters)';
-    }
-
-    if (!_uppercaseRegex.hasMatch(password)) {
-      return 'Password must contain at least one uppercase letter';
-    }
-
-    if (!_lowercaseRegex.hasMatch(password)) {
-      return 'Password must contain at least one lowercase letter';
-    }
-
-    if (!_digitRegex.hasMatch(password)) {
-      return 'Password must contain at least one number';
     }
 
     // Check for common weak passwords

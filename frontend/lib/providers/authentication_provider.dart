@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../models/models.dart';
@@ -9,6 +10,7 @@ import '../services/session_manager.dart';
 import '../services/form_validator.dart';
 import '../services/auth_error_handler.dart';
 import '../services/offline_auth_handler.dart';
+import '../services/api_service.dart';
 
 class AuthenticationProvider extends ChangeNotifier {
   static AuthenticationProvider? _instance;
@@ -24,6 +26,7 @@ class AuthenticationProvider extends ChangeNotifier {
   final SessionManager _sessionManager = SessionManager.instance;
   final AuthErrorHandler _errorHandler = AuthErrorHandler.instance;
   final OfflineAuthHandler _offlineHandler = OfflineAuthHandler.instance;
+  final ApiService _apiService = ApiService();
 
   // State
   AuthenticationState _state = AuthenticationState.unauthenticated;
@@ -125,20 +128,24 @@ class AuthenticationProvider extends ChangeNotifier {
       );
 
       if (result.success && result.user != null && result.accessToken != null) {
-        // Start session
-        await _sessionManager.startSession(
-          accessToken: result.accessToken!,
-          refreshToken: result.refreshToken,
-          userId: result.user!.id,
-          rememberMe: rememberMe,
-        );
-
-        // Cache user data for offline use
-        await _offlineHandler.cacheUserData(result.user!, result.accessToken!);
-
+        // Set user and state immediately
         _currentUser = result.user;
         _rememberMe = rememberMe;
+        _clearError();
+        
+        // Set tokens in API service for other services to use
+        _apiService.setTokens(result.accessToken!, result.refreshToken ?? '');
+        
+        // Set authenticated state first
         _setState(AuthenticationState.authenticated);
+        
+        // Force a UI update on the next frame
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+        
+        // Start session in background (don't await to avoid blocking UI update)
+        _startSessionInBackground(result.accessToken!, result.refreshToken, result.user!.id, rememberMe);
         
         debugPrint('User registration successful: ${result.user!.email}');
       } else {
@@ -186,20 +193,24 @@ class AuthenticationProvider extends ChangeNotifier {
       );
 
       if (result.success && result.user != null && result.accessToken != null) {
-        // Start session
-        await _sessionManager.startSession(
-          accessToken: result.accessToken!,
-          refreshToken: result.refreshToken,
-          userId: result.user!.id,
-          rememberMe: rememberMe,
-        );
-
-        // Cache user data for offline use
-        await _offlineHandler.cacheUserData(result.user!, result.accessToken!);
-
+        // Set user and state immediately
         _currentUser = result.user;
         _rememberMe = rememberMe;
+        _clearError();
+        
+        // Set tokens in API service for other services to use
+        _apiService.setTokens(result.accessToken!, result.refreshToken ?? '');
+        
+        // Set authenticated state first
         _setState(AuthenticationState.authenticated);
+        
+        // Force a UI update on the next frame
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+        
+        // Start session in background (don't await to avoid blocking UI update)
+        _startSessionInBackground(result.accessToken!, result.refreshToken, result.user!.id, rememberMe);
         
         debugPrint('User login successful: ${result.user!.email}');
       } else {
@@ -245,6 +256,12 @@ class AuthenticationProvider extends ChangeNotifier {
         
         debugPrint('Google Sign-In successful: ${result.user!.email}');
       } else {
+        // Don't show error for user cancellation - it's intentional
+        if (result.errorType == AuthErrorType.userCancelled) {
+          debugPrint('Google Sign-In cancelled by user - no error shown');
+          return;
+        }
+        
         // Handle account conflict scenarios
         if (result.errorType == AuthErrorType.accountExistsWithDifferentCredential) {
           // Store the conflict information for potential UI handling
@@ -464,6 +481,9 @@ class AuthenticationProvider extends ChangeNotifier {
       // Clear cached offline data
       await _offlineHandler.clearCachedData();
 
+      // Clear tokens from API service
+      _apiService.clearTokens();
+
       // Clear state
       _currentUser = null;
       _rememberMe = false;
@@ -678,9 +698,19 @@ class AuthenticationProvider extends ChangeNotifier {
 
   /// Set authentication state
   void _setState(AuthenticationState newState) {
+    debugPrint('Setting authentication state from $_state to $newState');
     if (_state != newState) {
       _state = newState;
+      debugPrint('Authentication state changed to $_state, notifying listeners');
       notifyListeners();
+      
+      // Force a rebuild on the next frame to ensure UI updates
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        debugPrint('Post-frame callback: Authentication state is $_state, isAuthenticated: $isAuthenticated');
+        notifyListeners();
+      });
+    } else {
+      debugPrint('Authentication state unchanged: $_state');
     }
   }
 
@@ -707,11 +737,17 @@ class AuthenticationProvider extends ChangeNotifier {
     );
 
     _lastErrorInfo = errorInfo;
-    _error = errorInfo.message;
-    _errorType = errorInfo.type;
-    _setState(AuthenticationState.error);
     
-    debugPrint('Authentication error handled: ${errorInfo.message} (${errorInfo.type})');
+    // Only show error if it should be displayed to user
+    if (_errorHandler.shouldShowError(errorType)) {
+      _error = errorInfo.message;
+      _errorType = errorInfo.type;
+      _setState(AuthenticationState.error);
+      
+      debugPrint('Authentication error handled: ${errorInfo.message} (${errorInfo.type})');
+    } else {
+      debugPrint('Authentication error handled but not shown: ${errorInfo.message} (${errorInfo.type})');
+    }
   }
 
   /// Retry operation with error handling
@@ -749,6 +785,32 @@ class AuthenticationProvider extends ChangeNotifier {
           ? AuthenticationState.authenticated 
           : AuthenticationState.unauthenticated);
     }
+  }
+
+  /// Start session in background without blocking UI updates
+  void _startSessionInBackground(String accessToken, String? refreshToken, String userId, bool rememberMe) {
+    Future.microtask(() async {
+      try {
+        debugPrint('Starting session in background for user: $userId');
+        
+        // Start session
+        await _sessionManager.startSession(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          userId: userId,
+          rememberMe: rememberMe,
+        );
+
+        // Cache user data for offline use
+        await _offlineHandler.cacheUserData(_currentUser!, accessToken);
+        
+        debugPrint('Background session initialization completed');
+      } catch (e) {
+        debugPrint('Background session initialization error: $e');
+        // Don't change authentication state if session fails - user is still authenticated
+        // Just log the error for debugging
+      }
+    });
   }
 
   @override

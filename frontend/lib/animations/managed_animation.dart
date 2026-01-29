@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'animation_config.dart';
 
 /// Managed animation wrapper that tracks state and lifecycle
@@ -70,7 +71,13 @@ class ManagedAnimation {
   /// Disposes the animation and its controller
   void dispose() {
     if (state != AnimationState.disposed) {
-      controller.dispose();
+      // Safely dispose the controller
+      try {
+        controller.dispose();
+      } catch (e) {
+        // Controller may already be disposed, ignore the error
+        debugPrint('Animation controller already disposed: $id');
+      }
       state = AnimationState.disposed;
       endTime ??= DateTime.now();
     }

@@ -168,6 +168,11 @@ class AuthErrorHandler {
 
   /// Check if error should be shown to user (avoid spam)
   bool shouldShowError(AuthErrorType errorType) {
+    // Never show error for user cancellation - it's intentional
+    if (errorType == AuthErrorType.userCancelled) {
+      return false;
+    }
+    
     final lastErrorTime = _lastErrorTimes[errorType];
     if (lastErrorTime == null) return true;
 

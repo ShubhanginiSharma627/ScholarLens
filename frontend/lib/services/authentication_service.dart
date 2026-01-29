@@ -192,7 +192,42 @@ class AuthenticationService {
         ).timeout(_requestTimeout);
       });
 
-      return await _handleAuthResponse(response, 'Token refresh');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          final tokens = data['data']['tokens'];
+          final newAccessToken = tokens['accessToken'] as String;
+          final newRefreshToken = tokens['refreshToken'] as String;
+
+          // Store new tokens
+          await _secureStorage.storeTokens(
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+            userId: await _secureStorage.getUserId() ?? '',
+          );
+
+          debugPrint('Token refresh successful');
+          return AuthResult.success(
+            user: User(
+              id: await _secureStorage.getUserId() ?? '',
+              email: '',
+              name: '',
+              provider: AuthProvider.email,
+              createdAt: DateTime.now(),
+              lastLoginAt: DateTime.now(),
+              isEmailVerified: false,
+            ),
+            accessToken: newAccessToken,
+          );
+        } else {
+          return AuthResult.failure(
+            error: data['error'] ?? 'Token refresh failed',
+            errorType: AuthErrorType.refreshTokenExpired,
+          );
+        }
+      } else {
+        return _handleHttpError(response, 'Token refresh');
+      }
     } catch (e) {
       debugPrint('Token refresh error: $e');
       return _handleAuthError(e);
@@ -308,26 +343,42 @@ class AuthenticationService {
   /// Handle authentication response from backend
   Future<AuthResult> _handleAuthResponse(http.Response response, String operation) async {
     try {
+      debugPrint('$operation response status: ${response.statusCode}');
+      debugPrint('$operation response body: ${response.body}');
+      
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (data['success'] == true && data['data'] != null) {
-          final userData = data['data'];
-          final user = User.fromJson(userData);
-          final token = userData['token'] as String;
+          final responseData = data['data'];
+          final user = User.fromJson(responseData['user']);
+          final tokens = responseData['tokens'];
+          final accessToken = tokens['accessToken'] as String;
+          final refreshToken = tokens['refreshToken'] as String;
 
           // Store authentication data
           await _secureStorage.storeTokens(
-            accessToken: token,
+            accessToken: accessToken,
+            refreshToken: refreshToken,
             userId: user.id,
           );
 
           debugPrint('$operation successful for user: ${user.email}');
-          return AuthResult.success(user: user, accessToken: token);
+          return AuthResult.success(user: user, accessToken: accessToken);
         } else {
+          // Handle error in success response
+          String errorMessage = '$operation failed';
+          if (data['error'] != null) {
+            final error = data['error'];
+            if (error is String) {
+              errorMessage = error;
+            } else if (error is Map<String, dynamic> && error['message'] != null) {
+              errorMessage = error['message'] as String;
+            }
+          }
           return AuthResult.failure(
-            error: data['error'] ?? '$operation failed',
-            errorType: _mapErrorType(data['error']),
+            error: errorMessage,
+            errorType: _mapErrorType(errorMessage),
           );
         }
       } else {
@@ -335,8 +386,9 @@ class AuthenticationService {
       }
     } catch (e) {
       debugPrint('$operation response parsing error: $e');
+      debugPrint('$operation response body: ${response.body}');
       return AuthResult.failure(
-        error: 'Failed to process server response',
+        error: 'Failed to process server response: $e',
         errorType: AuthErrorType.serverError,
       );
     }
@@ -346,7 +398,35 @@ class AuthenticationService {
   AuthResult _handleHttpError(http.Response response, String operation) {
     try {
       final data = jsonDecode(response.body);
-      final errorMessage = data['error'] ?? 'Unknown server error';
+      String errorMessage = 'Unknown server error';
+      
+      // Handle different error response structures from backend
+      if (data['error'] != null) {
+        final error = data['error'];
+        if (error is String) {
+          errorMessage = error;
+        } else if (error is Map<String, dynamic>) {
+          // Handle structured error object
+          if (error['message'] != null) {
+            errorMessage = error['message'] as String;
+            
+            // Add validation details if available
+            if (error['details'] != null && error['details'] is List) {
+              final details = error['details'] as List;
+              if (details.isNotEmpty) {
+                final validationErrors = details
+                    .map((detail) => detail['msg'] ?? detail['message'] ?? 'Validation error')
+                    .join(', ');
+                errorMessage = '$errorMessage: $validationErrors';
+              }
+            }
+          } else {
+            errorMessage = error.toString();
+          }
+        } else {
+          errorMessage = error.toString();
+        }
+      }
       
       AuthErrorType errorType;
       switch (response.statusCode) {
@@ -369,11 +449,13 @@ class AuthenticationService {
       }
 
       debugPrint('$operation HTTP error ${response.statusCode}: $errorMessage');
+      debugPrint('$operation Full response body: ${response.body}');
       return AuthResult.failure(error: errorMessage, errorType: errorType);
     } catch (e) {
       debugPrint('$operation HTTP error parsing failed: $e');
+      debugPrint('$operation Response body: ${response.body}');
       return AuthResult.failure(
-        error: 'Server error (${response.statusCode})',
+        error: 'Server error (${response.statusCode}): ${response.body}',
         errorType: AuthErrorType.serverError,
       );
     }

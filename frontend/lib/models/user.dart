@@ -28,14 +28,18 @@ class User {
       id: json['id'] as String,
       email: json['email'] as String,
       name: json['name'] as String,
-      profileImageUrl: json['profileImageUrl'] as String?,
+      profileImageUrl: json['picture'] as String? ?? json['profileImageUrl'] as String?,
       provider: AuthProvider.values.firstWhere(
-        (e) => e.name == (json['provider'] as String? ?? 'email'),
+        (e) => e.name == (json['authProvider'] as String? ?? json['provider'] as String? ?? 'email'),
         orElse: () => AuthProvider.email,
       ),
       createdAt: DateTime.parse(json['createdAt'] as String),
-      lastLoginAt: DateTime.parse(json['lastLoginAt'] as String),
-      isEmailVerified: json['isEmailVerified'] as bool? ?? false,
+      lastLoginAt: json['lastLoginAt'] != null 
+          ? DateTime.parse(json['lastLoginAt'] as String)
+          : json['updatedAt'] != null 
+              ? DateTime.parse(json['updatedAt'] as String)
+              : DateTime.parse(json['createdAt'] as String),
+      isEmailVerified: json['emailVerified'] as bool? ?? json['isEmailVerified'] as bool? ?? json['isActive'] as bool? ?? false,
       profile: json['profile'] != null 
           ? UserProfile.fromJson(json['profile'] as Map<String, dynamic>)
           : null,

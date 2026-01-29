@@ -255,7 +255,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   
                   // Password requirement text
                   Text(
-                    'Must be at least 8 characters',
+                    'Must be at least 6 characters',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppTheme.secondaryTextColor,
                     ),
@@ -491,7 +491,7 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  void _handleSignup(AuthenticationProvider authProvider) {
+  void _handleSignup(AuthenticationProvider authProvider) async {
     if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -503,12 +503,14 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     if (_formKey.currentState?.validate() ?? false) {
-      authProvider.signUpWithEmail(
+      await authProvider.signUpWithEmail(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         name: _nameController.text.trim(),
         rememberMe: _rememberMe,
       );
+      
+      // No manual navigation needed - AuthWrapper handles this automatically
     }
   }
 

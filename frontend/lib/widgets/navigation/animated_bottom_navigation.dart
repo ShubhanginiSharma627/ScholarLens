@@ -37,54 +37,113 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
   // Badge counts for demonstration (in real app, this would come from providers)
   final Map<int, int> _badgeCounts = {1: 3, 3: 1}; // Tutor has 3, Cards has 1
   final Map<int, int> _previousBadgeCounts = {};
+  bool _animationsInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _animationManager = AnimationManager();
-    _initializeAnimations();
     _previousBadgeCounts.addAll(_badgeCounts);
   }
 
-  void _initializeAnimations() {
-    for (int i = 0; i < widget.tabs.length; i++) {
-      if (widget.tabs[i].isCenter != true) {
-        // Color transition animation
-        _colorAnimationIds[i] = _animationManager.createThemeAwareFadeAnimation(
-          vsync: this,
-          context: context,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          category: AnimationCategory.microInteraction,
-        );
-
-        // Scale animation for selection
-        _scaleAnimationIds[i] = _animationManager.createThemeAwareScaleAnimation(
-          vsync: this,
-          context: context,
-          duration: const Duration(milliseconds: 150),
-          scaleStart: 1.0,
-          scaleEnd: 1.1,
-          curve: Curves.elasticOut,
-          category: AnimationCategory.microInteraction,
-        );
-
-        // Badge animation
-        _badgeAnimationIds[i] = _animationManager.createScaleAnimation(
-          vsync: this,
-          duration: const Duration(milliseconds: 300),
-          scaleStart: 0.0,
-          scaleEnd: 1.0,
-          curve: Curves.elasticOut,
-          category: AnimationCategory.microInteraction,
-        );
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_animationsInitialized) {
+      // Ensure animation manager is initialized
+      if (!_animationManager.isInitialized) {
+        _animationManager.initialize().then((_) {
+          if (mounted) {
+            _initializeAnimations();
+            _animationsInitialized = true;
+          }
+        });
+      } else {
+        _initializeAnimations();
+        _animationsInitialized = true;
       }
     }
+  }
+
+  void _initializeAnimations() {
+    // Clear any existing animations first
+    _disposeExistingAnimations();
+    
+    try {
+      for (int i = 0; i < widget.tabs.length; i++) {
+        if (widget.tabs[i].isCenter != true) {
+          // Color transition animation
+          _colorAnimationIds[i] = _animationManager.createThemeAwareFadeAnimation(
+            vsync: this,
+            context: context,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            category: AnimationCategory.microInteraction,
+          );
+
+          // Scale animation for selection
+          _scaleAnimationIds[i] = _animationManager.createThemeAwareScaleAnimation(
+            vsync: this,
+            context: context,
+            duration: const Duration(milliseconds: 150),
+            scaleStart: 1.0,
+            scaleEnd: 1.1,
+            curve: Curves.elasticOut,
+            category: AnimationCategory.microInteraction,
+          );
+
+          // Badge animation
+          _badgeAnimationIds[i] = _animationManager.createScaleAnimation(
+            vsync: this,
+            duration: const Duration(milliseconds: 300),
+            scaleStart: 0.0,
+            scaleEnd: 1.0,
+            curve: Curves.elasticOut,
+            category: AnimationCategory.microInteraction,
+          );
+        }
+      }
+    } catch (e) {
+      // If animation creation fails, log the error but don't crash
+      debugPrint('Failed to initialize animations: $e');
+      // Clear any partially created animations
+      _disposeExistingAnimations();
+    }
+  }
+
+  void _disposeExistingAnimations() {
+    // Dispose existing animations if any
+    try {
+      for (final id in _colorAnimationIds.values) {
+        _animationManager.disposeController(id);
+      }
+      for (final id in _scaleAnimationIds.values) {
+        _animationManager.disposeController(id);
+      }
+      for (final id in _badgeAnimationIds.values) {
+        _animationManager.disposeController(id);
+      }
+    } catch (e) {
+      // Log error but don't crash
+      debugPrint('Error disposing animations: $e');
+    }
+    
+    // Clear the maps
+    _colorAnimationIds.clear();
+    _scaleAnimationIds.clear();
+    _badgeAnimationIds.clear();
   }
 
   @override
   void didUpdateWidget(AnimatedBottomNavigation oldWidget) {
     super.didUpdateWidget(oldWidget);
+    
+    // Reinitialize animations if the number of tabs changed
+    if (oldWidget.tabs.length != widget.tabs.length) {
+      _animationsInitialized = false;
+      _initializeAnimations();
+      _animationsInitialized = true;
+    }
     
     // Animate selection changes
     if (oldWidget.currentIndex != widget.currentIndex) {
@@ -129,16 +188,27 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
 
   @override
   void dispose() {
-    // Dispose all animations
-    for (final id in _colorAnimationIds.values) {
-      _animationManager.disposeController(id);
+    try {
+      // Dispose all animations
+      for (final id in _colorAnimationIds.values) {
+        _animationManager.disposeController(id);
+      }
+      for (final id in _scaleAnimationIds.values) {
+        _animationManager.disposeController(id);
+      }
+      for (final id in _badgeAnimationIds.values) {
+        _animationManager.disposeController(id);
+      }
+    } catch (e) {
+      // Log error but don't crash during disposal
+      debugPrint('Error disposing animations in dispose(): $e');
     }
-    for (final id in _scaleAnimationIds.values) {
-      _animationManager.disposeController(id);
-    }
-    for (final id in _badgeAnimationIds.values) {
-      _animationManager.disposeController(id);
-    }
+    
+    // Clear the maps
+    _colorAnimationIds.clear();
+    _scaleAnimationIds.clear();
+    _badgeAnimationIds.clear();
+    
     super.dispose();
   }
 

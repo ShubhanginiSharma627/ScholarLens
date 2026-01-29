@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/lesson_content.dart';
+import 'api_service.dart';
 
 /// Exception thrown when tutor service operations fail
 class TutorServiceException implements Exception {
@@ -44,17 +45,19 @@ abstract class TutorService {
   Future<bool> isServiceAvailable();
 }
 
-/// HTTP implementation of the tutor service
+/// HTTP implementation of the tutor service using ApiService
 class HttpTutorService implements TutorService {
   final String baseUrl;
   final Duration timeout;
   final http.Client _client;
+  final ApiService _apiService;
 
   HttpTutorService({
     required this.baseUrl,
     this.timeout = const Duration(seconds: 30),
     http.Client? client,
-  }) : _client = client ?? http.Client();
+  }) : _client = client ?? http.Client(),
+       _apiService = ApiService();
 
   @override
   Future<LessonContent> analyzeImage(File image, {String? userPrompt}) async {
@@ -66,75 +69,49 @@ class HttpTutorService implements TutorService {
         throw const TutorServiceException('Image file does not exist');
       }
 
-      debugPrint('Starting image analysis request...');
+      debugPrint('Starting image analysis request via API service...');
 
-      // Create multipart request
-      final uri = Uri.parse('$baseUrl/analyze');
-      final request = http.MultipartRequest('POST', uri);
-
-      // Add image file
+      // Convert image to base64
       final imageBytes = await image.readAsBytes();
-      final multipartFile = http.MultipartFile.fromBytes(
-        'image',
-        imageBytes,
-        filename: _getFileName(image.path),
+      final base64Image = base64Encode(imageBytes);
+      
+      // Use the API service's analyzeEducationalImage method
+      final response = await _apiService.analyzeEducationalImage(
+        imageData: base64Image,
+        analysisType: 'educational_content',
+        language: 'English',
       );
-      request.files.add(multipartFile);
-
-      // Add optional user prompt
-      if (userPrompt != null && userPrompt.isNotEmpty) {
-        request.fields['user_prompt'] = userPrompt;
-      }
-
-      // Set headers
-      request.headers.addAll({
-        'Accept': 'application/json',
-      });
-
-      // Send request with timeout
-      final streamedResponse = await _client.send(request).timeout(timeout);
-      final response = await http.Response.fromStream(streamedResponse);
 
       stopwatch.stop();
       final responseTime = stopwatch.elapsedMilliseconds;
       
-      // Handle response
-      if (response.statusCode == 200) {
-        debugPrint('Image analysis completed in ${responseTime}ms');
-        
-        // Log performance warning if response is slow
-        if (responseTime > 10000) {
-          debugPrint('Warning: Slow API response detected: ${responseTime}ms');
-        }
-        
-        final jsonData = json.decode(response.body) as Map<String, dynamic>;
-        return LessonContent.fromJson(jsonData);
-      } else {
-        debugPrint('Image analysis failed after ${responseTime}ms with status ${response.statusCode}');
-        throw TutorServiceException(
-          'Failed to analyze image',
-          statusCode: response.statusCode,
-          details: response.body,
-        );
+      debugPrint('Image analysis completed in ${responseTime}ms');
+      
+      // Log performance warning if response is slow
+      if (responseTime > 10000) {
+        debugPrint('Warning: Slow API response detected: ${responseTime}ms');
       }
-    } on SocketException catch (e) {
-      stopwatch.stop();
-      debugPrint('Image analysis failed after ${stopwatch.elapsedMilliseconds}ms: Network connection failed');
-      throw TutorServiceException(
-        'Network connection failed',
-        details: e.message,
+      
+      // Convert the API response to LessonContent format
+      final lessonContent = LessonContent(
+        title: response['title'] as String? ?? 'Image Analysis',
+        content: response['analysis'] as String? ?? response['explanation'] as String? ?? 'Analysis completed',
+        keyPoints: (response['keyPoints'] as List?)?.cast<String>() ?? [],
+        difficulty: response['difficulty'] as String? ?? 'medium',
+        estimatedReadTime: response['estimatedReadTime'] as int? ?? 5,
+        tags: (response['tags'] as List?)?.cast<String>() ?? [],
+        relatedTopics: (response['relatedTopics'] as List?)?.cast<String>() ?? [],
       );
-    } on http.ClientException catch (e) {
+      
+      return lessonContent;
+      
+    } on ApiException catch (e) {
       stopwatch.stop();
-      debugPrint('Image analysis failed after ${stopwatch.elapsedMilliseconds}ms: Client error');
+      debugPrint('Image analysis failed after ${stopwatch.elapsedMilliseconds}ms: ${e.message}');
       throw TutorServiceException(
-        'HTTP client error',
-        details: e.message,
-      );
-    } on FormatException catch (e) {
-      throw TutorServiceException(
-        'Invalid response format',
-        details: e.message,
+        'Failed to analyze image: ${e.message}',
+        statusCode: e.statusCode,
+        details: e.toString(),
       );
     } catch (e) {
       if (e is TutorServiceException) rethrow;
@@ -148,35 +125,40 @@ class HttpTutorService implements TutorService {
   @override
   Future<String> askFollowUpQuestion(String question, String context) async {
     try {
-      final uri = Uri.parse('$baseUrl/follow-up');
+      debugPrint('Asking follow-up question via API service: $question');
       
-      final requestData = {
-        'question': question,
-        'context': context,
-      };
-
-      final response = await _client
-          .post(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: json.encode(requestData),
-          )
-          .timeout(timeout);
-
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body) as Map<String, dynamic>;
-        return jsonData['response'] as String;
-      } else {
-        throw TutorServiceException(
-          'Failed to get follow-up response',
-          statusCode: response.statusCode,
-          details: response.body,
-        );
-      }
-    } on SocketException catch (e) {
+      // Use the API service's chatWithTutor method for follow-up questions
+      final response = await _apiService.chatWithTutor(
+        message: question,
+        sessionType: 'follow_up',
+        conversationHistory: [
+          {
+            'role': 'assistant',
+            'content': context,
+          },
+          {
+            'role': 'user', 
+            'content': question,
+          }
+        ],
+      );
+      
+      // Extract the response text from the API response
+      final responseText = response['response'] as String? ?? 
+                          response['message'] as String? ??
+                          'I apologize, but I couldn\'t process your follow-up question at the moment.';
+      
+      debugPrint('Successfully received follow-up response');
+      return responseText;
+      
+    } on ApiException catch (e) {
+      debugPrint('API error during follow-up: $e');
+      throw TutorServiceException(
+        'Failed to get follow-up response: ${e.message}',
+        statusCode: e.statusCode,
+        details: e.toString(),
+      );
+    } catch (e) {
       throw TutorServiceException(
         'Network connection failed',
         details: e.message,
@@ -210,53 +192,51 @@ class HttpTutorService implements TutorService {
     List<String>? highlights,
   }) async {
     try {
-      final uri = Uri.parse('$baseUrl/chapter-chat');
+      debugPrint('Asking chapter question via API service: $question');
       
-      // Build context with chapter information
-      final contextData = {
-        'question': question,
-        'textbook_title': textbookTitle,
-        'chapter_number': chapterNumber,
-        'section_title': sectionTitle,
-        'section_content': sectionContent,
-        if (highlights != null && highlights.isNotEmpty) 'highlights': highlights,
-      };
+      // Build context message with chapter information
+      final contextMessage = '''
+Context: $textbookTitle - Chapter $chapterNumber: $sectionTitle
 
-      final response = await _client
-          .post(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: json.encode(contextData),
-          )
-          .timeout(timeout);
+Section Content:
+$sectionContent
 
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body) as Map<String, dynamic>;
-        return jsonData['response'] as String;
-      } else {
-        throw TutorServiceException(
-          'Failed to get chapter-specific response',
-          statusCode: response.statusCode,
-          details: response.body,
-        );
-      }
-    } on SocketException catch (e) {
-      throw TutorServiceException(
-        'Network connection failed',
-        details: e.message,
+${highlights != null && highlights.isNotEmpty ? 'Highlighted text: ${highlights.join(', ')}' : ''}
+
+Question: $question
+''';
+      
+      // Use the API service's chatWithTutor method for chapter questions
+      final response = await _apiService.chatWithTutor(
+        message: contextMessage,
+        subject: textbookTitle,
+        sessionType: 'chapter_discussion',
+        conversationHistory: [
+          {
+            'role': 'system',
+            'content': 'You are helping a student understand content from their textbook. Provide clear, educational explanations based on the provided context.',
+          },
+          {
+            'role': 'user',
+            'content': contextMessage,
+          }
+        ],
       );
-    } on http.ClientException catch (e) {
+      
+      // Extract the response text from the API response
+      final responseText = response['response'] as String? ?? 
+                          response['message'] as String? ??
+                          'I apologize, but I couldn\'t process your chapter question at the moment.';
+      
+      debugPrint('Successfully received chapter response');
+      return responseText;
+      
+    } on ApiException catch (e) {
+      debugPrint('API error during chapter question: $e');
       throw TutorServiceException(
-        'HTTP client error',
-        details: e.message,
-      );
-    } on FormatException catch (e) {
-      throw TutorServiceException(
-        'Invalid response format',
-        details: e.message,
+        'Failed to get chapter-specific response: ${e.message}',
+        statusCode: e.statusCode,
+        details: e.toString(),
       );
     } catch (e) {
       if (e is TutorServiceException) rethrow;
@@ -270,14 +250,11 @@ class HttpTutorService implements TutorService {
   @override
   Future<bool> isServiceAvailable() async {
     try {
-      final uri = Uri.parse('$baseUrl/health');
-      final response = await _client
-          .get(uri)
-          .timeout(const Duration(seconds: 5));
-      
-      return response.statusCode == 200;
+      // Use the API service's getAIStatus method to check availability
+      final status = await _apiService.getAIStatus();
+      return status['available'] == true || status['status'] == 'healthy';
     } catch (e) {
-      debugPrint('Tutor service health check failed: $e');
+      debugPrint('Tutor service availability check failed: $e');
       return false;
     }
   }
