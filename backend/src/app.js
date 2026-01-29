@@ -91,7 +91,7 @@ app.use((err, req, res, next) => {
   res.status(status).json(payload);
 });
 
-const HOST = "0.0.0.0";
+const HOST = process.env.HOST || "0.0.0.0";
 const PORT = process.env.PORT || "3000";
 
 
