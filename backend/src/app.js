@@ -18,6 +18,7 @@ const syllabusRoutes = require('./routes/syllabus.routes');
 const examRoutes = require('./routes/exam.routes');
 const visionRoutes = require('./routes/vision.routes');
 const statsRoutes = require('./routes/stats.routes');
+const storageRoutes = require('./routes/storage.routes');
 
 // Import middleware
 const { createRateLimit } = require('./middleware/auth.middleware');
@@ -27,6 +28,16 @@ const app = express();
 
 // Ensure logs directory exists
 fs.ensureDirSync('logs');
+
+// Initialize and check GCS storage
+const gcsStorage = require('./services/gcs-storage.service');
+const gcsConfig = gcsStorage.getConfigStatus();
+if (gcsConfig.initialized) {
+  console.log('✅ Google Cloud Storage initialized successfully');
+} else {
+  console.warn('⚠️  Google Cloud Storage not properly configured');
+  console.warn('   Check GOOGLE_CLOUD_PROJECT and GOOGLE_APPLICATION_CREDENTIALS');
+}
 
 // Security and middleware
 app.use(helmet());
@@ -58,6 +69,7 @@ app.use('/api/exam', examRoutes);
 app.use('/api/vision', visionRoutes);
 app.use('/api/syllabus', syllabusRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/storage', storageRoutes);
 
 // Legacy routes (for backward compatibility)
 app.use('/generate-plan', planRoutes);

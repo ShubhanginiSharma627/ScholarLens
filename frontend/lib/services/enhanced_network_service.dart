@@ -88,61 +88,18 @@ class EnhancedNetworkService {
     throw Exception('Max retries exceeded');
   }
   
-  // Upload file with progress tracking
+  // Delegate to StorageService for file uploads
+  // Use StorageService.uploadFile() instead of this method
+  @deprecated
   Future<Map<String, dynamic>> uploadFile({
     required String endpoint,
     required File file,
     Map<String, String>? fields,
     Function(double)? onProgress,
   }) async {
-    final uri = Uri.parse('$_baseUrl$endpoint');
-    final request = http.MultipartRequest('POST', uri);
-    
-    // Add headers
-    request.headers.addAll({
-      'Accept': 'application/json',
-      // Note: Authorization header will be added by ApiService if needed
-    });
-    
-    // Add fields
-    if (fields != null) {
-      request.fields.addAll(fields);
-    }
-    
-    // Add file
-    final multipartFile = await http.MultipartFile.fromPath(
-      'file',
-      file.path,
+    throw UnsupportedError(
+      'Use StorageService.uploadFile() instead of EnhancedNetworkService.uploadFile()'
     );
-    request.files.add(multipartFile);
-    
-    // Send request with progress tracking
-    final streamedResponse = await request.send();
-    
-    if (onProgress != null) {
-      int totalBytes = streamedResponse.contentLength ?? 0;
-      int receivedBytes = 0;
-      
-      streamedResponse.stream.listen(
-        (chunk) {
-          receivedBytes += chunk.length;
-          if (totalBytes > 0) {
-            onProgress(receivedBytes / totalBytes);
-          }
-        },
-      );
-    }
-    
-    final response = await http.Response.fromStream(streamedResponse);
-    
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return jsonDecode(response.body);
-    } else {
-      throw ApiException(
-        'Upload failed: ${response.body}',
-        response.statusCode,
-      );
-    }
   }
   
   // Batch requests

@@ -29,8 +29,8 @@ const PROMPT_TYPES = {
 // Cache for loaded prompts
 const promptCache = new Map();
 
-// Base prompts directory - go up one level from backend to find prompts
-const PROMPTS_DIR = path.join(process.cwd(), '..', 'prompts');
+// Base prompts directory - use absolute path from the project root
+const PROMPTS_DIR = path.resolve(__dirname, '..', '..', 'prompts');
 
 /**
  * Load a prompt template from file

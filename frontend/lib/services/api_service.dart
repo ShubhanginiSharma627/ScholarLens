@@ -524,6 +524,108 @@ class ApiService {
     return UserStats.fromJson(response);
   }
   
+  // Storage endpoints
+  Future<Map<String, dynamic>> getStorageStatus() async {
+    final response = await _makeRequest('GET', '/storage/status');
+    return response['data'];
+  }
+  
+  Future<StorageUploadResponse> uploadFile({
+    required File file,
+    String? folder,
+    bool makePublic = false,
+  }) async {
+    final multipartFile = await http.MultipartFile.fromPath(
+      'file',
+      file.path,
+      filename: file.path.split('/').last,
+    );
+    
+    final fields = <String, String>{
+      if (folder != null) 'folder': folder,
+      'makePublic': makePublic.toString(),
+    };
+    
+    final response = await _makeMultipartRequest(
+      '/storage/upload',
+      fields,
+      files: [multipartFile],
+      requiresAuth: true,
+    );
+    
+    return StorageUploadResponse.fromJson(response['data']);
+  }
+  
+  Future<String> getFileDownloadUrl({
+    required String fileName,
+    DateTime? expires,
+    bool public = false,
+  }) async {
+    final queryParams = <String, String>{
+      if (expires != null) 'expires': expires.toIso8601String(),
+      'public': public.toString(),
+    };
+    
+    final uri = Uri.parse('$_baseUrl/storage/download/$fileName')
+        .replace(queryParameters: queryParams);
+    
+    final response = await _client.get(uri, headers: _headers)
+        .timeout(const Duration(seconds: _timeoutSeconds));
+    
+    final data = _handleResponse(response);
+    return data['data']['downloadUrl'] as String;
+  }
+  
+  Future<void> deleteFile({required String fileName}) async {
+    await _makeRequest('DELETE', '/storage/files/$fileName', requiresAuth: true);
+  }
+  
+  Future<List<StorageFile>> listFiles({
+    String? folder,
+    int maxResults = 100,
+  }) async {
+    final queryParams = <String, String>{
+      if (folder != null) 'folder': folder,
+      'maxResults': maxResults.toString(),
+    };
+    
+    final uri = Uri.parse('$_baseUrl/storage/files')
+        .replace(queryParameters: queryParams);
+    
+    final response = await _client.get(uri, headers: _headers)
+        .timeout(const Duration(seconds: _timeoutSeconds));
+    
+    final data = _handleResponse(response);
+    final filesJson = data['data']['files'] as List;
+    
+    return filesJson.map((json) => StorageFile.fromJson(json)).toList();
+  }
+  
+  // Syllabus scanning with file upload
+  Future<Map<String, dynamic>> scanSyllabus({
+    required File file,
+    String? prompt,
+  }) async {
+    final multipartFile = await http.MultipartFile.fromPath(
+      'file',
+      file.path,
+      filename: file.path.split('/').last,
+    );
+    
+    final fields = <String, String>{
+      if (prompt != null) 'prompt': prompt,
+    };
+    
+    final response = await _makeMultipartRequest(
+      '/syllabus/scan',
+      fields,
+      files: [multipartFile],
+      requiresAuth: true,
+    );
+    
+    return response;
+  }
+  
   // Dispose
   void dispose() {
     _client.close();

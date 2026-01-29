@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/models.dart';
+import '../services/storage_service.dart';
 import '../widgets/common/polished_components.dart';
 import 'textbook_detail_screen.dart';
 
@@ -14,6 +16,9 @@ class SyllabusScannerScreen extends StatefulWidget {
 
 class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
   List<UploadedTextbook> uploadedTextbooks = [];
+  final StorageService _storageService = StorageService();
+  bool _isUploading = false;
+  double _uploadProgress = 0.0;
 
   @override
   void initState() {
@@ -21,37 +26,112 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
     _loadUploadedTextbooks();
   }
 
-  void _loadUploadedTextbooks() {
-    // TODO: Load uploaded textbooks from storage/service
-    // For now, using mock data
+  void _loadUploadedTextbooks() async {
+    try {
+      // Load uploaded textbooks from storage
+      final files = await _storageService.listFiles(folder: 'syllabus');
+      
+      setState(() {
+        uploadedTextbooks = files.map((file) => UploadedTextbook(
+          id: file.name,
+          title: file.originalName.replaceAll('.pdf', ''),
+          fileName: file.originalName,
+          fileSize: file.formattedSize,
+          status: TextbookStatus.ready,
+          uploadedAt: file.timeCreated,
+          chapters: [], // Will be populated after analysis
+          totalPages: 0, // Will be populated after analysis
+          keyTopics: [], // Will be populated after analysis
+          subject: 'Unknown', // Will be determined after analysis
+        )).toList();
+      });
+    } catch (e) {
+      // Fall back to mock data if storage fails
+      setState(() {
+        uploadedTextbooks = [
+          UploadedTextbook(
+            id: '1',
+            title: 'Biology Textbook',
+            fileName: 'Biology_Grade_12.pdf',
+            fileSize: '24.5 MB',
+            status: TextbookStatus.ready,
+            uploadedAt: DateTime.now().subtract(const Duration(days: 2)),
+            chapters: ['Cell Structure', 'Mitosis', 'DNA Replication', 'Photosynthesis', 'Genetics'],
+            totalPages: 156,
+            keyTopics: ['Cell Structure', 'Mitosis', 'DNA Replication', 'Photosynthesis'],
+            subject: 'Biology',
+          ),
+          UploadedTextbook(
+            id: '2',
+            title: 'Physics Textbook',
+            fileName: 'Physics_Fundamentals.pdf',
+            fileSize: '18.2 MB',
+            status: TextbookStatus.ready,
+            uploadedAt: DateTime.now().subtract(const Duration(days: 5)),
+            chapters: ['Newton\'s Laws', 'Kinematics', 'Work & Energy'],
+            totalPages: 124,
+            keyTopics: ['Newton\'s Laws', 'Kinematics', 'Work & Energy'],
+            subject: 'Physics',
+          ),
+        ];
+      });
+    }
+  }
+
+  Future<void> _handleFileUpload(File file) async {
+    if (!_storageService.isSupportedFileType(file)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unsupported file type. Please select a PDF file.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() {
-      uploadedTextbooks = [
-        UploadedTextbook(
-          id: '1',
-          title: 'Biology Textbook',
-          fileName: 'Biology_Grade_12.pdf',
-          fileSize: '24.5 MB',
-          status: TextbookStatus.ready,
-          uploadedAt: DateTime.now().subtract(const Duration(days: 2)),
-          chapters: ['Cell Structure', 'Mitosis', 'DNA Replication', 'Photosynthesis', 'Genetics'],
-          totalPages: 156,
-          keyTopics: ['Cell Structure', 'Mitosis', 'DNA Replication', 'Photosynthesis'],
-          subject: 'Biology',
-        ),
-        UploadedTextbook(
-          id: '2',
-          title: 'Physics Textbook',
-          fileName: 'Physics_Fundamentals.pdf',
-          fileSize: '18.2 MB',
-          status: TextbookStatus.ready,
-          uploadedAt: DateTime.now().subtract(const Duration(days: 5)),
-          chapters: ['Newton\'s Laws', 'Kinematics', 'Work & Energy'],
-          totalPages: 124,
-          keyTopics: ['Newton\'s Laws', 'Kinematics', 'Work & Energy'],
-          subject: 'Physics',
-        ),
-      ];
+      _isUploading = true;
+      _uploadProgress = 0.0;
     });
+
+    try {
+      // Upload and scan the syllabus
+      final analysisResult = await _storageService.uploadAndScanSyllabus(
+        file: file,
+        prompt: 'Analyze this syllabus and extract key information including chapters, topics, and subject area.',
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Syllabus uploaded and analyzed successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      // Reload textbooks to show the new upload
+      _loadUploadedTextbooks();
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Upload failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+          _uploadProgress = 0.0;
+        });
+      }
+    }
   }
 
   @override
@@ -70,7 +150,11 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    const UploadInterface(),
+                    UploadInterface(
+                      isUploading: _isUploading,
+                      uploadProgress: _uploadProgress,
+                      onFileSelected: _handleFileUpload,
+                    ),
                     YourTextbooksSection(textbooks: uploadedTextbooks),
                     const GeminiTextbookPromotionCard(),
                     const TextbookFeaturesCard(),
@@ -128,7 +212,16 @@ class SyllabusHeader extends StatelessWidget {
 
 /// Upload interface with drag and drop area
 class UploadInterface extends StatelessWidget {
-  const UploadInterface({super.key});
+  final bool isUploading;
+  final double uploadProgress;
+  final Function(File) onFileSelected;
+
+  const UploadInterface({
+    super.key,
+    required this.isUploading,
+    required this.uploadProgress,
+    required this.onFileSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -183,25 +276,43 @@ class UploadInterface extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => _chooseFile(context),
-            icon: const Icon(Icons.upload),
-            label: const Text('Choose File'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          if (isUploading) ...[
+            LinearProgressIndicator(
+              value: uploadProgress,
+              backgroundColor: Colors.grey[300],
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Theme.of(context).primaryColor,
               ),
             ),
-          ),
+            const SizedBox(height: 16),
+            Text(
+              'Uploading... ${(uploadProgress * 100).toInt()}%',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.grey[600],
+              ),
+            ),
+          ] else
+            ElevatedButton.icon(
+              onPressed: () => _chooseFile(context),
+              icon: const Icon(Icons.upload),
+              label: const Text('Choose File'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
   void _chooseFile(BuildContext context) async {
+    if (isUploading) return;
+
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -210,14 +321,19 @@ class UploadInterface extends StatelessWidget {
       );
 
       if (result != null && context.mounted) {
-        PlatformFile file = result.files.first;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Selected: ${file.name}'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        // TODO: Process uploaded file
+        PlatformFile platformFile = result.files.first;
+        
+        if (platformFile.path != null) {
+          File file = File(platformFile.path!);
+          onFileSelected(file);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to access selected file'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (context.mounted) {

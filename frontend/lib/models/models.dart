@@ -10,6 +10,8 @@ export 'processed_image.dart';
 export 'quiz_question.dart';
 export 'recent_activity.dart';
 export 'recent_snap.dart';
+export 'storage_file.dart';
+export 'storage_upload_response.dart';
 export 'study_session_progress.dart';
 export 'text_highlight.dart';
 export 'uploaded_textbook.dart';

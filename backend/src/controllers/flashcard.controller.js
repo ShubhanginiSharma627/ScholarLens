@@ -204,40 +204,114 @@ const generateFlashcardsFromTopic = async (req, res) => {
       tags: req.body.tags
     });
     
-    // Parse AI response and create flashcards
-    const flashcardMatches = aiResponse.match(/Q: (.*?)\nA: (.*?)(?=\n\n|$)/gs);
+    console.log('AI Response Length:', aiResponse?.length || 0); // Debug log
+    console.log('AI Response Type:', typeof aiResponse); // Debug log
+    console.log('AI Response (first 500 chars):', aiResponse?.substring(0, 500) || 'EMPTY'); // Debug log
+    
+    if (!aiResponse || aiResponse.trim().length === 0) {
+      console.error('AI Response is empty or null');
+      return res.status(500).json({
+        success: false,
+        error: { message: 'AI service returned empty response', details: 'No content generated' }
+      });
+    }
+    
+    let parsedResponse;
     const createdFlashcards = [];
     
-    if (flashcardMatches) {
-      for (const match of flashcardMatches) {
-        const lines = match.trim().split('\n');
-        const question = lines[0].replace('Q: ', '').trim();
-        const answer = lines[1].replace('A: ', '').trim();
-        
-        const flashcardId = uuidv4();
-        const flashcardData = {
-          id: flashcardId,
-          userId,
-          question,
-          answer,
-          difficulty,
-          tags: [topic],
-          setId: setId || null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          studyStats: {
-            timesStudied: 0,
-            correctAnswers: 0,
-            lastStudied: null,
-            nextReview: new Date().toISOString(),
-            easeFactor: 2.5,
-            interval: 1
-          },
-          generatedBy: 'ai'
-        };
-        
-        await db.collection('flashcards').doc(flashcardId).set(flashcardData);
-        createdFlashcards.push(flashcardData);
+    try {
+      // Clean the AI response by removing markdown code blocks
+      let cleanedResponse = aiResponse.trim();
+      
+      // Remove markdown code blocks if present
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanedResponse.startsWith('```')) {
+        cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      console.log('Cleaned AI Response:', cleanedResponse.substring(0, 500));
+      
+      // Try to parse as JSON first (new format)
+      parsedResponse = JSON.parse(cleanedResponse);
+      
+      if (parsedResponse.flashcards && Array.isArray(parsedResponse.flashcards)) {
+        // Process JSON format flashcards
+        for (const flashcard of parsedResponse.flashcards) {
+          const flashcardId = uuidv4();
+          const flashcardData = {
+            id: flashcardId,
+            userId,
+            question: flashcard.question,
+            answer: flashcard.answer,
+            difficulty: flashcard.difficulty || difficulty,
+            tags: flashcard.tags || [topic],
+            setId: setId || null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            studyStats: {
+              timesStudied: 0,
+              correctAnswers: 0,
+              lastStudied: null,
+              nextReview: new Date().toISOString(),
+              easeFactor: 2.5,
+              interval: 1
+            },
+            generatedBy: 'ai'
+          };
+          
+          // Only add optional fields if they exist and are not undefined
+          if (flashcard.category) {
+            flashcardData.category = flashcard.category;
+          }
+          if (flashcard.explanation) {
+            flashcardData.explanation = flashcard.explanation;
+          }
+          if (flashcard.memory_tip) {
+            flashcardData.memoryTip = flashcard.memory_tip;
+          }
+          
+          await db.collection('flashcards').doc(flashcardId).set(flashcardData);
+          createdFlashcards.push(flashcardData);
+        }
+      }
+    } catch (jsonError) {
+      console.log('JSON parsing failed, trying legacy format:', jsonError.message);
+      
+      // Fallback to legacy text parsing
+      const flashcardMatches = aiResponse.match(/Q: (.*?)\nA: (.*?)(?=\n\n|$)/gs);
+      
+      if (flashcardMatches) {
+        for (const match of flashcardMatches) {
+          const lines = match.trim().split('\n');
+          const question = lines[0].replace('Q: ', '').trim();
+          const answer = lines[1].replace('A: ', '').trim();
+          
+          const flashcardId = uuidv4();
+          const flashcardData = {
+            id: flashcardId,
+            userId,
+            question,
+            answer,
+            difficulty,
+            tags: [topic],
+            setId: setId || null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            studyStats: {
+              timesStudied: 0,
+              correctAnswers: 0,
+              lastStudied: null,
+              nextReview: new Date().toISOString(),
+              easeFactor: 2.5,
+              interval: 1
+            },
+            generatedBy: 'ai'
+          };
+          
+          await db.collection('flashcards').doc(flashcardId).set(flashcardData);
+          createdFlashcards.push(flashcardData);
+        }
       }
     }
     
@@ -255,7 +329,8 @@ const generateFlashcardsFromTopic = async (req, res) => {
       data: { 
         flashcards: createdFlashcards,
         generated: createdFlashcards.length,
-        topic
+        topic,
+        metadata: parsedResponse?.metadata || null
       }
     });
     
@@ -263,7 +338,7 @@ const generateFlashcardsFromTopic = async (req, res) => {
     console.error('Generate flashcards error:', error);
     res.status(500).json({
       success: false,
-      error: { message: 'Failed to generate flashcards' }
+      error: { message: 'Failed to generate flashcards', details: error.message }
     });
   }
 };

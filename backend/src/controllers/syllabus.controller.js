@@ -2,7 +2,7 @@ const pdf = require('pdf-parse');
 const fs = require('fs-extra');
 const path = require('path');
 const syllabusService = require('../services/syllabus.service');
-const firebaseStorage = require('../services/firebase-storage.service');
+const gcsStorage = require('../services/gcs-storage.service');
 const { analyzeDocument } = require('../services/vertexai.service');
 const { socraticTutorPrompt } = require('../utils/promptUtils');
 const firestore = require('@google-cloud/firestore');
@@ -79,16 +79,16 @@ exports.scanSyllabus = async (req, res) => {
       return res.status(400).json({ error: 'No file provided' });
     }
 
-    // Check if Firebase Storage is configured
-    if (!firebaseStorage.isConfigured()) {
-      return res.status(500).json({ error: 'Firebase Storage not configured' });
+    // Check if GCS Storage is configured
+    if (!gcsStorage.isConfigured()) {
+      return res.status(500).json({ error: 'Google Cloud Storage not configured' });
     }
 
     const file = req.file;
-    const fileName = firebaseStorage.generateUniqueFilename(file.originalname, 'syllabus-');
+    const fileName = gcsStorage.generateUniqueFilename(file.originalname, 'syllabus-');
 
-    // Upload to Firebase Storage
-    const downloadUrl = await firebaseStorage.uploadFile(file.path, fileName, {
+    // Upload to Google Cloud Storage
+    const downloadUrl = await gcsStorage.uploadFile(file.path, fileName, {
       contentType: file.mimetype,
       makePublic: false, // Keep private for security
       originalName: file.originalname,
@@ -101,23 +101,23 @@ exports.scanSyllabus = async (req, res) => {
     const userPrompt = req.body.prompt || 'Analyze this syllabus and provide a study plan.';
     const fullPrompt = socraticTutorPrompt(userPrompt, 'Syllabus analysis');
 
-    // For document analysis, we need the Firebase Storage path
-    const firebaseStoragePath = `gs://${process.env.FIREBASE_STORAGE_BUCKET}/${fileName}`;
-    const analysis = await analyzeDocument(firebaseStoragePath, fullPrompt, 'gemini-1.5-pro');
+    // For document analysis, we need the GCS Storage path
+    const gcsStoragePath = `gs://${process.env.GCS_BUCKET}/${fileName}`;
+    const analysis = await analyzeDocument(gcsStoragePath, fullPrompt, 'gemini-1.5-pro');
 
     // Log interaction
     await db.collection('interactions').add({
       type: 'syllabus',
       userId: req.body.userId || 'anonymous',
       prompt: userPrompt,
-      fileUri: firebaseStoragePath,
+      fileUri: gcsStoragePath,
       downloadUrl: downloadUrl,
       timestamp: new Date(),
     });
 
     res.status(200).json({ 
       analysis, 
-      fileUri: firebaseStoragePath,
+      fileUri: gcsStoragePath,
       downloadUrl: downloadUrl 
     });
   } catch (error) {

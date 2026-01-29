@@ -12,7 +12,8 @@
     "clean": "rm -rf node_modules package-lock.json",
     "fresh-install": "npm run clean && npm install",
     "prod": "NODE_ENV=production node src/app.js",
-    "check": "node --check src/app.js"
+    "check": "node --check src/app.js",
+    "setup-gcs": "node scripts/setup-gcs.js"
   },
   "dependencies": {
     "@google-cloud/firestore": "^5.0.0",
