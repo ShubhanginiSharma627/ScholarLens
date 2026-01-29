@@ -1,21 +1,11 @@
 const enhancedAiService = require('../services/enhanced-ai.service');
 const firestore = require('@google-cloud/firestore');
-const winston = require('winston');
+const { createLogger, logBusiness, logPerformance } = require('../config/logging.config');
 
 const db = new firestore.Firestore();
 
-// Configure logger
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'logs/enhanced-ai-controller.log' })
-  ]
-});
+// Create service-specific logger
+const logger = createLogger('enhanced-ai-controller');
 
 // Enhanced topic explanation with cache
 const explainTopicWithCache = async (req, res) => {
@@ -136,57 +126,163 @@ const createQuizQuestionsWithCache = async (req, res) => {
 
 // Enhanced tutor chat with cache
 const chatWithTutorWithCache = async (req, res) => {
+  const requestId = `enhanced_chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
   try {
     const { message, subject, studentLevel, conversationHistory, learningGoals, sessionType } = req.body;
     const userId = req.user?.userId;
 
+    logger.info(`[${requestId}] Enhanced tutor chat request received`, {
+      userId: userId || 'anonymous',
+      messageLength: message?.length || 0,
+      messagePreview: message?.substring(0, 50) || '',
+      subject,
+      studentLevel,
+      sessionType: sessionType || 'general_chat',
+      hasConversationHistory: !!conversationHistory,
+      hasLearningGoals: !!learningGoals,
+      requestHeaders: {
+        userAgent: req.headers['user-agent'],
+        contentType: req.headers['content-type']
+      }
+    });
+
     if (!message) {
+      logger.warn(`[${requestId}] Missing message in request body`);
       return res.status(400).json({
         success: false,
         error: { message: 'Message is required' }
       });
     }
 
-    const result = await enhancedAiService.generateTutorResponseWithCache(message, {
-      subject,
-      studentLevel,
-      conversationHistory,
-      learningGoals,
-      sessionType: sessionType || 'general_chat'
-    });
-
-    // Log interaction if user is authenticated
-    if (userId) {
-      await db.collection('chat_sessions').add({
-        userId,
-        userMessage: message,
-        tutorResponse: result.response,
+    const startTime = Date.now();
+    
+    try {
+      const result = await enhancedAiService.generateTutorResponseWithCache(message, {
         subject,
-        sessionType,
-        cacheHit: result.cacheHit,
+        studentLevel,
+        conversationHistory,
+        learningGoals,
+        sessionType: sessionType || 'general_chat'
+      });
+
+      const processingTime = Date.now() - startTime;
+
+      logger.info(`[${requestId}] Enhanced tutor response generated`, {
+        responseLength: result.response?.length || 0,
+        processingTime,
         source: result.source,
-        timestamp: new Date(),
+        cacheHit: result.cacheHit,
+        relatedTopic: result.relatedTopic,
+        confidence: result.confidence,
+        hasError: !!result.error
+      });
+
+      // Validate response
+      if (!result.response || result.response.trim() === '') {
+        logger.error(`[${requestId}] Empty enhanced tutor response`, {
+          processingTime,
+          source: result.source,
+          error: result.error
+        });
+        return res.status(500).json({
+          success: false,
+          error: { message: 'Failed to generate response. Please try again.' }
+        });
+      }
+
+      // Log interaction if user is authenticated
+      if (userId) {
+        try {
+          await db.collection('chat_sessions').add({
+            userId,
+            userMessage: message,
+            tutorResponse: result.response,
+            subject,
+            sessionType,
+            cacheHit: result.cacheHit,
+            source: result.source,
+            relatedTopic: result.relatedTopic,
+            confidence: result.confidence,
+            processingTime,
+            timestamp: new Date(),
+          });
+          logger.debug(`[${requestId}] Enhanced chat session logged to database`);
+        } catch (dbError) {
+          logger.error(`[${requestId}] Failed to log enhanced chat session`, {
+            error: dbError.message,
+            userId
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        data: { 
+          response: result.response,
+          sessionType: sessionType || 'general_chat',
+          cacheHit: result.cacheHit,
+          source: result.source,
+          processingTime,
+          ...(result.relatedTopic && { relatedTopic: result.relatedTopic }),
+          ...(result.confidence && { confidence: result.confidence }),
+          timestamp: new Date().toISOString()
+        }
+      });
+
+    } catch (generationError) {
+      const processingTime = Date.now() - startTime;
+      
+      logger.error(`[${requestId}] Enhanced tutor response generation failed`, {
+        error: generationError.message,
+        stack: generationError.stack,
+        processingTime,
+        messageLength: message.length,
+        subject,
+        studentLevel,
+        sessionType,
+        errorCode: generationError.code
+      });
+
+      // Provide specific error messages
+      let errorMessage = 'Failed to generate tutor response';
+      let statusCode = 500;
+      
+      if (generationError.message.includes('BILLING_DISABLED')) {
+        errorMessage = 'AI service is temporarily unavailable due to billing configuration.';
+        statusCode = 503;
+      } else if (generationError.message.includes('NOT_FOUND')) {
+        errorMessage = 'AI model is temporarily unavailable. Please try again later.';
+        statusCode = 503;
+      } else if (generationError.message.includes('timeout')) {
+        errorMessage = 'Request timed out. Please try again with a shorter message.';
+        statusCode = 408;
+      }
+      
+      return res.status(statusCode).json({
+        success: false,
+        error: { 
+          message: errorMessage,
+          code: generationError.code || 'ENHANCED_GENERATION_ERROR',
+          processingTime
+        }
       });
     }
 
-    res.json({
-      success: true,
-      data: { 
-        response: result.response,
-        sessionType: sessionType || 'general_chat',
-        cacheHit: result.cacheHit,
-        source: result.source,
-        ...(result.relatedTopic && { relatedTopic: result.relatedTopic }),
-        ...(result.confidence && { confidence: result.confidence }),
-        timestamp: new Date().toISOString()
-      }
-    });
-
   } catch (error) {
-    logger.error('Enhanced tutor chat error:', error);
+    logger.error(`[${requestId}] Enhanced tutor chat request failed`, {
+      error: error.message,
+      stack: error.stack,
+      requestBody: req.body,
+      userId: req.user?.userId || 'anonymous'
+    });
+    
     res.status(500).json({
       success: false,
-      error: { message: 'Failed to generate tutor response' }
+      error: { 
+        message: 'Internal server error. Please try again later.',
+        code: 'ENHANCED_INTERNAL_ERROR'
+      }
     });
   }
 };

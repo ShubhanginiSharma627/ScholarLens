@@ -49,8 +49,10 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
       (_tutorService as HttpTutorService).cancelActiveRequests();
     }
     
+    // Dispose controllers safely
     _scrollController.dispose();
     _textController.dispose();
+    
     super.dispose();
   }
 

@@ -70,21 +70,32 @@ class ManagedAnimation {
 
   /// Disposes the animation and its controller
   void dispose() {
-    if (state != AnimationState.disposed) {
-      // Safely dispose the controller
-      try {
-        if (!controller.isDismissed && !controller.isCompleted) {
-          controller.stop();
-        }
-        controller.dispose();
-      } catch (e) {
-        // Controller may already be disposed, ignore the error
-        if (kDebugMode) {
-          debugPrint('Animation controller already disposed: $id - $e');
-        }
+    if (state == AnimationState.disposed) {
+      // Already disposed, don't dispose again
+      if (kDebugMode) {
+        debugPrint('Animation already disposed: $id');
       }
-      state = AnimationState.disposed;
-      endTime ??= DateTime.now();
+      return;
+    }
+    
+    // Mark as disposed first to prevent double disposal
+    state = AnimationState.disposed;
+    endTime ??= DateTime.now();
+    
+    // Safely dispose the controller
+    try {
+      if (!controller.isDismissed && !controller.isCompleted) {
+        controller.stop();
+      }
+      // Check if controller is already disposed by checking if it throws
+      if (!controller.isDisposed) {
+        controller.dispose();
+      }
+    } catch (e) {
+      // Controller may already be disposed, log but don't crash
+      if (kDebugMode) {
+        debugPrint('Controller disposal error for $id: $e');
+      }
     }
   }
 

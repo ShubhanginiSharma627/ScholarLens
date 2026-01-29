@@ -49,16 +49,16 @@ class _SignupScreenState extends State<SignupScreen> {
         child: Consumer<AuthenticationProvider>(
           builder: (context, authProvider, child) {
             return SingleChildScrollView(
-              padding: const EdgeInsets.all(AppTheme.spacingL),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: AppTheme.spacingXL),
+                  const SizedBox(height: AppTheme.spacingL),
                   
                   // Header
                   _buildHeader(),
                   
-                  const SizedBox(height: AppTheme.spacingXL),
+                  const SizedBox(height: AppTheme.spacingL),
                   
                   // Form Card
                   ModernFormCard(
@@ -68,27 +68,27 @@ class _SignupScreenState extends State<SignupScreen> {
                         // Sign Up Header
                         _buildFormHeader(),
                         
-                        const SizedBox(height: AppTheme.spacingXL),
+                        const SizedBox(height: AppTheme.spacingL),
                         
                         // Google Sign-In Button
                         _buildGoogleSignInButton(authProvider),
                         
-                        const SizedBox(height: AppTheme.spacingL),
+                        const SizedBox(height: AppTheme.spacingM),
                         
                         // Divider
                         const FormDivider(),
                         
-                        const SizedBox(height: AppTheme.spacingL),
+                        const SizedBox(height: AppTheme.spacingM),
                         
                         // Signup Form
                         _buildSignupForm(authProvider),
                         
-                        const SizedBox(height: AppTheme.spacingL),
+                        const SizedBox(height: AppTheme.spacingM),
                         
                         // Terms and Conditions
                         _buildTermsAndConditions(),
                         
-                        const SizedBox(height: AppTheme.spacingXL),
+                        const SizedBox(height: AppTheme.spacingL),
                         
                         // Signup Button
                         _buildSignupButton(authProvider),
@@ -96,7 +96,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: AppTheme.spacingXL),
+                  const SizedBox(height: AppTheme.spacingL),
                   
                   // Login Link
                   _buildLoginLink(),
@@ -120,36 +120,38 @@ class _SignupScreenState extends State<SignupScreen> {
       children: [
         // App Logo/Icon
         Container(
-          width: 80,
-          height: 80,
+          width: 64,
+          height: 64,
           decoration: BoxDecoration(
             color: AppTheme.primaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+            borderRadius: BorderRadius.circular(AppTheme.radiusL),
           ),
           child: const Icon(
             Icons.school,
-            size: 40,
+            size: 32,
             color: AppTheme.primaryColor,
           ),
         ),
         
-        const SizedBox(height: AppTheme.spacingL),
+        const SizedBox(height: AppTheme.spacingM),
         
         // Welcome Text
         Text(
           'Create Account',
-          style: Theme.of(context).textTheme.displayMedium?.copyWith(
+          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
             fontWeight: FontWeight.w700,
+            fontSize: 28,
           ),
           textAlign: TextAlign.center,
         ),
         
-        const SizedBox(height: AppTheme.spacingS),
+        const SizedBox(height: AppTheme.spacingXS),
         
         Text(
           'Start your learning journey today',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: AppTheme.secondaryTextColor,
+            fontSize: 14,
           ),
           textAlign: TextAlign.center,
         ),
@@ -162,19 +164,21 @@ class _SignupScreenState extends State<SignupScreen> {
       children: [
         Text(
           'Sign Up',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppTheme.primaryTextColor,
+            fontSize: 22,
           ),
           textAlign: TextAlign.center,
         ),
         
-        const SizedBox(height: AppTheme.spacingS),
+        const SizedBox(height: AppTheme.spacingXS),
         
         Text(
           'Create your account to get started',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: AppTheme.secondaryTextColor,
+            fontSize: 13,
           ),
           textAlign: TextAlign.center,
         ),

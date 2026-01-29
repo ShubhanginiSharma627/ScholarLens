@@ -44,16 +44,16 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Consumer<AuthenticationProvider>(
           builder: (context, authProvider, child) {
             return SingleChildScrollView(
-              padding: const EdgeInsets.all(AppTheme.spacingL),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: AppTheme.spacingXL),
+                  const SizedBox(height: AppTheme.spacingL),
                   
                   // Header
                   _buildHeader(),
                   
-                  const SizedBox(height: AppTheme.spacingXXL),
+                  const SizedBox(height: AppTheme.spacingL),
                   
                   // Form Card
                   ModernFormCard(
@@ -63,32 +63,32 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Sign In Header
                         _buildFormHeader(),
                         
-                        const SizedBox(height: AppTheme.spacingXL),
+                        const SizedBox(height: AppTheme.spacingL),
                         
                         // Google Sign-In Button
                         _buildGoogleSignInButton(authProvider),
                         
-                        const SizedBox(height: AppTheme.spacingL),
+                        const SizedBox(height: AppTheme.spacingM),
                         
                         // Divider
                         const FormDivider(),
                         
-                        const SizedBox(height: AppTheme.spacingL),
+                        const SizedBox(height: AppTheme.spacingM),
                         
                         // Login Form
                         _buildLoginForm(authProvider),
                         
-                        const SizedBox(height: AppTheme.spacingM),
+                        const SizedBox(height: AppTheme.spacingS),
                         
                         // Forgot Password Link
                         _buildForgotPasswordLink(),
                         
-                        const SizedBox(height: AppTheme.spacingM),
+                        const SizedBox(height: AppTheme.spacingS),
                         
                         // Remember Me
                         _buildRememberMe(),
                         
-                        const SizedBox(height: AppTheme.spacingXL),
+                        const SizedBox(height: AppTheme.spacingL),
                         
                         // Login Button
                         _buildLoginButton(authProvider),
@@ -96,13 +96,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: AppTheme.spacingXL),
+                  const SizedBox(height: AppTheme.spacingL),
                   
                   // Sign Up Link
                   _buildSignUpLink(),
                   
                   // Terms Text
-                  const SizedBox(height: AppTheme.spacingL),
+                  const SizedBox(height: AppTheme.spacingM),
                   _buildTermsText(),
                   
                   // Error Message
@@ -124,36 +124,38 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         // App Logo/Icon
         Container(
-          width: 80,
-          height: 80,
+          width: 64,
+          height: 64,
           decoration: BoxDecoration(
             color: AppTheme.primaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+            borderRadius: BorderRadius.circular(AppTheme.radiusL),
           ),
           child: const Icon(
             Icons.school,
-            size: 40,
+            size: 32,
             color: AppTheme.primaryColor,
           ),
         ),
         
-        const SizedBox(height: AppTheme.spacingL),
+        const SizedBox(height: AppTheme.spacingM),
         
         // Welcome Text
         Text(
           'Welcome Back',
-          style: Theme.of(context).textTheme.displayMedium?.copyWith(
+          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
             fontWeight: FontWeight.w700,
+            fontSize: 28,
           ),
           textAlign: TextAlign.center,
         ),
         
-        const SizedBox(height: AppTheme.spacingS),
+        const SizedBox(height: AppTheme.spacingXS),
         
         Text(
           'Sign in to continue your learning journey',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: AppTheme.secondaryTextColor,
+            fontSize: 14,
           ),
           textAlign: TextAlign.center,
         ),
@@ -166,19 +168,21 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         Text(
           'Sign In',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppTheme.primaryTextColor,
+            fontSize: 22,
           ),
           textAlign: TextAlign.center,
         ),
         
-        const SizedBox(height: AppTheme.spacingS),
+        const SizedBox(height: AppTheme.spacingXS),
         
         Text(
           'Enter your credentials to access your account',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: AppTheme.secondaryTextColor,
+            fontSize: 13,
           ),
           textAlign: TextAlign.center,
         ),

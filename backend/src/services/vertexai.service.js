@@ -1,6 +1,9 @@
 const { VertexAI } = require('@google-cloud/vertexai');
-const winston = require('winston');
+const { createLogger, logPerformance } = require('../config/logging.config');
 const promptService = require('./prompt.service');
+
+// Create service-specific logger
+const logger = createLogger('vertexai-service');
 function extractText(response) {
   try {
     const text =
@@ -23,18 +26,7 @@ function extractText(response) {
   }
 }
 
-// Configure logger
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'logs/ai-service.log' })
-  ]
-});
+// Configure logger - removed old winston config, using new logging system
 
 // AI Models Configuration
 const MODELS = {
@@ -129,18 +121,38 @@ function selectOptimalModel(taskType, complexity = 'medium') {
 }
 
 async function generateText(prompt, taskType = 'general', complexity = 'medium', options = {}) {
-  if (!vertexAI) throw new Error('VertexAI not initialized. Check GOOGLE_CLOUD_PROJECT.');
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  logger.info(`[${requestId}] Starting text generation`, {
+    taskType,
+    complexity,
+    promptLength: prompt.length,
+    options: {
+      temperature: options.temperature,
+      maxTokens: options.maxTokens,
+      model: options.model
+    }
+  });
+
+  if (!vertexAI) {
+    logger.error(`[${requestId}] VertexAI not initialized. Check GOOGLE_CLOUD_PROJECT.`);
+    throw new Error('VertexAI not initialized. Check GOOGLE_CLOUD_PROJECT.');
+  }
   
   let model = options.model || selectOptimalModel(taskType, complexity);
   
   // Validate model parameter and provide fallback
   if (!model || model.trim() === '') {
-    logger.error(`Empty model parameter for taskType: ${taskType}, complexity: ${complexity}`);
+    logger.error(`[${requestId}] Empty model parameter`, {
+      taskType,
+      complexity,
+      originalModel: options.model
+    });
     model = 'gemini-1.5-pro'; // Hard-coded fallback
-    logger.warn(`Using fallback model: ${model}`);
+    logger.warn(`[${requestId}] Using fallback model: ${model}`);
   }
   
-  logger.info(`Generating text with model: ${model}, task: ${taskType}`);
+  logger.info(`[${requestId}] Model selected: ${model} for task: ${taskType}`);
 
   try {
     const generationConfig = {
@@ -150,9 +162,14 @@ async function generateText(prompt, taskType = 'general', complexity = 'medium',
       maxOutputTokens: options.maxTokens || 2048,
     };
 
+    logger.debug(`[${requestId}] Generation config:`, generationConfig);
+
     // Get system prompt based on task type
     const systemPrompt = await getSystemPromptForTask(taskType);
-    logger.debug(`System prompt loaded: ${systemPrompt ? 'Yes' : 'No'}`);
+    logger.info(`[${requestId}] System prompt loaded: ${systemPrompt ? 'Yes' : 'No'}`, {
+      taskType,
+      systemPromptLength: systemPrompt ? systemPrompt.length : 0
+    });
     
     // Configure model with system instruction if available
     const modelConfig = { model };
@@ -160,41 +177,94 @@ async function generateText(prompt, taskType = 'general', complexity = 'medium',
       modelConfig.systemInstruction = {
         parts: [{ text: systemPrompt }]
       };
-      logger.debug(`System instruction set for model`);
+      logger.debug(`[${requestId}] System instruction set for model`);
     }
+    
+    logger.info(`[${requestId}] Creating generative model with config:`, {
+      model,
+      hasSystemInstruction: !!systemPrompt
+    });
     
     const generativeModel = vertexAI.getGenerativeModel(modelConfig);
 
-    logger.debug(`User prompt: ${prompt.substring(0, 200)}...`);
+    logger.debug(`[${requestId}] User prompt preview: ${prompt.substring(0, 200)}...`);
+    
+    const startTime = Date.now();
+    logger.info(`[${requestId}] Sending request to VertexAI...`);
     
     const result = await generativeModel.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig
     });
     
-    logger.debug(`Generation result received`);
+    const requestDuration = Date.now() - startTime;
+    logger.info(`[${requestId}] VertexAI request completed in ${requestDuration}ms`);
+    
+    // Log performance metrics
+    logPerformance('vertexai_generate_content', requestDuration, {
+      requestId,
+      taskType,
+      model,
+      promptLength: prompt.length
+    });
     
     const response = await result.response;
-    logger.info(`Generation result received`, response);
+    logger.info(`[${requestId}] Response received from VertexAI`, {
+      hasCandidates: !!response?.candidates,
+      candidatesCount: response?.candidates?.length || 0,
+      requestDuration
+    });
+
+    // Log detailed response structure for debugging
+    if (response?.candidates?.[0]) {
+      const candidate = response.candidates[0];
+      logger.debug(`[${requestId}] First candidate details:`, {
+        hasContent: !!candidate.content,
+        partsCount: candidate.content?.parts?.length || 0,
+        finishReason: candidate.finishReason,
+        safetyRatings: candidate.safetyRatings?.length || 0
+      });
+    }
 
     const text = extractText(response);
     
-    logger.info(`Text generation successful, length: ${text.length}`);
+    logger.info(`[${requestId}] Text extraction completed`, {
+      textLength: text.length,
+      isEmpty: text.length === 0,
+      requestDuration
+    });
     
     if (text.length === 0) {
-      logger.error('Generated text is empty');
-      logger.debug('Full response object:', JSON.stringify(response, null, 2));
+      logger.error(`[${requestId}] Generated text is empty`, {
+        fullResponse: JSON.stringify(response, null, 2),
+        taskType,
+        model
+      });
       throw new Error('Generated response is empty');
     }
     
+    logger.info(`[${requestId}] Text generation successful`, {
+      textLength: text.length,
+      taskType,
+      model,
+      requestDuration
+    });
+    
     return text;
   } catch (error) {
-    logger.error(`Text generation failed: ${error.message}`);
-    logger.error('Stack trace:', error.stack);
+    logger.error(`[${requestId}] Text generation failed`, {
+      error: error.message,
+      stack: error.stack,
+      taskType,
+      model,
+      promptLength: prompt.length,
+      errorCode: error.code,
+      errorDetails: error.details
+    });
     
     // Provide a fallback response for tutor chat to prevent "no generated response" error
     if (taskType === 'chat_response' || taskType === 'tutor_chat') {
-      logger.warn('Providing fallback tutor response due to generation failure');
+      logger.warn(`[${requestId}] Providing fallback tutor response due to generation failure`);
       return "I apologize, but I'm experiencing technical difficulties right now. Please try asking your question again, or contact support if the issue persists.";
     }
     
@@ -470,9 +540,21 @@ async function generateRevisionPlan(topic, options = {}) {
 
 // Generate tutor chat response using prompt templates
 async function generateTutorResponse(message, options = {}) {
+  const requestId = `tutor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
   try {
-    logger.info(`Generating tutor response for message: "${message.substring(0, 50)}..."`);
-    logger.info(`Options:`, options);
+    logger.info(`[${requestId}] Generating tutor response`, {
+      messageLength: message.length,
+      messagePreview: message.substring(0, 50),
+      options: {
+        subject: options.subject,
+        studentLevel: options.studentLevel,
+        sessionType: options.sessionType,
+        hasConversationHistory: !!options.conversationHistory,
+        hasLearningGoals: !!options.learningGoals,
+        hasContext: !!options.context
+      }
+    });
     
     // Build user prompt with parameters (the system prompt will be added automatically)
     const userPrompt = `Student message: ${message}
@@ -480,14 +562,43 @@ async function generateTutorResponse(message, options = {}) {
     ${options.studentLevel ? `Student level: ${options.studentLevel}` : ''}
     ${options.conversationHistory ? `Conversation history: ${JSON.stringify(options.conversationHistory)}` : ''}
     ${options.learningGoals ? `Learning goals: ${JSON.stringify(options.learningGoals)}` : ''}
-    ${options.sessionType ? `Session type: ${options.sessionType}` : ''}`;
+    ${options.sessionType ? `Session type: ${options.sessionType}` : ''}
+    ${options.context ? `Additional context: ${options.context}` : ''}`;
     
-    logger.info(`Generated user prompt length: ${userPrompt.length}`);
+    logger.info(`[${requestId}] User prompt constructed`, {
+      promptLength: userPrompt.length,
+      hasSubject: !!options.subject,
+      hasStudentLevel: !!options.studentLevel,
+      hasContext: !!options.context
+    });
     
-    return await generateText(userPrompt, 'chat_response', 'medium', options);
+    const startTime = Date.now();
+    const response = await generateText(userPrompt, 'chat_response', 'medium', options);
+    const duration = Date.now() - startTime;
+    
+    logger.info(`[${requestId}] Tutor response generated successfully`, {
+      responseLength: response.length,
+      duration,
+      isEmpty: response.trim().length === 0
+    });
+    
+    if (!response || response.trim().length === 0) {
+      logger.error(`[${requestId}] Empty tutor response generated`, {
+        originalMessage: message,
+        options
+      });
+      throw new Error('Generated tutor response is empty');
+    }
+    
+    return response;
   } catch (error) {
-    logger.error('Tutor response generation failed:', error.message);
-    logger.error('Stack trace:', error.stack);
+    logger.error(`[${requestId}] Tutor response generation failed`, {
+      error: error.message,
+      stack: error.stack,
+      messageLength: message.length,
+      options,
+      errorCode: error.code
+    });
     throw error;
   }
 }

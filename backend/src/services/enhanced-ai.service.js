@@ -1,19 +1,9 @@
 const vertexaiService = require('./vertexai.service');
 const scienceqaService = require('./scienceqa.service');
-const winston = require('winston');
+const { createLogger, logPerformance } = require('../config/logging.config');
 
-// Configure logger
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'logs/enhanced-ai-service.log' })
-  ]
-});
+// Create service-specific logger
+const logger = createLogger('enhanced-ai-service');
 
 /**
  * Enhanced explanation generation with ScienceQA cache
@@ -167,14 +157,50 @@ async function generateQuizWithCache(topic, count = 5, type = 'multiple_choice',
  * @returns {Promise<Object>} - Generated response
  */
 async function generateTutorResponseWithCache(message, options = {}) {
+  const requestId = `enhanced_tutor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
   try {
-    logger.info(`Generating tutor response with cache layer`);
+    logger.info(`[${requestId}] Starting enhanced tutor response generation`, {
+      messageLength: message.length,
+      messagePreview: message.substring(0, 100),
+      options: {
+        subject: options.subject,
+        studentLevel: options.studentLevel,
+        sessionType: options.sessionType,
+        hasConversationHistory: !!options.conversationHistory,
+        hasLearningGoals: !!options.learningGoals
+      }
+    });
     
     // Step 1: Try to get relevant context from ScienceQA
-    const cachedContext = await scienceqaService.retrieveContext(message, options.subject);
+    logger.info(`[${requestId}] Attempting to retrieve context from ScienceQA`);
+    const startCacheTime = Date.now();
+    
+    let cachedContext = null;
+    try {
+      cachedContext = await scienceqaService.retrieveContext(message, options.subject);
+      const cacheTime = Date.now() - startCacheTime;
+      
+      logger.info(`[${requestId}] ScienceQA context retrieval completed`, {
+        duration: cacheTime,
+        contextFound: !!cachedContext,
+        contextTopic: cachedContext?.topic,
+        contextConfidence: cachedContext?.confidence
+      });
+    } catch (cacheError) {
+      const cacheTime = Date.now() - startCacheTime;
+      logger.warn(`[${requestId}] ScienceQA context retrieval failed`, {
+        duration: cacheTime,
+        error: cacheError.message
+      });
+    }
     
     if (cachedContext) {
-      logger.info('Using ScienceQA context for enhanced tutor response');
+      logger.info(`[${requestId}] Using ScienceQA context for enhanced tutor response`, {
+        topic: cachedContext.topic,
+        confidence: cachedContext.confidence,
+        contextLength: cachedContext.context?.length || 0
+      });
       
       // Enhance the options with cached context
       const enhancedOptions = {
@@ -184,7 +210,16 @@ async function generateTutorResponseWithCache(message, options = {}) {
         confidence: cachedContext.confidence
       };
       
+      const startGenTime = Date.now();
       const response = await vertexaiService.generateTutorResponse(message, enhancedOptions);
+      const genTime = Date.now() - startGenTime;
+      
+      logger.info(`[${requestId}] Enhanced tutor response generated successfully`, {
+        responseLength: response.length,
+        generationTime: genTime,
+        source: 'enhanced_with_cache',
+        relatedTopic: cachedContext.topic
+      });
       
       return {
         response,
@@ -196,8 +231,16 @@ async function generateTutorResponseWithCache(message, options = {}) {
     }
 
     // Step 2: Fallback to standard VertexAI
-    logger.info('No suitable context found, using standard tutor response');
+    logger.info(`[${requestId}] No suitable context found, using standard tutor response`);
+    const startGenTime = Date.now();
     const response = await vertexaiService.generateTutorResponse(message, options);
+    const genTime = Date.now() - startGenTime;
+    
+    logger.info(`[${requestId}] Standard tutor response generated successfully`, {
+      responseLength: response.length,
+      generationTime: genTime,
+      source: 'vertexai_only'
+    });
     
     return {
       response,
@@ -206,8 +249,23 @@ async function generateTutorResponseWithCache(message, options = {}) {
     };
 
   } catch (error) {
-    logger.error('Enhanced tutor response generation failed:', error.message);
-    throw error;
+    logger.error(`[${requestId}] Enhanced tutor response generation failed`, {
+      error: error.message,
+      stack: error.stack,
+      messageLength: message.length,
+      options,
+      errorCode: error.code,
+      errorDetails: error.details
+    });
+    
+    // Provide a fallback response to prevent complete failure
+    logger.warn(`[${requestId}] Providing fallback response due to generation failure`);
+    return {
+      response: "I apologize, but I'm experiencing technical difficulties right now. Please try asking your question again, or contact support if the issue persists.",
+      source: 'fallback_error',
+      cacheHit: false,
+      error: error.message
+    };
   }
 }
 

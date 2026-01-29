@@ -18,7 +18,7 @@ class ModernFormCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: margin ?? const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
+      margin: margin ?? const EdgeInsets.symmetric(horizontal: 0), // Removed horizontal margin
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
@@ -31,7 +31,7 @@ class ModernFormCard extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: padding ?? const EdgeInsets.all(AppTheme.spacingXL),
+        padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 20), // Reduced padding
         child: child,
       ),
     );

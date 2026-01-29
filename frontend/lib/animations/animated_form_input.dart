@@ -442,6 +442,7 @@ class _AnimatedFormInputState extends State<AnimatedFormInput>
           onChanged: widget.onChanged,
           onFieldSubmitted: widget.onFieldSubmitted,
           onTap: widget.onTap,
+          style: const TextStyle(fontSize: 14), // Reduced font size
         );
       },
     );

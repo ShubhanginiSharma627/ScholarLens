@@ -24,6 +24,7 @@ const storageRoutes = require('./routes/storage.routes');
 
 // Import middleware
 const { createRateLimit } = require('./middleware/auth.middleware');
+const { logRequests, logErrors } = require('./middleware/request-logger.middleware');
 const { nowIso } = require('./utils/dateUtils');
 
 const app = express();
@@ -50,6 +51,9 @@ app.use(cors({}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(morgan('combined'));
+
+// Request logging middleware (add before routes)
+app.use(logRequests);
 
 // Global rate limiting
 const globalRateLimit = createRateLimit(15 * 60 * 1000, 100); // 100 requests per 15 minutes
@@ -93,6 +97,7 @@ app.use((req, res) => {
 });
 
 // Global error handler
+app.use(logErrors);
 app.use((err, req, res, next) => {
   console.error('Global error handler:', err);
   

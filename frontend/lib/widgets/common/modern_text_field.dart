@@ -83,14 +83,16 @@ class ModernTextField extends StatelessWidget {
           ),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppTheme.spacingM,
-          vertical: AppTheme.spacingL,
+          horizontal: 12,
+          vertical: 12, // Reduced from AppTheme.spacingL
         ),
-        labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: AppTheme.secondaryTextColor,
+          fontSize: 13, // Reduced font size
         ),
-        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: AppTheme.secondaryTextColor.withValues(alpha: 0.7),
+          fontSize: 13, // Reduced font size
         ),
       ),
       validator: validator,

@@ -8,22 +8,12 @@ const {
   generateQuizQuestions
 } = require('../services/vertexai.service');
 const firestore = require('@google-cloud/firestore');
-const winston = require('winston');
+const { createLogger, logBusiness, logPerformance } = require('../config/logging.config');
 
 const db = new firestore.Firestore();
 
-// Configure logger
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'logs/ai-controller.log' })
-  ]
-});
+// Create service-specific logger
+const logger = createLogger('ai-controller');
 
 // Generate topic explanation
 const explainTopic = async (req, res) => {
@@ -177,78 +167,182 @@ const createRevisionPlan = async (req, res) => {
 
 // Generate tutor chat response
 const chatWithTutor = async (req, res) => {
+  const requestId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
   try {
     const { message, subject, studentLevel, conversationHistory, learningGoals, sessionType } = req.body;
     const userId = req.user?.userId;
 
+    logger.info(`[${requestId}] Tutor chat request received`, {
+      userId: userId || 'anonymous',
+      messageLength: message?.length || 0,
+      messagePreview: message?.substring(0, 50) || '',
+      subject,
+      studentLevel,
+      sessionType: sessionType || 'general_chat',
+      hasConversationHistory: !!conversationHistory,
+      hasLearningGoals: !!learningGoals,
+      requestHeaders: {
+        userAgent: req.headers['user-agent'],
+        contentType: req.headers['content-type']
+      }
+    });
+
     if (!message) {
+      logger.warn(`[${requestId}] Missing message in request body`);
       return res.status(400).json({
         success: false,
         error: { message: 'Message is required' }
       });
     }
 
-    logger.info(`Processing tutor chat request for message: "${message.substring(0, 50)}..."`);
-
-    const tutorResponse = await generateTutorResponse(message, {
+    logger.info(`[${requestId}] Processing tutor chat request`, {
+      messageLength: message.length,
       subject,
       studentLevel,
-      conversationHistory,
-      learningGoals,
       sessionType: sessionType || 'general_chat'
     });
 
-    // Validate that we got a response
-    if (!tutorResponse || tutorResponse.trim() === '') {
-      logger.error('Empty tutor response received');
-      return res.status(500).json({
-        success: false,
-        error: { message: 'Failed to generate response. Please try again.' }
-      });
-    }
-
-    // Log interaction if user is authenticated
-    if (userId) {
-      await db.collection('chat_sessions').add({
-        userId,
-        userMessage: message,
-        tutorResponse,
+    const startTime = Date.now();
+    
+    try {
+      const tutorResponse = await generateTutorResponse(message, {
         subject,
+        studentLevel,
+        conversationHistory,
+        learningGoals,
+        sessionType: sessionType || 'general_chat'
+      });
+
+      const processingTime = Date.now() - startTime;
+
+      // Validate that we got a response
+      if (!tutorResponse || tutorResponse.trim() === '') {
+        logger.error(`[${requestId}] Empty tutor response received`, {
+          processingTime,
+          originalMessage: message,
+          options: { subject, studentLevel, sessionType }
+        });
+        return res.status(500).json({
+          success: false,
+          error: { message: 'Failed to generate response. Please try again.' }
+        });
+      }
+
+      logger.info(`[${requestId}] Tutor response generated successfully`, {
+        responseLength: tutorResponse.length,
+        processingTime,
+        userId: userId || 'anonymous'
+      });
+
+      // Log business metrics
+      logBusiness('tutor_chat_success', userId, {
+        messageLength: message.length,
+        subject,
+        sessionType: sessionType || 'general_chat',
+        processingTime,
+        responseLength: tutorResponse.length
+      });
+
+      // Log performance metrics
+      logPerformance('tutor_chat_generation', processingTime, {
+        requestId,
+        userId: userId || 'anonymous',
+        messageLength: message.length,
+        responseLength: tutorResponse.length
+      });
+
+      // Log interaction if user is authenticated
+      if (userId) {
+        try {
+          await db.collection('chat_sessions').add({
+            userId,
+            userMessage: message,
+            tutorResponse,
+            subject,
+            sessionType,
+            processingTime,
+            timestamp: new Date(),
+          });
+          logger.debug(`[${requestId}] Chat session logged to database`);
+        } catch (dbError) {
+          logger.error(`[${requestId}] Failed to log chat session to database`, {
+            error: dbError.message,
+            userId
+          });
+          // Don't fail the request if logging fails
+        }
+      }
+
+      res.json({
+        success: true,
+        data: { 
+          response: tutorResponse,
+          sessionType: sessionType || 'general_chat',
+          processingTime,
+          timestamp: new Date().toISOString()
+        }
+      });
+
+    } catch (generationError) {
+      const processingTime = Date.now() - startTime;
+      
+      logger.error(`[${requestId}] Tutor response generation failed`, {
+        error: generationError.message,
+        stack: generationError.stack,
+        processingTime,
+        messageLength: message.length,
+        subject,
+        studentLevel,
         sessionType,
-        timestamp: new Date(),
+        errorCode: generationError.code
+      });
+
+      // Provide specific error messages based on error type
+      let errorMessage = 'Failed to generate tutor response';
+      let statusCode = 500;
+      
+      if (generationError.message.includes('BILLING_DISABLED')) {
+        errorMessage = 'AI service is temporarily unavailable due to billing configuration. Please contact support.';
+        statusCode = 503;
+      } else if (generationError.message.includes('NOT_FOUND')) {
+        errorMessage = 'AI model is temporarily unavailable. Please try again later.';
+        statusCode = 503;
+      } else if (generationError.message.includes('model parameter must not be empty')) {
+        errorMessage = 'AI service configuration error. Please contact support.';
+        statusCode = 500;
+      } else if (generationError.message.includes('Generated response is empty')) {
+        errorMessage = 'Unable to generate a response. Please rephrase your question and try again.';
+        statusCode = 422;
+      } else if (generationError.message.includes('timeout')) {
+        errorMessage = 'Request timed out. Please try again with a shorter message.';
+        statusCode = 408;
+      }
+      
+      return res.status(statusCode).json({
+        success: false,
+        error: { 
+          message: errorMessage,
+          code: generationError.code || 'GENERATION_ERROR',
+          processingTime
+        }
       });
     }
-
-    logger.info(`Tutor response generated successfully, length: ${tutorResponse.length}`);
-
-    res.json({
-      success: true,
-      data: { 
-        response: tutorResponse,
-        sessionType: sessionType || 'general_chat',
-        timestamp: new Date().toISOString()
-      }
-    });
 
   } catch (error) {
-    logger.error('Tutor chat error:', error);
-    
-    // Provide specific error messages based on error type
-    let errorMessage = 'Failed to generate tutor response';
-    
-    if (error.message.includes('BILLING_DISABLED')) {
-      errorMessage = 'AI service is temporarily unavailable due to billing configuration. Please contact support.';
-    } else if (error.message.includes('NOT_FOUND')) {
-      errorMessage = 'AI model is temporarily unavailable. Please try again later.';
-    } else if (error.message.includes('model parameter must not be empty')) {
-      errorMessage = 'AI service configuration error. Please contact support.';
-    } else if (error.message.includes('Generated response is empty')) {
-      errorMessage = 'Unable to generate a response. Please rephrase your question and try again.';
-    }
+    logger.error(`[${requestId}] Tutor chat request failed`, {
+      error: error.message,
+      stack: error.stack,
+      requestBody: req.body,
+      userId: req.user?.userId || 'anonymous'
+    });
     
     res.status(500).json({
       success: false,
-      error: { message: errorMessage }
+      error: { 
+        message: 'Internal server error. Please try again later.',
+        code: 'INTERNAL_ERROR'
+      }
     });
   }
 };
