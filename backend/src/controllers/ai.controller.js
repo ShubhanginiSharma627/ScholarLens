@@ -15,6 +15,17 @@ const db = new firestore.Firestore();
 // Create service-specific logger
 const logger = createLogger('ai-controller');
 
+// Helper function to safely prepare Firestore data by removing undefined values
+const prepareFirestoreData = (data) => {
+  const cleanData = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined && value !== null) {
+      cleanData[key] = value;
+    }
+  }
+  return cleanData;
+};
+
 // Generate topic explanation
 const explainTopic = async (req, res) => {
   try {
@@ -37,7 +48,7 @@ const explainTopic = async (req, res) => {
 
     // Log interaction if user is authenticated
     if (userId) {
-      await db.collection('interactions').add({
+      const interactionData = prepareFirestoreData({
         type: 'topic_explanation',
         userId,
         topic,
@@ -45,6 +56,7 @@ const explainTopic = async (req, res) => {
         explanationType: type,
         timestamp: new Date(),
       });
+      await db.collection('interactions').add(interactionData);
     }
 
     res.json({
@@ -89,13 +101,14 @@ const createStudyPlan = async (req, res) => {
 
     // Log interaction if user is authenticated
     if (userId) {
-      await db.collection('interactions').add({
+      const interactionData = prepareFirestoreData({
         type: 'study_plan_generation',
         userId,
         subjects,
         currentLevel,
         timestamp: new Date(),
       });
+      await db.collection('interactions').add(interactionData);
     }
 
     res.json({
@@ -137,7 +150,7 @@ const createRevisionPlan = async (req, res) => {
 
     // Log interaction if user is authenticated
     if (userId) {
-      await db.collection('interactions').add({
+      const interactionData = prepareFirestoreData({
         type: 'revision_plan_generation',
         userId,
         topic,
@@ -145,6 +158,7 @@ const createRevisionPlan = async (req, res) => {
         length,
         timestamp: new Date(),
       });
+      await db.collection('interactions').add(interactionData);
     }
 
     res.json({
@@ -255,20 +269,29 @@ const chatWithTutor = async (req, res) => {
       // Log interaction if user is authenticated
       if (userId) {
         try {
-          await db.collection('chat_sessions').add({
+          // Prepare chat session data, filtering out undefined values
+          const chatSessionData = {
             userId,
             userMessage: message,
             tutorResponse,
-            subject,
-            sessionType,
+            sessionType: sessionType || 'general_chat',
             processingTime,
             timestamp: new Date(),
-          });
+          };
+          
+          // Only add subject if it's defined
+          if (subject !== undefined && subject !== null) {
+            chatSessionData.subject = subject;
+          }
+          
+          await db.collection('chat_sessions').add(chatSessionData);
           logger.debug(`[${requestId}] Chat session logged to database`);
         } catch (dbError) {
           logger.error(`[${requestId}] Failed to log chat session to database`, {
             error: dbError.message,
-            userId
+            userId,
+            subject: subject || 'undefined',
+            sessionType: sessionType || 'undefined'
           });
           // Don't fail the request if logging fails
         }
