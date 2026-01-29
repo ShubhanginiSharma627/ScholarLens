@@ -296,7 +296,7 @@ class HttpTutorService implements TutorService {
 
 /// Factory for creating tutor service instances
 class TutorServiceFactory {
-  static const String defaultBaseUrl = 'http://localhost:3000';
+  static const String defaultBaseUrl = 'http://172.20.10.5:3000';
 
   /// Creates a production tutor service
   static TutorService createProduction({String? baseUrl}) {

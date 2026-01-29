@@ -4,7 +4,11 @@ import 'package:provider/provider.dart';
 import '../providers/providers.dart';
 import '../services/form_validator.dart';
 import '../theme/app_theme.dart';
-import '../animations/animated_form_input.dart';
+
+import '../widgets/common/modern_form_card.dart';
+import '../widgets/common/form_divider.dart';
+import '../widgets/common/modern_text_field.dart';
+import '../widgets/common/modern_button.dart';
 import 'signup_screen.dart';
 import 'password_reset_screen.dart';
 
@@ -35,6 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Consumer<AuthenticationProvider>(
           builder: (context, authProvider, child) {
@@ -43,40 +48,62 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: AppTheme.spacingXXL),
+                  const SizedBox(height: AppTheme.spacingXL),
                   
                   // Header
                   _buildHeader(),
                   
                   const SizedBox(height: AppTheme.spacingXXL),
                   
-                  // Login Form
-                  _buildLoginForm(authProvider),
-                  
-                  const SizedBox(height: AppTheme.spacingL),
-                  
-                  // Remember Me & Forgot Password
-                  _buildRememberMeAndForgotPassword(),
-                  
-                  const SizedBox(height: AppTheme.spacingXL),
-                  
-                  // Login Button
-                  _buildLoginButton(authProvider),
-                  
-                  const SizedBox(height: AppTheme.spacingL),
-                  
-                  // Divider
-                  _buildDivider(),
-                  
-                  const SizedBox(height: AppTheme.spacingL),
-                  
-                  // Google Sign-In Button
-                  _buildGoogleSignInButton(authProvider),
+                  // Form Card
+                  ModernFormCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Sign In Header
+                        _buildFormHeader(),
+                        
+                        const SizedBox(height: AppTheme.spacingXL),
+                        
+                        // Google Sign-In Button
+                        _buildGoogleSignInButton(authProvider),
+                        
+                        const SizedBox(height: AppTheme.spacingL),
+                        
+                        // Divider
+                        const FormDivider(),
+                        
+                        const SizedBox(height: AppTheme.spacingL),
+                        
+                        // Login Form
+                        _buildLoginForm(authProvider),
+                        
+                        const SizedBox(height: AppTheme.spacingM),
+                        
+                        // Forgot Password Link
+                        _buildForgotPasswordLink(),
+                        
+                        const SizedBox(height: AppTheme.spacingM),
+                        
+                        // Remember Me
+                        _buildRememberMe(),
+                        
+                        const SizedBox(height: AppTheme.spacingXL),
+                        
+                        // Login Button
+                        _buildLoginButton(authProvider),
+                      ],
+                    ),
+                  ),
                   
                   const SizedBox(height: AppTheme.spacingXL),
                   
                   // Sign Up Link
                   _buildSignUpLink(),
+                  
+                  // Terms Text
+                  const SizedBox(height: AppTheme.spacingL),
+                  _buildTermsText(),
                   
                   // Error Message
                   if (authProvider.error != null) ...[
@@ -134,14 +161,43 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildFormHeader() {
+    return Column(
+      children: [
+        Text(
+          'Sign In',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppTheme.primaryTextColor,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        
+        const SizedBox(height: AppTheme.spacingS),
+        
+        Text(
+          'Enter your credentials to access your account',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppTheme.secondaryTextColor,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
   Widget _buildLoginForm(AuthenticationProvider authProvider) {
     return Form(
       key: _formKey,
       child: Column(
         children: [
           // Email Field
-          AnimatedFormInputConfigs.email(
+          ModernTextField(
             controller: _emailController,
+            labelText: 'Email',
+            hintText: 'you@example.com',
+            prefixIcon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
             validator: FormValidator.validateEmail,
             onChanged: (value) {
               authProvider.updateFormField('email', value);
@@ -151,12 +207,17 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: AppTheme.spacingM),
           
           // Password Field
-          AnimatedFormInputConfigs.password(
+          ModernTextField(
             controller: _passwordController,
+            labelText: 'Password',
+            hintText: '••••••••',
+            prefixIcon: Icons.lock_outlined,
             obscureText: _obscurePassword,
+            textInputAction: TextInputAction.done,
             suffixIcon: IconButton(
               icon: Icon(
-                _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                color: AppTheme.secondaryTextColor,
               ),
               onPressed: () {
                 setState(() {
@@ -177,37 +238,42 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildRememberMeAndForgotPassword() {
-    return Row(
-      children: [
-        // Remember Me Checkbox
-        Expanded(
-          child: CheckboxListTile(
-            value: _rememberMe,
-            onChanged: (value) {
-              setState(() {
-                _rememberMe = value ?? false;
-              });
-            },
-            title: Text(
-              'Remember me',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            controlAffinity: ListTileControlAffinity.leading,
-            contentPadding: EdgeInsets.zero,
-            dense: true,
+  Widget _buildForgotPasswordLink() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton(
+        onPressed: _handleForgotPassword,
+        child: Text(
+          'Forgot password?',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppTheme.primaryColor,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        
-        // Forgot Password Link
-        TextButton(
-          onPressed: _handleForgotPassword,
-          child: Text(
-            'Forgot Password?',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.primaryColor,
-              fontWeight: FontWeight.w600,
-            ),
+      ),
+    );
+  }
+
+  Widget _buildRememberMe() {
+    return Row(
+      children: [
+        Checkbox(
+          value: _rememberMe,
+          onChanged: (value) {
+            setState(() {
+              _rememberMe = value ?? false;
+            });
+          },
+          activeColor: AppTheme.primaryColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: AppTheme.spacingS),
+        Text(
+          'Remember me for 30 days',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppTheme.primaryTextColor,
           ),
         ),
       ],
@@ -215,84 +281,40 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildLoginButton(AuthenticationProvider authProvider) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: authProvider.isLoading ? null : () => _handleLogin(authProvider),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.primaryColor,
-          foregroundColor: Colors.white,
-        ),
-        child: authProvider.isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : const Text(
-                'Sign In',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        const Expanded(child: Divider()),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
-          child: Text(
-            'OR',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppTheme.secondaryTextColor,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const Expanded(child: Divider()),
-      ],
+    return ModernButton.primary(
+      text: 'Sign In',
+      isLoading: authProvider.isLoading,
+      onPressed: () => _handleLogin(authProvider),
     );
   }
 
   Widget _buildGoogleSignInButton(AuthenticationProvider authProvider) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: OutlinedButton.icon(
-        onPressed: authProvider.isLoading ? null : () => _handleGoogleSignIn(authProvider),
-        icon: Image.asset(
-          'assets/images/google_logo.png', // You'll need to add this asset
-          width: 24,
-          height: 24,
-          errorBuilder: (context, error, stackTrace) {
-            return const Icon(
-              Icons.g_mobiledata,
-              size: 24,
-              color: AppTheme.primaryColor,
-            );
-          },
-        ),
-        label: const Text(
-          'Continue with Google',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppTheme.primaryColor),
-          foregroundColor: AppTheme.primaryColor,
-        ),
+    return ModernButton.secondary(
+      text: 'Continue with Google',
+      isLoading: authProvider.isLoading,
+      icon: Image.asset(
+        'assets/images/google_logo.png',
+        width: 20,
+        height: 20,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(
+            Icons.g_mobiledata,
+            size: 20,
+            color: AppTheme.primaryColor,
+          );
+        },
       ),
+      onPressed: () => _handleGoogleSignIn(authProvider),
+    );
+  }
+
+  Widget _buildTermsText() {
+    return Text(
+      'By continuing, you agree to our Terms of Service and Privacy Policy',
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: AppTheme.secondaryTextColor,
+      ),
+      textAlign: TextAlign.center,
     );
   }
 
@@ -302,12 +324,14 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         Text(
           "Don't have an account? ",
-          style: Theme.of(context).textTheme.bodyMedium,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppTheme.secondaryTextColor,
+          ),
         ),
         TextButton(
           onPressed: _navigateToSignUp,
           child: Text(
-            'Sign Up',
+            'Sign up',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppTheme.primaryColor,
               fontWeight: FontWeight.w600,

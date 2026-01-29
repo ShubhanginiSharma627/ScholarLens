@@ -91,11 +91,15 @@ app.use((err, req, res, next) => {
   res.status(status).json(payload);
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const HOST = "0.0.0.0";
+const PORT = 3000;
+
+
+
+app.listen(PORT,HOST, () => {
   console.log(`🚀 Scholar Lens Backend listening on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
+  console.log(`Server running at http://${HOST}:${PORT}`);
 });
 
 module.exports = app;

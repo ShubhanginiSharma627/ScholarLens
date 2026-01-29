@@ -22,7 +22,7 @@ class GoogleSignInService {
   // Backend API configuration
   static const String _baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:3000/api',
+    defaultValue: 'http://172.20.10.5:3000/api',
   );
   static const String _googleAuthEndpoint = '/auth/google';
   static const String _linkAccountEndpoint = '/auth/link-google';
@@ -31,12 +31,11 @@ class GoogleSignInService {
 
   /// Initialize Google Sign-In service
   void initialize({
-    List<String> scopes = const ['email', 'profile'],
+    List<String> scopes = const ['email'],
     String? hostedDomain,
   }) {
     _googleSignIn = GoogleSignIn(
       scopes: scopes,
-      hostedDomain: hostedDomain,
     );
     
     debugPrint('Google Sign-In service initialized');

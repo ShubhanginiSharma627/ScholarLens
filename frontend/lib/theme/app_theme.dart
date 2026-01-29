@@ -27,6 +27,10 @@ class AppTheme {
   static const Color darkPrimaryTextColor = Color(0xFFF9FAFB);
   static const Color darkSecondaryTextColor = Color(0xFFD1D5DB);
   
+  // Border colors
+  static const Color borderColor = Color(0xFFE5E7EB);
+  static const Color darkBorderColor = Color(0xFF4B5563);
+  
   // Spacing constants for consistent layout
   static const double spacingXS = 4.0;
   static const double spacingS = 8.0;

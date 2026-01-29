@@ -4,9 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'api_service.dart';
 import 'network_service.dart';
-import '../models/auth_result.dart';
 
-class EnhancedNetworkService extends NetworkService {
+class EnhancedNetworkService {
   static const String _baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://localhost:3000/api',
@@ -15,6 +14,7 @@ class EnhancedNetworkService extends NetworkService {
   static const Duration _timeout = Duration(seconds: 30);
   
   final ApiService _apiService = ApiService();
+  final NetworkService _networkService = NetworkService.instance;
   
   // Singleton pattern
   static final EnhancedNetworkService _instance = EnhancedNetworkService._internal();
@@ -224,12 +224,25 @@ class EnhancedNetworkService extends NetworkService {
   }
   
   // Dispose resources
-  @override
   void dispose() {
-    super.dispose();
+    _networkService.dispose();
     _cache.clear();
     _apiService.dispose();
   }
+
+  // Delegate NetworkService methods
+  Future<bool> checkConnectivity() => _networkService.checkConnectivity();
+  Future<bool> isConnected() => _networkService.isConnected();
+  NetworkError detectNetworkError(dynamic error) => _networkService.detectNetworkError(error);
+  Future<void> handleNetworkError(NetworkError error) => _networkService.handleNetworkError(error);
+  Future<T> retryOperation<T>(
+    Future<T> Function() operation, {
+    int maxRetries = 3,
+    Duration initialDelay = const Duration(seconds: 1),
+  }) => _networkService.retryOperation(operation, maxRetries: maxRetries, initialDelay: initialDelay);
+  Stream<bool> get connectivityStream => _networkService.connectivityStream;
+  void startMonitoring() => _networkService.startMonitoring();
+  void stopMonitoring() => _networkService.stopMonitoring();
 }
 
 class CacheEntry {
