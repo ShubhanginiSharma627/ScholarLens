@@ -223,6 +223,24 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
                 ],
               ),
             ),
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(bottom: 16, right: 16),
+        child: FloatingActionButton(
+          onPressed: () async {
+            final result = await Navigator.of(context).push<bool>(
+              MaterialPageRoute(
+                builder: (context) => const CreateFlashcardScreen(),
+              ),
+            );
+            if (result == true) {
+              await _loadData();
+            }
+          },
+          backgroundColor: Colors.purple,
+          foregroundColor: Colors.white,
+          child: const Icon(Icons.add, size: 28),
+        ),
+      ),
     );
   }
   Widget _buildDeckTile(Map<String, dynamic> deck) {
@@ -289,9 +307,11 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
           size: 28,
         ),
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Opening ${deck['name']} deck...'),
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => AllCardsViewScreen(
+                subject: deck['name'] as String,
+              ),
             ),
           );
         },
