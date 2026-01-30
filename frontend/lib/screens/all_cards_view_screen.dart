@@ -4,6 +4,7 @@ import '../services/flashcard_service.dart';
 import '../widgets/flashcard/card_list_item.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
+import '../utils/navigation_helper.dart';
 import 'flashcard_screen.dart';
 import 'create_flashcard_screen.dart';
 class AllCardsViewScreen extends StatefulWidget {
@@ -150,7 +151,9 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
   void _navigateToGenerateCards() async {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (context) => const CreateFlashcardScreen(),
+        builder: (context) => CreateFlashcardScreen(
+          initialSubject: widget.subject,
+        ),
       ),
     );
     if (result == true) {
@@ -361,26 +364,22 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
                 ),
               ],
             ),
-      floatingActionButton: AnimatedBuilder(
+      floatingActionButton: _filteredCards.isEmpty ? null : AnimatedBuilder(
         animation: _fadeAnimation,
         builder: (context, child) {
           return Transform.scale(
             scale: _fadeAnimation.value,
-            child: FloatingActionButton.extended(
+            child: FloatingActionButton(
               onPressed: _navigateToGenerateCards,
               backgroundColor: AppTheme.primaryColor,
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.auto_awesome_rounded),
-              label: const Text(
-                'Generate More Cards',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              tooltip: 'Generate More Cards',
+              child: const Icon(Icons.auto_awesome_rounded),
             ),
           );
         },
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
   Widget _buildSearchHeader(bool isDark) {
@@ -541,7 +540,7 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
               controller: _scrollController,
               padding: const EdgeInsets.only(
                 top: AppTheme.spacingS,
-                bottom: 100, // Space for FAB
+                bottom: 80, // Space for FAB
               ),
               itemCount: _filteredCards.length,
               itemBuilder: (context, index) {

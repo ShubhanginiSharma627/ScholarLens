@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 import '../models/models.dart';
@@ -11,10 +12,9 @@ class AuthenticationService {
   AuthenticationService._();
   final SecureStorageService _secureStorage = SecureStorageService();
   final NetworkService _networkService = NetworkService.instance;
-  static const String _baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'https://scholarlens-afvx.onrender.com/api',
-  );
+
+  static final String _baseUrl =
+      dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
   static const String _registerEndpoint = '/auth/register';
   static const String _loginEndpoint = '/auth/login';
   static const String _logoutEndpoint = '/auth/logout';

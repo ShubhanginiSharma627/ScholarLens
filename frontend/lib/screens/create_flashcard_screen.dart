@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/flashcard.dart';
 import '../services/flashcard_service.dart';
-import '../widgets/common/top_navigation_bar.dart';
 class CreateFlashcardScreen extends StatefulWidget {
   final String? initialSubject;
   final String? initialCategory;
@@ -28,12 +27,29 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
   
   // Card generation mode
   String _generationMode = 'manual'; // 'manual' or 'ai'
+  
+  // Store ScaffoldMessenger reference to avoid widget disposal issues
+  ScaffoldMessengerState? _scaffoldMessenger;
   @override
   void initState() {
     super.initState();
     _subjectController.text = widget.initialSubject ?? '';
     _categoryController.text = widget.initialCategory ?? '';
+    
+    // If we have an initial subject, default to AI generation mode and use subject as topic
+    if (widget.initialSubject != null && widget.initialSubject!.isNotEmpty) {
+      _generationMode = 'ai';
+      _topicController.text = widget.initialSubject!;
+    }
+    
     _loadExistingData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Store ScaffoldMessenger reference early to avoid disposal issues
+    _scaffoldMessenger = ScaffoldMessenger.of(context);
   }
   @override
   void dispose() {
@@ -52,9 +68,27 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
       _existingCategories = categories;
     });
   }
+
+  void _showSnackBar(SnackBar snackBar) {
+    try {
+      if (mounted && _scaffoldMessenger != null) {
+        _scaffoldMessenger!.clearSnackBars();
+        _scaffoldMessenger!.showSnackBar(snackBar);
+      }
+    } catch (e) {
+      // Silently handle any remaining widget disposal issues
+      debugPrint('Could not show snackbar: $e');
+    }
+  }
   Future<void> _saveFlashcard() async {
+    print('=== _saveFlashcard called ===');
+    print('Generation mode: $_generationMode');
+    print('Form valid: ${_formKey.currentState?.validate()}');
+    
     if (!_formKey.currentState!.validate()) return;
 
+    print('Form validation passed, starting save process...');
+    
     setState(() {
       _isLoading = true;
     });
@@ -73,7 +107,7 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
         await _flashcardService.createFlashcard(flashcard);
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          _showSnackBar(
             const SnackBar(
               content: Text('Flashcard created successfully!'),
               backgroundColor: Colors.green,
@@ -82,31 +116,124 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
         }
       } else {
         // Generate AI flashcards
-        // TODO: Implement AI generation API call
-        // For now, show a placeholder message
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          // Show generating message
+          _showSnackBar(
             const SnackBar(
-              content: Text('AI generation feature coming soon!'),
-              backgroundColor: Colors.orange,
+              content: Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text('Generating flashcards with AI...'),
+                ],
+              ),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 10), // Longer duration for AI generation
             ),
           );
         }
+        
+        try {
+          // Call the real AI generation API
+          final topic = _topicController.text.trim();
+          final subject = _subjectController.text.trim();
+          final category = _categoryController.text.trim().isEmpty 
+              ? null 
+              : _categoryController.text.trim();
+              
+          print('=== AI GENERATION DEBUG ===');
+          print('Topic: $topic');
+          print('Subject: $subject'); 
+          print('Category: $category');
+          print('Starting AI generation...');
+          
+          final generatedCards = await _flashcardService.generateFlashcardsWithAI(
+            topic: topic,
+            subject: subject,
+            category: category,
+            count: 5,
+          );
+          
+          print('Generated ${generatedCards.length} flashcards successfully');
+          print('Cards: ${generatedCards.map((c) => c.question).toList()}');
+          
+          // Only show success message if widget is still mounted
+          if (mounted) {
+            // Clear any existing snackbars first
+            _scaffoldMessenger?.clearSnackBars();
+            _showSnackBar(
+              SnackBar(
+                content: Text('Generated ${generatedCards.length} flashcards successfully!'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        } catch (e) {
+          print('=== AI GENERATION ERROR ===');
+          print('Error type: ${e.runtimeType}');
+          print('Error message: $e');
+          print('Stack trace: ${StackTrace.current}');
+          
+          // Only show error message if widget is still mounted
+          if (mounted) {
+            // Clear any existing snackbars first
+            _scaffoldMessenger?.clearSnackBars();
+            _showSnackBar(
+              SnackBar(
+                content: Text('Failed to generate flashcards: ${e.toString()}'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 8),
+                action: SnackBarAction(
+                  label: 'Retry',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    if (mounted) {
+                      _saveFlashcard(); // Retry the operation
+                    }
+                  },
+                ),
+              ),
+            );
+          }
+          // Don't return early, let the user try again
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+          return;
+        }
       }
       
+      // Only navigate back if the operation was successful and widget is still mounted
       if (mounted) {
         Navigator.of(context).pop(true); // Return true to indicate success
       }
     } catch (e) {
+      print('=== GENERAL ERROR ===');
+      print('Error: $e');
+      
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        // Clear any existing snackbars first
+        _scaffoldMessenger?.clearSnackBars();
+        _showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
     } finally {
+      // Always reset loading state if widget is still mounted
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -124,66 +251,114 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const TopNavigationBar(
-        showBackButton: true,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: _clearForm,
-                  icon: const Icon(Icons.clear),
-                  label: const Text('Clear Form'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _buildGenerationModeSelector(),
-            const SizedBox(height: 16),
-            _buildSubjectField(),
-            const SizedBox(height: 16),
-            _buildCategoryField(),
-            const SizedBox(height: 24),
-            if (_generationMode == 'manual') ...[
-              _buildQuestionField(),
-              const SizedBox(height: 16),
-              _buildAnswerField(),
-            ] else ...[
-              _buildTopicField(),
-            ],
-            const SizedBox(height: 32),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _saveFlashcard,
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(_generationMode == 'manual' ? 'Create Flashcard' : 'Generate Cards'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildTipsCard(),
-          ],
+      appBar: AppBar(
+        title: Text(
+          widget.initialSubject != null 
+              ? 'Generate More ${widget.initialSubject} Cards'
+              : 'Create Flashcard',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
         ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Stack(
+        children: [
+          Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: _clearForm,
+                      icon: const Icon(Icons.clear),
+                      label: const Text('Clear Form'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _buildGenerationModeSelector(),
+                const SizedBox(height: 16),
+                _buildSubjectField(),
+                const SizedBox(height: 16),
+                _buildCategoryField(),
+                const SizedBox(height: 24),
+                if (_generationMode == 'manual') ...[
+                  _buildQuestionField(),
+                  const SizedBox(height: 16),
+                  _buildAnswerField(),
+                ] else ...[
+                  _buildTopicField(),
+                ],
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _saveFlashcard,
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Text(_generationMode == 'manual' ? 'Create Flashcard' : 'Generate Cards'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _buildTipsCard(),
+              ],
+            ),
+          ),
+          if (_isLoading && _generationMode == 'ai')
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: Center(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Generating flashcards...',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'AI is creating cards based on your topic',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -251,10 +426,12 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
         const SizedBox(height: 8),
         TextFormField(
           controller: _topicController,
-          decoration: const InputDecoration(
-            hintText: 'e.g., Photosynthesis, Quadratic Equations, World War II',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.topic),
+          decoration: InputDecoration(
+            hintText: widget.initialSubject != null 
+                ? 'e.g., ${_getTopicSuggestion(widget.initialSubject!)}'
+                : 'e.g., Photosynthesis, Quadratic Equations, World War II',
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.topic),
             helperText: 'AI will generate multiple flashcards based on this topic',
           ),
           maxLines: 2,
@@ -270,6 +447,22 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
         ),
       ],
     );
+  }
+
+  String _getTopicSuggestion(String subject) {
+    final suggestions = {
+      'Computer Science': 'Data Structures, Algorithms, Object-Oriented Programming',
+      'Mathematics': 'Calculus, Linear Algebra, Statistics',
+      'Physics': 'Quantum Mechanics, Thermodynamics, Electromagnetism',
+      'Chemistry': 'Organic Chemistry, Chemical Bonding, Periodic Table',
+      'Biology': 'Cell Biology, Genetics, Evolution',
+      'History': 'World War II, Renaissance, Industrial Revolution',
+      'English': 'Shakespeare, Grammar, Literary Analysis',
+      'Psychology': 'Cognitive Psychology, Behavioral Psychology, Memory',
+      'Economics': 'Microeconomics, Macroeconomics, Market Structures',
+    };
+    
+    return suggestions[subject] ?? 'Advanced topics in $subject';
   }
   Widget _buildSubjectField() {
     return Column(
@@ -447,6 +640,10 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
               const SizedBox(height: 4),
               const Text('• Include examples in your answers when helpful'),
             ] else ...[
+              if (widget.initialSubject != null) ...[
+                Text('• Generating more cards for ${widget.initialSubject}'),
+                const SizedBox(height: 4),
+              ],
               const Text('• Be specific with your topic for better results'),
               const SizedBox(height: 4),
               const Text('• AI will generate 5-10 cards per topic'),

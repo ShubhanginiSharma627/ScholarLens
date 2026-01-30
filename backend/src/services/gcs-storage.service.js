@@ -29,7 +29,6 @@ class GCSStorageService {
       const bucketName = process.env.GCS_BUCKET || `${process.env.GOOGLE_CLOUD_PROJECT}-storage`;
       this.bucket = this.storage.bucket(bucketName);
       
-      // Check if bucket exists, create if it doesn't
       const [exists] = await this.bucket.exists();
       if (!exists) {
         logger.info(`Creating GCS bucket: ${bucketName}`);
@@ -77,7 +76,7 @@ class GCSStorageService {
       }
       const [url] = await file.getSignedUrl({
         action: 'read',
-        expires: metadata.expires || Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days from now
+        expires: metadata.expires || Date.now() + 7 * 24 * 60 * 60 * 1000,
       });
       logger.info(`File uploaded successfully: ${destination}`);
       return url;
@@ -108,7 +107,7 @@ class GCSStorageService {
       }
       const [url] = await file.getSignedUrl({
         action: 'read',
-        expires: metadata.expires || Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days from now
+        expires: metadata.expires || Date.now() + 7 * 24 * 60 * 60 * 1000,
       });
       logger.info(`Buffer uploaded successfully: ${destination}`);
       return url;
@@ -142,7 +141,7 @@ class GCSStorageService {
       }
       const [url] = await file.getSignedUrl({
         action: 'read',
-        expires: options.expires || Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days from now
+        expires: options.expires || Date.now() + 7 * 24 * 60 * 60 * 1000,
       });
       return url;
     } catch (error) {
@@ -287,10 +286,8 @@ class GCSStorageService {
       logger.info(`Updating metadata for file: ${filePath}`);
       const file = this.bucket.file(filePath);
       
-      // Get current metadata
       const [currentMetadata] = await file.getMetadata();
       
-      // Merge with new metadata
       const updatedMetadata = {
         ...currentMetadata.metadata,
         ...newMetadata

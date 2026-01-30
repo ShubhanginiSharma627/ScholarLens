@@ -18,33 +18,66 @@ class _TextbookDetailScreenState extends State<TextbookDetailScreen> {
     _loadTextbookProgress();
   }
   void _loadTextbookProgress() {
+    final totalChapters = widget.textbook.chapters.isNotEmpty 
+        ? widget.textbook.chapters.length 
+        : 1;
+    
+    final hasRealChapters = widget.textbook.chapters.isNotEmpty;
+    final completedChapters = hasRealChapters ? (totalChapters * 0.3).round() : 0;
+    final currentChapter = hasRealChapters ? (completedChapters + 1).clamp(1, totalChapters) : 1;
+    
     setState(() {
       progress = TextbookProgress(
         textbookId: widget.textbook.id,
-        completedChapters: 2,
-        totalChapters: widget.textbook.chapters.length,
-        studyHours: 4.5,
-        currentChapter: 3,
-        keyTopics: widget.textbook.keyTopics,
+        completedChapters: completedChapters,
+        totalChapters: totalChapters,
+        studyHours: hasRealChapters ? 4.5 : 0.5,
+        currentChapter: currentChapter,
+        keyTopics: widget.textbook.keyTopics.isNotEmpty 
+            ? widget.textbook.keyTopics 
+            : ['Document Analysis', 'Key Concepts', 'Study Materials'],
         chapterProgresses: _generateChapterProgresses(),
         lastStudied: DateTime.now().subtract(const Duration(hours: 2)),
       );
     });
   }
   List<ChapterProgress> _generateChapterProgresses() {
+    if (widget.textbook.chapters.isEmpty) {
+      return [
+        ChapterProgress(
+          chapterNumber: 1,
+          chapterTitle: 'Document Analysis',
+          pageRange: 'Full Document',
+          estimatedReadingTimeMinutes: 45,
+          isCompleted: false,
+          progressPercentage: 0.0,
+          completedAt: null,
+          lastAccessed: null,
+        ),
+      ];
+    }
+    
     return widget.textbook.chapters.asMap().entries.map((entry) {
       final index = entry.key;
       final chapter = entry.value;
       final chapterNumber = index + 1;
+      final totalChapters = widget.textbook.chapters.length;
+      
+      final completedCount = (totalChapters * 0.3).round();
+      final isCompleted = index < completedCount;
+      final isCurrent = index == completedCount;
+      
       return ChapterProgress(
         chapterNumber: chapterNumber,
         chapterTitle: chapter,
-        pageRange: 'Pages ${(index * 30) + 1}-${(index + 1) * 30}',
+        pageRange: widget.textbook.totalPages > 0 
+            ? 'Pages ${((index * widget.textbook.totalPages) / totalChapters).round() + 1}-${(((index + 1) * widget.textbook.totalPages) / totalChapters).round()}'
+            : 'Pages ${(index * 30) + 1}-${(index + 1) * 30}',
         estimatedReadingTimeMinutes: 45 + (index * 5),
-        isCompleted: index < 2, // First 2 chapters completed
-        progressPercentage: index < 2 ? 100.0 : (index == 2 ? 35.0 : 0.0),
-        completedAt: index < 2 ? DateTime.now().subtract(Duration(days: index + 1)) : null,
-        lastAccessed: index <= 2 ? DateTime.now().subtract(Duration(hours: index + 1)) : null,
+        isCompleted: isCompleted,
+        progressPercentage: isCompleted ? 100.0 : (isCurrent ? 35.0 : 0.0),
+        completedAt: isCompleted ? DateTime.now().subtract(Duration(days: index + 1)) : null,
+        lastAccessed: (isCompleted || isCurrent) ? DateTime.now().subtract(Duration(hours: index + 1)) : null,
       );
     }).toList();
   }
@@ -225,7 +258,7 @@ class TextbookOverviewCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${textbook.fileSize} • ${textbook.totalPages} pages',
+                  '${textbook.fileSize}${textbook.totalPages > 0 ? ' • ${textbook.totalPages} pages' : ''}${textbook.subject != 'Unknown' ? ' • ${textbook.subject}' : ''}',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 14,
@@ -247,7 +280,10 @@ class ProgressTrackingSection extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    final progressPercentage = progress.completionPercentage.round();
+    final progressPercentage = progress.totalChapters > 0 
+        ? (progress.completionPercentage.isFinite ? progress.completionPercentage.round() : 0)
+        : 0;
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(20),
@@ -288,7 +324,9 @@ class ProgressTrackingSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           LinearProgressIndicator(
-            value: progress.completedChapters / progress.totalChapters,
+            value: progress.totalChapters > 0 
+                ? (progress.completedChapters / progress.totalChapters).clamp(0.0, 1.0)
+                : 0.0,
             backgroundColor: Colors.grey[200],
             valueColor: AlwaysStoppedAnimation<Color>(
               Theme.of(context).primaryColor,
@@ -301,7 +339,9 @@ class ProgressTrackingSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${progress.completedChapters}/${progress.totalChapters} chapters completed',
+                progress.totalChapters > 0 
+                    ? '${progress.completedChapters}/${progress.totalChapters} chapters completed'
+                    : 'No chapters available yet',
                 style: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 14,
@@ -450,6 +490,12 @@ class KeyTopicsSection extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final displayTopics = topics.isNotEmpty 
+        ? topics 
+        : ['Document Analysis', 'Key Concepts', 'Study Materials'];
+    
+    final hasRealTopics = topics.isNotEmpty;
+        
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(20),
@@ -467,28 +513,74 @@ class KeyTopicsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Key Topics',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+          Row(
+            children: [
+              const Text(
+                'Key Topics',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              if (!hasRealTopics) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Auto-generated',
+                    style: TextStyle(
+                      color: Colors.orange[700],
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.green[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'AI Extracted',
+                    style: TextStyle(
+                      color: Colors.green[700],
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 16),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: topics.map((topic) => Container(
+            children: displayTopics.map((topic) => Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                color: hasRealTopics 
+                    ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
+                    : Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
+                border: hasRealTopics 
+                    ? null 
+                    : Border.all(color: Colors.grey.withValues(alpha: 0.3)),
               ),
               child: Text(
                 topic,
                 style: TextStyle(
-                  color: Theme.of(context).primaryColor,
+                  color: hasRealTopics 
+                      ? Theme.of(context).primaryColor
+                      : Colors.grey[600],
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -527,13 +619,52 @@ class ChapterNavigationSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Chapters',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+          Row(
+            children: [
+              const Text(
+                'Chapters',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              if (textbook.chapters.isEmpty) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Generated',
+                    style: TextStyle(
+                      color: Colors.blue[700],
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.green[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'AI Extracted',
+                    style: TextStyle(
+                      color: Colors.green[700],
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 16),
           ListView.builder(

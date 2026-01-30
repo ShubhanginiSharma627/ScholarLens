@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/flashcard.dart';
 import '../services/flashcard_service.dart';
 import '../widgets/common/top_navigation_bar.dart';
+import '../utils/navigation_helper.dart';
 import 'create_flashcard_screen.dart';
 import 'all_cards_view_screen.dart';
 class FlashcardManagementScreen extends StatefulWidget {
@@ -14,32 +15,7 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
   List<Flashcard> _allFlashcards = [];
   List<String> _subjects = [];
   bool _isLoading = true;
-  final List<Map<String, dynamic>> _mockDecks = [
-    {
-      'name': 'Cell Biology',
-      'count': 24,
-      'color': Colors.purple,
-      'icon': Icons.layers,
-    },
-    {
-      'name': 'Physics Mechanics',
-      'count': 18,
-      'color': Colors.teal,
-      'icon': Icons.layers,
-    },
-    {
-      'name': 'Algebra Basics',
-      'count': 32,
-      'color': Colors.orange,
-      'icon': Icons.layers,
-    },
-    {
-      'name': 'Organic Chemistry',
-      'count': 15,
-      'color': Colors.blue,
-      'icon': Icons.layers,
-    },
-  ];
+
   @override
   void initState() {
     super.initState();
@@ -175,7 +151,7 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        ..._mockDecks.map((deck) => _buildDeckTile(deck)),
+                        _buildDecksContent(),
                       ],
                     ),
                   ),
@@ -243,7 +219,77 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
       ),
     );
   }
-  Widget _buildDeckTile(Map<String, dynamic> deck) {
+
+  Widget _buildDecksContent() {
+    if (_subjects.isEmpty) {
+      return _buildEmptyDecksState();
+    }
+
+    // Group flashcards by subject to create real decks
+    final decksBySubject = <String, List<Flashcard>>{};
+    for (final flashcard in _allFlashcards) {
+      final subject = flashcard.subject;
+      if (!decksBySubject.containsKey(subject)) {
+        decksBySubject[subject] = [];
+      }
+      decksBySubject[subject]!.add(flashcard);
+    }
+
+    return Column(
+      children: decksBySubject.entries.map((entry) {
+        final subject = entry.key;
+        final cards = entry.value;
+        return _buildRealDeckTile(subject, cards);
+      }).toList(),
+    );
+  }
+
+  Widget _buildEmptyDecksState() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.layers_outlined,
+              size: 48,
+              color: Colors.grey[400],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No decks available',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Create your first flashcard deck to get started!',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRealDeckTile(String subject, List<Flashcard> cards) {
+    // Assign colors based on subject name hash for consistency
+    final colors = [Colors.purple, Colors.teal, Colors.orange, Colors.blue, Colors.green, Colors.red];
+    final colorIndex = subject.hashCode.abs() % colors.length;
+    final color = colors[colorIndex];
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: ListTile(
@@ -252,17 +298,17 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: (deck['color'] as Color).withValues(alpha: 0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
-            deck['icon'] as IconData,
-            color: deck['color'] as Color,
+            Icons.layers,
+            color: color,
             size: 24,
           ),
         ),
         title: Text(
-          deck['name'] as String,
+          subject,
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -272,7 +318,7 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
         subtitle: Row(
           children: [
             Text(
-              '${deck['count']} cards',
+              '${cards.length} cards',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -282,18 +328,15 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
             const SizedBox(width: 16),
             TextButton.icon(
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => AllCardsViewScreen(
-                      subject: deck['name'] as String,
-                    ),
-                  ),
+                NavigationHelper.navigateToAllCardsView(
+                  context,
+                  subject,
                 );
               },
               icon: const Icon(Icons.list_rounded, size: 16),
               label: const Text('All Cards'),
               style: TextButton.styleFrom(
-                foregroundColor: deck['color'] as Color,
+                foregroundColor: color,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -303,16 +346,13 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
         ),
         trailing: Icon(
           Icons.play_arrow_rounded,
-          color: deck['color'] as Color,
+          color: color,
           size: 28,
         ),
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => AllCardsViewScreen(
-                subject: deck['name'] as String,
-              ),
-            ),
+          NavigationHelper.navigateToAllCardsView(
+            context,
+            subject,
           );
         },
       ),

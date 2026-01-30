@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 class ApiService {
-  static const String _baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'https://scholarlens-afvx.onrender.com/api',
-  );
+  static final String _baseUrl =
+      dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
+
   static const int _timeoutSeconds = 15; // Reduced from 30 to 15 seconds
   String? _accessToken;
   String? _refreshToken;
@@ -41,9 +41,11 @@ class ApiService {
   }) async {
     final uri = Uri.parse('$_baseUrl$endpoint');
     final headers = customHeaders ?? _headers;
+    
     if (requiresAuth && _accessToken == null) {
       throw ApiException('Authentication required', 401);
     }
+
     try {
       http.Response response;
       switch (method.toUpperCase()) {
@@ -72,6 +74,7 @@ class ApiService {
         default:
           throw ApiException('Unsupported HTTP method: $method', 400);
       }
+      
       return _handleResponse(response);
     } on SocketException {
       throw ApiException('No internet connection', 0);
@@ -91,9 +94,11 @@ class ApiService {
     } catch (e) {
       throw ApiException('Invalid JSON response', response.statusCode);
     }
+    
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return data;
     }
+    
     if (response.statusCode == 401 && _refreshToken != null) {
       throw TokenExpiredException(
         data['error']?['message'] ?? 'Authentication failed',
@@ -101,7 +106,7 @@ class ApiService {
       );
     }
     throw ApiException(
-      data['error']?['message'] ?? 'Request failed',
+      data['error']?['message'] ?? data['message'] ?? 'Request failed',
       response.statusCode,
     );
   }
@@ -110,6 +115,7 @@ class ApiService {
     Map<String, String> fields, {
     List<http.MultipartFile>? files,
     bool requiresAuth = false,
+    int? timeoutSeconds,
   }) async {
     final uri = Uri.parse('$_baseUrl$endpoint');
     if (requiresAuth && _accessToken == null) {
@@ -122,8 +128,11 @@ class ApiService {
       if (files != null) {
         request.files.addAll(files);
       }
+      
+      // Use custom timeout or default to longer timeout for file operations
+      final timeout = timeoutSeconds ?? (_timeoutSeconds * 4); // 60 seconds default
       final streamedResponse = await request.send()
-          .timeout(const Duration(seconds: _timeoutSeconds * 2));
+          .timeout(Duration(seconds: timeout));
       final response = await http.Response.fromStream(streamedResponse);
       return _handleResponse(response);
     } catch (e) {
@@ -240,6 +249,7 @@ class ApiService {
         if (setId != null) 'setId': setId,
       },
     );
+    
     final flashcardsJson = response['data']['flashcards'] as List;
     return flashcardsJson.map((json) => Flashcard.fromJson(json)).toList();
   }
@@ -463,6 +473,7 @@ class ApiService {
       fields,
       files: [multipartFile],
       requiresAuth: true,
+      timeoutSeconds: 60, // 1 minute for regular file upload
     );
     return StorageUploadResponse.fromJson(response['data']);
   }
@@ -518,6 +529,7 @@ class ApiService {
       fields,
       files: [multipartFile],
       requiresAuth: true,
+      timeoutSeconds: 120, // 2 minutes for AI analysis
     );
     return response;
   }
@@ -588,25 +600,32 @@ class UserStats {
   final int totalInteractions;
   final Map<String, int> topics;
   final List<double> quizScores;
-  final int streak;
-  final List<WeakTopic> weakestTopics;
+  final int? streak; // Make nullable temporarily to handle runtime null
+  final List<WeakTopic>? weakestTopics; // Keep nullable
   UserStats({
     required this.totalInteractions,
     required this.topics,
     required this.quizScores,
-    required this.streak,
-    required this.weakestTopics,
+    this.streak, // Make optional
+    this.weakestTopics, // Keep optional
   });
   factory UserStats.fromJson(Map<String, dynamic> json) {
     return UserStats(
       totalInteractions: json['totalInteractions'] ?? 0,
       topics: Map<String, int>.from(json['topics'] ?? {}),
       quizScores: List<double>.from(json['quizScores'] ?? []),
-      streak: json['streak'] ?? 0,
-      weakestTopics: (json['weakestTopics'] as List? ?? [])
-          .map((item) => WeakTopic.fromJson(item))
-          .toList(),
+      streak: json['streak'], // Allow null, will handle in analytics service
+      weakestTopics: json['weakestTopics'] != null 
+          ? (json['weakestTopics'] as List)
+              .map((item) => WeakTopic.fromJson(item))
+              .toList()
+          : null, // Allow null
     );
+  }
+
+  @override
+  String toString() {
+    return 'UserStats(totalInteractions: $totalInteractions, topics: $topics, quizScores: $quizScores, streak: $streak, weakestTopics: $weakestTopics)';
   }
 }
 class WeakTopic {

@@ -7,15 +7,28 @@ import 'screens/signup_screen.dart';
 import 'screens/password_reset_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'theme/app_theme.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/performance_optimizer.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
   PerformanceOptimizer.instance.startMonitoring();
+  
+  // Load environment variables with error handling
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint('Warning: Could not load .env file: $e');
+    debugPrint('Using default environment configuration');
+  }
+  
   final deviceCapabilities = await PerformanceOptimizer.analyzeDeviceCapabilities();
   debugPrint('Device capabilities: $deviceCapabilities');
+  
   PerformanceOptimizer.optimizeImageProcessing();
   PerformanceOptimizer.optimizeNetworkRequests();
   PerformanceOptimizer.optimizeUIRendering();
+  
   runApp(const ScholarLensApp());
 }
 class ScholarLensApp extends StatelessWidget {

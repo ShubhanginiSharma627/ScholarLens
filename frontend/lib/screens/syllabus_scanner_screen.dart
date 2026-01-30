@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/models.dart';
@@ -22,50 +24,118 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
   }
   void _loadUploadedTextbooks() async {
     try {
-      final files = await _storageService.listFiles(folder: 'syllabus');
+      final files = await _storageService.listFiles();
+      
+      final syllabusFiles = files.where((file) => 
+        file.name.startsWith('syllabus-') && file.name.endsWith('.pdf')
+      ).toList();
+      
+      final textbooks = <UploadedTextbook>[];
+      
+      for (var file in syllabusFiles) {
+        try {
+          final analysisData = _extractAnalysisFromMetadata(file);
+          
+          final textbook = UploadedTextbook(
+            id: file.name,
+            title: file.originalName.isNotEmpty 
+                ? file.originalName.replaceAll('.pdf', '') 
+                : file.name.replaceAll('.pdf', ''),
+            fileName: file.originalName.isNotEmpty ? file.originalName : file.name,
+            fileSize: file.formattedSize,
+            status: TextbookStatus.ready,
+            uploadedAt: file.timeCreated,
+            chapters: analysisData['chapters'] ?? <String>[],
+            totalPages: analysisData['totalPages'] ?? 0,
+            keyTopics: analysisData['keyTopics'] ?? <String>[],
+            subject: analysisData['subject'] ?? 'Unknown',
+          );
+          
+          textbooks.add(textbook);
+        } catch (e) {
+          print('Error processing file ${file.name}: $e');
+          try {
+            final textbook = UploadedTextbook(
+              id: file.name,
+              title: file.originalName.isNotEmpty 
+                  ? file.originalName.replaceAll('.pdf', '') 
+                  : file.name.replaceAll('.pdf', ''),
+              fileName: file.originalName.isNotEmpty ? file.originalName : file.name,
+              fileSize: file.formattedSize,
+              status: TextbookStatus.ready,
+              uploadedAt: file.timeCreated,
+              chapters: <String>[],
+              totalPages: 0,
+              keyTopics: <String>[],
+              subject: 'Unknown',
+            );
+            textbooks.add(textbook);
+          } catch (e2) {
+            print('Failed to create textbook for ${file.name}: $e2');
+          }
+        }
+      }
+      
       setState(() {
-        uploadedTextbooks = files.map((file) => UploadedTextbook(
-          id: file.name,
-          title: file.originalName.replaceAll('.pdf', ''),
-          fileName: file.originalName,
-          fileSize: file.formattedSize,
-          status: TextbookStatus.ready,
-          uploadedAt: file.timeCreated,
-          chapters: [], // Will be populated after analysis
-          totalPages: 0, // Will be populated after analysis
-          keyTopics: [], // Will be populated after analysis
-          subject: 'Unknown', // Will be determined after analysis
-        )).toList();
+        uploadedTextbooks = textbooks;
       });
     } catch (e) {
+      print('Error loading textbooks: $e');
       setState(() {
-        uploadedTextbooks = [
-          UploadedTextbook(
-            id: '1',
-            title: 'Biology Textbook',
-            fileName: 'Biology_Grade_12.pdf',
-            fileSize: '24.5 MB',
-            status: TextbookStatus.ready,
-            uploadedAt: DateTime.now().subtract(const Duration(days: 2)),
-            chapters: ['Cell Structure', 'Mitosis', 'DNA Replication', 'Photosynthesis', 'Genetics'],
-            totalPages: 156,
-            keyTopics: ['Cell Structure', 'Mitosis', 'DNA Replication', 'Photosynthesis'],
-            subject: 'Biology',
-          ),
-          UploadedTextbook(
-            id: '2',
-            title: 'Physics Textbook',
-            fileName: 'Physics_Fundamentals.pdf',
-            fileSize: '18.2 MB',
-            status: TextbookStatus.ready,
-            uploadedAt: DateTime.now().subtract(const Duration(days: 5)),
-            chapters: ['Newton\'s Laws', 'Kinematics', 'Work & Energy'],
-            totalPages: 124,
-            keyTopics: ['Newton\'s Laws', 'Kinematics', 'Work & Energy'],
-            subject: 'Physics',
-          ),
-        ];
+        uploadedTextbooks = [];
       });
+    }
+  }
+
+  Map<String, dynamic> _extractAnalysisFromMetadata(dynamic file) {
+    try {
+      final metadata = file.metadata ?? {};
+      
+      List<String> chapters = <String>[];
+      List<String> keyTopics = <String>[];
+      
+      if (metadata['chapters'] != null) {
+        try {
+          final chaptersJson = metadata['chapters'].toString();
+          if (chaptersJson.isNotEmpty && chaptersJson != 'null') {
+            final decoded = json.decode(chaptersJson);
+            if (decoded is List) {
+              chapters = decoded.cast<String>();
+            }
+          }
+        } catch (e) {
+          print('Error parsing chapters JSON: $e');
+        }
+      }
+      
+      if (metadata['keyTopics'] != null) {
+        try {
+          final topicsJson = metadata['keyTopics'].toString();
+          if (topicsJson.isNotEmpty && topicsJson != 'null') {
+            final decoded = json.decode(topicsJson);
+            if (decoded is List) {
+              keyTopics = decoded.cast<String>();
+            }
+          }
+        } catch (e) {
+          print('Error parsing keyTopics JSON: $e');
+        }
+      }
+      
+      return {
+        'chapters': chapters,
+        'totalPages': int.tryParse(metadata['totalPages']?.toString() ?? '0') ?? 0,
+        'keyTopics': keyTopics,
+        'subject': metadata['subject']?.toString() ?? 'Unknown',
+      };
+    } catch (e) {
+      print('Error extracting metadata: $e');
+      return {
+        'chapters': <String>[],
+        'totalPages': 0,
+        'keyTopics': <String>[],
+        'subject': 'Unknown',
+      };
     }
   }
   Future<void> _handleFileUpload(File file) async {
@@ -80,30 +150,103 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
       }
       return;
     }
+
     setState(() {
       _isUploading = true;
       _uploadProgress = 0.0;
     });
+
     try {
+      _simulateUploadProgress();
+      
       final analysisResult = await _storageService.uploadAndScanSyllabus(
         file: file,
         prompt: 'Analyze this syllabus and extract key information including chapters, topics, and subject area.',
       );
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Syllabus uploaded and analyzed successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (analysisResult['data']?['isDuplicate'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'File already exists!',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    analysisResult['data']?['message'] ?? 'Returning previous analysis to save time.',
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.blue,
+              duration: const Duration(seconds: 6),
+              action: SnackBarAction(
+                label: 'OK',
+                textColor: Colors.white,
+                onPressed: () {},
+              ),
+            ),
+          );
+        }
+        else if (analysisResult['data']?['status'] == 'uploaded_pending_analysis') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'File uploaded successfully!',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    analysisResult['data']?['message'] ?? 'Google Cloud services are being set up. Please try again in 2-3 minutes.',
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 8),
+              action: SnackBarAction(
+                label: 'OK',
+                textColor: Colors.white,
+                onPressed: () {},
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Syllabus uploaded and analyzed successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       }
+
       _loadUploadedTextbooks();
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Upload failed: $e';
+        Color backgroundColor = Colors.red;
+        
+        if (e.toString().contains('Service agents are being provisioned') || 
+            e.toString().contains('SERVICE_AGENTS_PROVISIONING')) {
+          errorMessage = 'Google Cloud services are still being set up for your project. Please try again in 2-3 minutes.';
+          backgroundColor = Colors.orange;
+        } else if (e.toString().contains('STORAGE_NOT_CONFIGURED')) {
+          errorMessage = 'Storage configuration error. Please contact support.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Upload failed: $e'),
-            backgroundColor: Colors.red,
+            content: Text(errorMessage),
+            backgroundColor: backgroundColor,
+            duration: const Duration(seconds: 6),
           ),
         );
       }
@@ -115,6 +258,27 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
         });
       }
     }
+  }
+
+  void _simulateUploadProgress() {
+    Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      if (!_isUploading || !mounted) {
+        timer.cancel();
+        return;
+      }
+      
+      setState(() {
+        if (_uploadProgress < 0.9) {
+          _uploadProgress += 0.05;
+        } else if (_uploadProgress < 1.0) {
+          _uploadProgress = 1.0;
+        }
+      });
+      
+      if (_uploadProgress >= 1.0) {
+        timer.cancel();
+      }
+    });
   }
   @override
   Widget build(BuildContext context) {
@@ -244,7 +408,7 @@ class UploadInterface extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Supports PDF files up to 100MB. Gemini 1.5 Pro can read entire textbooks!',
+            'Supports PDF files up to 100MB. AI analysis may take 1-2 minutes for large documents.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Colors.grey[600],
@@ -261,7 +425,9 @@ class UploadInterface extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Uploading... ${(uploadProgress * 100).toInt()}%',
+              uploadProgress < 1.0 
+                ? 'Uploading... ${(uploadProgress * 100).toInt()}%'
+                : 'Analyzing with AI... This may take 1-2 minutes',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Colors.grey[600],
               ),

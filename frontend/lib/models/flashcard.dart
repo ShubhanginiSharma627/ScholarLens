@@ -20,18 +20,35 @@ class Flashcard {
     this.category,
   });
   factory Flashcard.fromJson(Map<String, dynamic> json) {
+    // Handle different response formats from backend
+    final studyStats = json['studyStats'] as Map<String, dynamic>?;
+    
     return Flashcard(
       id: json['id'] as String,
-      subject: json['subject'] as String,
+      subject: json['subject'] as String? ?? 
+               (json['tags'] as List?)?.first?.toString() ?? 
+               'General',
       question: json['question'] as String,
       answer: json['answer'] as String,
       difficulty: Difficulty.values.firstWhere(
         (e) => e.name == json['difficulty'],
         orElse: () => Difficulty.medium,
       ),
-      nextReviewDate: DateTime.parse(json['next_review_date'] as String),
-      reviewCount: json['review_count'] as int,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      nextReviewDate: DateTime.parse(
+        json['nextReviewDate'] as String? ?? 
+        json['next_review_date'] as String? ?? 
+        studyStats?['nextReview'] as String? ?? 
+        DateTime.now().add(const Duration(days: 1)).toIso8601String()
+      ),
+      reviewCount: json['reviewCount'] as int? ?? 
+                   json['review_count'] as int? ?? 
+                   studyStats?['timesStudied'] as int? ?? 
+                   0,
+      createdAt: DateTime.parse(
+        json['createdAt'] as String? ?? 
+        json['created_at'] as String? ?? 
+        DateTime.now().toIso8601String()
+      ),
       category: json['category'] as String?,
     );
   }

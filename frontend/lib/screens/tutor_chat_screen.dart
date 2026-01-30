@@ -157,7 +157,7 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
   }
   Widget _buildChatArea() {
     return Container(
-      height: 400, // Fixed height for chat area
+      height: MediaQuery.of(context).size.height * 0.6, // 60% of screen height
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),

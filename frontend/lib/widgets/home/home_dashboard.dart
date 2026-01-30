@@ -1,59 +1,161 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/progress_provider.dart';
-import '../../screens/camera_screen.dart';
-import '../../screens/tutor_chat_screen.dart';
-import '../../screens/flashcard_management_screen.dart';
-import '../../screens/create_flashcard_screen.dart';
-import '../../screens/syllabus_scanner_screen.dart';
+import '../../services/flashcard_service.dart';
+import '../../services/api_service.dart';
+import '../../models/flashcard.dart';
+import '../../utils/navigation_helper.dart';
 import '../common/top_navigation_bar.dart';
-class HomeDashboard extends StatelessWidget {
+
+class HomeDashboard extends StatefulWidget {
   const HomeDashboard({super.key});
+
+  @override
+  State<HomeDashboard> createState() => _HomeDashboardState();
+}
+
+class _HomeDashboardState extends State<HomeDashboard> {
+  final FlashcardService _flashcardService = FlashcardService();
+  final ApiService _apiService = ApiService();
+  List<Flashcard> _allFlashcards = [];
+  Map<String, double> _subjectProgress = {};
+  UserStats? _userStats;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      final flashcards = await _flashcardService.getAllFlashcards();
+      final subjectProgress = await _calculateSubjectProgress(flashcards);
+      
+      // Try to get user stats from backend
+      UserStats? userStats;
+      try {
+        userStats = await _apiService.getUserStats();
+      } catch (e) {
+        // If backend fails, continue with local data only
+        print('Failed to load user stats: $e');
+      }
+      
+      setState(() {
+        _allFlashcards = flashcards;
+        _subjectProgress = subjectProgress;
+        _userStats = userStats;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<Map<String, double>> _calculateSubjectProgress(List<Flashcard> flashcards) async {
+    final subjectGroups = <String, List<Flashcard>>{};
+    
+    for (final card in flashcards) {
+      if (!subjectGroups.containsKey(card.subject)) {
+        subjectGroups[card.subject] = [];
+      }
+      subjectGroups[card.subject]!.add(card);
+    }
+    
+    final progress = <String, double>{};
+    for (final entry in subjectGroups.entries) {
+      final masteredCards = entry.value.where((card) => 
+          card.reviewCount >= 3 && card.difficulty == Difficulty.easy).length;
+      final totalCards = entry.value.length;
+      progress[entry.key] = totalCards > 0 ? masteredCards / totalCards : 0.0;
+    }
+    
+    return progress;
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: const TopNavigationBar(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Good morning! 👋',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadDashboardData,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildGreeting(),
+                    const SizedBox(height: 24),
+                    _buildStatsGrid(context),
+                    const SizedBox(height: 24),
+                    _buildContinueLearningSection(context),
+                    const SizedBox(height: 24),
+                    _buildQuickActionsSection(context),
+                    const SizedBox(height: 24),
+                    _buildWeakAreasSection(context),
+                    const SizedBox(height: 24),
+                    _buildRecentActivitySection(context),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Ready to learn something new?',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 24),
-            _buildStatsGrid(context),
-            const SizedBox(height: 24),
-            _buildContinueLearningSection(context),
-            const SizedBox(height: 24),
-            _buildQuickActionsSection(context),
-            const SizedBox(height: 24),
-            _buildWeakAreasSection(context),
-            const SizedBox(height: 24),
-            _buildRecentActivitySection(context),
-            const SizedBox(height: 16),
-          ],
+    );
+  }
+
+  Widget _buildGreeting() {
+    final hour = DateTime.now().hour;
+    String greeting;
+    if (hour < 12) {
+      greeting = 'Good morning! 👋';
+    } else if (hour < 17) {
+      greeting = 'Good afternoon! 👋';
+    } else {
+      greeting = 'Good evening! 👋';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          greeting,
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          _allFlashcards.isEmpty 
+              ? 'Ready to start your learning journey?'
+              : 'Ready to continue learning?',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
     );
   }
   Widget _buildStatsGrid(BuildContext context) {
     return Consumer<ProgressProvider>(
       builder: (context, progress, child) {
+        final totalCards = _allFlashcards.length;
+        final masteredCards = _allFlashcards.where((card) => 
+            card.reviewCount >= 3 && card.difficulty == Difficulty.easy).length;
+        final dueCards = _allFlashcards.where((card) => card.isDue).length;
+        
+        // Use backend stats if available, otherwise fall back to local data
+        final streak = _userStats?.streak ?? progress.dayStreak;
+        final totalInteractions = _userStats?.totalInteractions ?? totalCards;
+        
         return GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
@@ -64,31 +166,31 @@ class HomeDashboard extends StatelessWidget {
           children: [
             _buildStatCard(
               icon: Icons.local_fire_department,
-              value: '${progress.dayStreak}',
+              value: '$streak',
               label: 'Day Streak',
               color: Colors.orange,
               backgroundColor: Colors.orange[50]!,
             ),
             _buildStatCard(
               icon: Icons.emoji_events,
-              value: '${progress.topicsMastered}',
-              label: 'Topics Mastered',
+              value: '$masteredCards',
+              label: 'Cards Mastered',
               color: Colors.purple,
               backgroundColor: Colors.purple[50]!,
             ),
             _buildStatCard(
               icon: Icons.quiz,
-              value: '${progress.questionsSolved}',
-              label: 'Questions Solved',
+              value: '$totalInteractions',
+              label: 'Total Interactions',
               color: Colors.teal,
               backgroundColor: Colors.teal[50]!,
             ),
             _buildStatCard(
               icon: Icons.schedule,
-              value: progress.studyHours.toStringAsFixed(1),
-              label: 'Study Hours',
-              color: Colors.grey[700]!,
-              backgroundColor: Colors.grey[100]!,
+              value: '$dueCards',
+              label: 'Due Today',
+              color: dueCards > 0 ? Colors.red : Colors.grey[700]!,
+              backgroundColor: dueCards > 0 ? Colors.red[50]! : Colors.grey[100]!,
             ),
           ],
         );
@@ -142,6 +244,70 @@ class HomeDashboard extends StatelessWidget {
     );
   }
   Widget _buildContinueLearningSection(BuildContext context) {
+    if (_allFlashcards.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Get Started',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue[600]!, Colors.blue[400]!],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Welcome to ScholarLens!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Create your first flashcard deck to start learning',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => NavigationHelper.navigateToCreateFlashcard(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.blue[600],
+                  ),
+                  child: const Text('Create Cards'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Find the most recently studied subject
+    final recentSubject = _subjectProgress.keys.isNotEmpty 
+        ? _subjectProgress.keys.first 
+        : 'Study';
+    final progress = _subjectProgress[recentSubject] ?? 0.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -156,7 +322,7 @@ class HomeDashboard extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () => NavigationHelper.navigateToCards(context),
               child: Text(
                 'See all',
                 style: TextStyle(
@@ -190,9 +356,9 @@ class HomeDashboard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'Cellular Biology: Mitochondria',
-                style: TextStyle(
+              Text(
+                recentSubject,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -201,9 +367,9 @@ class HomeDashboard extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Text(
-                    '75% complete',
-                    style: TextStyle(
+                  Text(
+                    '${(progress * 100).round()}% mastered',
+                    style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
                     ),
@@ -218,7 +384,7 @@ class HomeDashboard extends StatelessWidget {
                     ),
                     child: FractionallySizedBox(
                       alignment: Alignment.centerLeft,
-                      widthFactor: 0.75,
+                      widthFactor: progress,
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -254,13 +420,7 @@ class HomeDashboard extends StatelessWidget {
                 icon: Icons.camera_alt,
                 label: 'Snap & Solve',
                 color: Colors.purple,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const CameraScreen(),
-                    ),
-                  );
-                },
+                onTap: () => NavigationHelper.navigateToCamera(context),
               ),
             ),
             const SizedBox(width: 12),
@@ -269,13 +429,7 @@ class HomeDashboard extends StatelessWidget {
                 icon: Icons.upload_file,
                 label: 'Upload Syllabus',
                 color: Colors.teal,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const SyllabusScannerScreen(),
-                    ),
-                  );
-                },
+                onTap: () => NavigationHelper.navigateToSyllabusScanner(context),
               ),
             ),
           ],
@@ -303,13 +457,7 @@ class HomeDashboard extends StatelessWidget {
                 icon: Icons.layers,
                 label: 'Study Cards',
                 color: Colors.indigo,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const FlashcardManagementScreen(),
-                    ),
-                  );
-                },
+                onTap: () => NavigationHelper.navigateToCards(context),
               ),
             ),
           ],
@@ -322,13 +470,7 @@ class HomeDashboard extends StatelessWidget {
                 icon: Icons.chat_bubble,
                 label: 'Ask Tutor',
                 color: Colors.blue,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const TutorChatScreen(),
-                    ),
-                  );
-                },
+                onTap: () => NavigationHelper.navigateToTutor(context),
               ),
             ),
             const SizedBox(width: 12),
@@ -337,13 +479,7 @@ class HomeDashboard extends StatelessWidget {
                 icon: Icons.add_circle,
                 label: 'Create Cards',
                 color: Colors.green,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const CreateFlashcardScreen(),
-                    ),
-                  );
-                },
+                onTap: () => NavigationHelper.navigateToCreateFlashcard(context),
               ),
             ),
           ],
@@ -392,7 +528,7 @@ class HomeDashboard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Weak Areas',
+          'Subject Progress',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -416,7 +552,7 @@ class HomeDashboard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Performance by Subject',
+                'Mastery by Subject',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -424,13 +560,33 @@ class HomeDashboard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildSubjectProgress('Algebra', 0.85, Colors.green),
-              const SizedBox(height: 12),
-              _buildSubjectProgress('Geometry', 0.45, Colors.red),
-              const SizedBox(height: 12),
-              _buildSubjectProgress('Biology', 0.72, Colors.green),
-              const SizedBox(height: 12),
-              _buildSubjectProgress('Physics', 0.58, Colors.orange),
+              if (_subjectProgress.isEmpty)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Text(
+                      'No subjects yet.\nCreate flashcards to see your progress!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                ..._subjectProgress.entries.map((entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildSubjectProgress(
+                        entry.key,
+                        entry.value,
+                        entry.value >= 0.7 
+                            ? Colors.green 
+                            : entry.value >= 0.4 
+                                ? Colors.orange 
+                                : Colors.red,
+                      ),
+                    )),
             ],
           ),
         ),

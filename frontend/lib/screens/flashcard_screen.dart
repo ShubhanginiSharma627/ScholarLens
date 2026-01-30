@@ -218,129 +218,153 @@ class _FlashcardScreenState extends State<FlashcardScreen>
           ),
         ],
       ),
-      body: Column(
-        children: [
-          AnimatedBuilder(
-            animation: _progressAnimation,
-            builder: (context, child) {
-              return ModernProgressTracker(
-                totalCards: widget.flashcards.length,
-                masteredCards: (_sessionProgress.easyCount + _sessionProgress.mediumCount),
-                correctCount: _sessionProgress.correctCount,
-                incorrectCount: _sessionProgress.incorrectCount,
-                completionPercentage: _sessionProgress.completionPercentage * _progressAnimation.value,
-                showCounters: true,
-                showMasteryStats: false, // Hide mastery stats during study session
-              );
-            },
-          ),
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              onPageChanged: _onPageChanged,
-              itemCount: widget.flashcards.length,
-              physics: const BouncingScrollPhysics(),
-              itemBuilder: (context, index) {
-                return AnimatedBuilder(
-                  animation: _pageController,
-                  builder: (context, child) {
-                    double value = 1.0;
-                    if (_pageController.position.haveDimensions) {
-                      value = _pageController.page! - index;
-                      value = (1 - (value.abs() * 0.1)).clamp(0.0, 1.0);
-                    }
-                    return Transform.scale(
-                      scale: value,
-                      child: Opacity(
-                        opacity: value,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: EnhancedFlashcardWidget(
-                            flashcard: widget.flashcards[index],
-                            isFlipped: index == _currentIndex ? _isFlipped : false,
-                            onFlip: index == _currentIndex ? _onFlip : () {},
-                            onDifficultyRated: index == _currentIndex ? _onDifficultyRated : (_) {},
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Progress tracker - fixed height
+            AnimatedBuilder(
+              animation: _progressAnimation,
+              builder: (context, child) {
+                return ModernProgressTracker(
+                  totalCards: widget.flashcards.length,
+                  masteredCards: (_sessionProgress.easyCount + _sessionProgress.mediumCount),
+                  correctCount: _sessionProgress.correctCount,
+                  incorrectCount: _sessionProgress.incorrectCount,
+                  completionPercentage: _sessionProgress.completionPercentage * _progressAnimation.value,
+                  showCounters: true,
+                  showMasteryStats: false, // Hide mastery stats during study session
                 );
               },
             ),
-          ),
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                'Card ${_currentIndex + 1} of ${widget.flashcards.length}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).primaryColor,
-                ),
-                textAlign: TextAlign.center,
+            // Main content area - flexible
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Column(
+                    children: [
+                      // Flashcard area - takes most of the available space
+                      Expanded(
+                        flex: 3,
+                        child: PageView.builder(
+                          controller: _pageController,
+                          onPageChanged: _onPageChanged,
+                          itemCount: widget.flashcards.length,
+                          physics: const BouncingScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            return AnimatedBuilder(
+                              animation: _pageController,
+                              builder: (context, child) {
+                                double value = 1.0;
+                                if (_pageController.position.haveDimensions) {
+                                  value = _pageController.page! - index;
+                                  value = (1 - (value.abs() * 0.1)).clamp(0.0, 1.0);
+                                }
+                                return Transform.scale(
+                                  scale: value,
+                                  child: Opacity(
+                                    opacity: value,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: EnhancedFlashcardWidget(
+                                        flashcard: widget.flashcards[index],
+                                        isFlipped: index == _currentIndex ? _isFlipped : false,
+                                        onFlip: index == _currentIndex ? _onFlip : () {},
+                                        onDifficultyRated: index == _currentIndex ? _onDifficultyRated : (_) {},
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                      // Card counter - fixed height
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Text(
+                            'Card ${_currentIndex + 1} of ${widget.flashcards.length}',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                      // Navigation buttons - fixed height
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildAnimatedNavButton(
+                                onPressed: _currentIndex > 0 ? _previousCard : null,
+                                icon: Icons.arrow_back_ios,
+                                tooltip: 'Previous Card',
+                              ),
+                              _buildAnimatedNavButton(
+                                onPressed: _onFlip,
+                                icon: _isFlipped ? Icons.visibility_off : Icons.visibility,
+                                tooltip: _isFlipped ? 'Hide Answer' : 'Show Answer',
+                              ),
+                              _buildAnimatedNavButton(
+                                onPressed: _currentIndex < widget.flashcards.length - 1 ? _nextCard : null,
+                                icon: Icons.arrow_forward_ios,
+                                tooltip: 'Next Card',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Difficulty rating - flexible height but constrained
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        transitionBuilder: (Widget child, Animation<double> animation) {
+                          return SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0.0, 1.0),
+                              end: Offset.zero,
+                            ).animate(CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeInOutCubic,
+                            )),
+                            child: FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: _isFlipped
+                            ? Container(
+                                key: const ValueKey('difficulty_rating'),
+                                constraints: BoxConstraints(
+                                  maxHeight: constraints.maxHeight * 0.25, // Max 25% of available height
+                                ),
+                                padding: const EdgeInsets.all(16),
+                                child: SingleChildScrollView(
+                                  child: DifficultyRatingBar(
+                                    onRatingSelected: _onDifficultyRated,
+                                    selectedRating: _ratings[_currentIndex],
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                key: const ValueKey('empty_space'),
+                                height: 0,
+                              ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
-          ),
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildAnimatedNavButton(
-                    onPressed: _currentIndex > 0 ? _previousCard : null,
-                    icon: Icons.arrow_back_ios,
-                    tooltip: 'Previous Card',
-                  ),
-                  _buildAnimatedNavButton(
-                    onPressed: _onFlip,
-                    icon: _isFlipped ? Icons.visibility_off : Icons.visibility,
-                    tooltip: _isFlipped ? 'Hide Answer' : 'Show Answer',
-                  ),
-                  _buildAnimatedNavButton(
-                    onPressed: _currentIndex < widget.flashcards.length - 1 ? _nextCard : null,
-                    icon: Icons.arrow_forward_ios,
-                    tooltip: 'Next Card',
-                  ),
-                ],
-              ),
-            ),
-          ),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.0, 1.0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeInOutCubic,
-                )),
-                child: FadeTransition(
-                  opacity: animation,
-                  child: child,
-                ),
-              );
-            },
-            child: _isFlipped
-                ? Container(
-                    key: const ValueKey('difficulty_rating'),
-                    padding: const EdgeInsets.all(16),
-                    child: DifficultyRatingBar(
-                      onRatingSelected: _onDifficultyRated,
-                      selectedRating: _ratings[_currentIndex],
-                    ),
-                  )
-                : Container(
-                    key: const ValueKey('empty_space'),
-                    height: 0,
-                  ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -7,6 +7,7 @@ import '../services/performance_optimizer.dart';
 import '../widgets/home/home_dashboard.dart';
 import '../widgets/navigation/animated_bottom_navigation.dart';
 import '../widgets/navigation/enhanced_speed_dial.dart';
+import '../utils/navigation_helper.dart';
 import 'tutor_chat_screen.dart';
 import 'flashcard_management_screen.dart';
 import 'analytics_screen.dart';
@@ -59,6 +60,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   @override
   void initState() {
     super.initState();
+    
+    // Initialize the navigation helper
+    NavigationHelper.initialize(_onTabTapped);
+    
     SchedulerBinding.instance.addPostFrameCallback((_) {
       _startFrameTimeMonitoring();
     });
@@ -76,6 +81,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   @override
   void dispose() {
     _pageController.dispose();
+    NavigationHelper.dispose();
     super.dispose();
   }
   @override

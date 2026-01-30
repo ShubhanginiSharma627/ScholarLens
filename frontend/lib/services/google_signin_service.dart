@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import '../models/models.dart';
@@ -11,11 +12,12 @@ class GoogleSignInService {
   GoogleSignInService._();
   final SecureStorageService _secureStorage = SecureStorageService();
   final NetworkService _networkService = NetworkService.instance;
-  late final GoogleSignIn _googleSignIn;
-  static const String _baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'https://scholarlens-afvx.onrender.com/api',
-  );
+  GoogleSignIn? _googleSignIn;
+  bool _isInitialized = false;
+
+  static final String _baseUrl =
+      dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
+
   static const String _googleAuthEndpoint = '/auth/google';
   static const String _linkAccountEndpoint = '/auth/link-google';
   static const String _checkAccountEndpoint = '/auth/check-account';
@@ -27,6 +29,7 @@ class GoogleSignInService {
     _googleSignIn = GoogleSignIn(
       scopes: scopes,
     );
+    _isInitialized = true;
     debugPrint('Google Sign-In service initialized');
   }
   Future<AuthResult> signInWithGoogle() async {
@@ -35,7 +38,7 @@ class GoogleSignInService {
       if (!_isInitialized) {
         initialize(); // Initialize with default settings
       }
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      final GoogleSignInAccount? googleUser = await _googleSignIn!.signIn();
       if (googleUser == null) {
         debugPrint('Google Sign-In cancelled by user');
         return AuthResult.failure(
@@ -73,8 +76,8 @@ class GoogleSignInService {
   Future<AuthResult> signOut() async {
     try {
       debugPrint('Attempting Google Sign-Out');
-      if (_isInitialized) {
-        await _googleSignIn.signOut();
+      if (_isInitialized && _googleSignIn != null) {
+        await _googleSignIn!.signOut();
       }
       await _secureStorage.clearAuthenticationData();
       debugPrint('Google Sign-Out successful');
@@ -98,8 +101,8 @@ class GoogleSignInService {
   Future<AuthResult> disconnect() async {
     try {
       debugPrint('Attempting Google disconnect');
-      if (_isInitialized) {
-        await _googleSignIn.disconnect();
+      if (_isInitialized && _googleSignIn != null) {
+        await _googleSignIn!.disconnect();
       }
       await _secureStorage.clearAuthenticationData();
       debugPrint('Google disconnect successful');
@@ -122,18 +125,17 @@ class GoogleSignInService {
   }
   Future<bool> isSignedIn() async {
     try {
-      if (!_isInitialized) return false;
-      return await _googleSignIn.isSignedIn();
+      if (!_isInitialized || _googleSignIn == null) return false;
+      return await _googleSignIn!.isSignedIn();
     } catch (e) {
       debugPrint('Google Sign-In status check error: $e');
       return false;
     }
   }
   GoogleSignInAccount? get currentUser {
-    if (!_isInitialized) return null;
-    return _googleSignIn.currentUser;
+    if (!_isInitialized || _googleSignIn == null) return null;
+    return _googleSignIn!.currentUser;
   }
-  bool get _isInitialized => _googleSignIn != null;
   Future<AuthResult> _authenticateWithBackend({
     required GoogleSignInAccount googleUser,
     required String accessToken,
@@ -296,8 +298,8 @@ class GoogleSignInService {
   }
   Future<bool> isGooglePlayServicesAvailable() async {
     try {
-      if (!_isInitialized) return false;
-      await _googleSignIn.isSignedIn();
+      if (!_isInitialized || _googleSignIn == null) return false;
+      await _googleSignIn!.isSignedIn();
       return true;
     } catch (e) {
       debugPrint('Google Play Services check error: $e');
@@ -310,7 +312,7 @@ class GoogleSignInService {
         initialize(); // Initialize with default settings
       }
       debugPrint('Attempting silent Google Sign-In');
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signInSilently();
+      final GoogleSignInAccount? googleUser = await _googleSignIn!.signInSilently();
       if (googleUser == null) {
         debugPrint('Silent Google Sign-In failed - no previous session');
         return null;

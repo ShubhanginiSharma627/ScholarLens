@@ -118,7 +118,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
     final isDark = theme.brightness == Brightness.dark;
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 300),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
         gradient: LinearGradient(
@@ -156,49 +155,64 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
         child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingXL),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildSubjectBadge(context, AppTheme.primaryColor, false),
-              const SizedBox(height: AppTheme.spacingXL),
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 600),
-                builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: 0.8 + (0.2 * value),
-                    child: Container(
-                      padding: const EdgeInsets.all(AppTheme.spacingM),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.help_outline_rounded,
-                        size: 48,
-                        color: AppTheme.primaryColor,
-                      ),
+          padding: const EdgeInsets.all(AppTheme.spacingL),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildSubjectBadge(context, AppTheme.primaryColor, false),
+                        const SizedBox(height: AppTheme.spacingL),
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          duration: const Duration(milliseconds: 600),
+                          builder: (context, value, child) {
+                            return Transform.scale(
+                              scale: 0.8 + (0.2 * value),
+                              child: Container(
+                                padding: const EdgeInsets.all(AppTheme.spacingM),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.help_outline_rounded,
+                                  size: 40,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: AppTheme.spacingL),
+                        Flexible(
+                          child: Text(
+                            widget.flashcard.question,
+                            style: AppTypography.getTextStyle(context, 'headlineMedium').copyWith(
+                              fontWeight: AppTypography.bold,
+                              height: 1.3,
+                              letterSpacing: -0.2,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? AppTheme.darkPrimaryTextColor
+                                  : AppTheme.primaryTextColor.withValues(alpha: 0.95),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spacingL),
+                        _buildTapInstruction(context),
+                      ],
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: AppTheme.spacingXL),
-              Text(
-                widget.flashcard.question,
-                style: AppTypography.getTextStyle(context, 'headlineLarge').copyWith(
-                  fontWeight: AppTypography.bold,
-                  height: 1.3,
-                  letterSpacing: -0.2,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppTheme.darkPrimaryTextColor
-                      : AppTheme.primaryTextColor.withValues(alpha: 0.95),
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppTheme.spacingXL),
-              _buildTapInstruction(context),
-            ],
+              );
+            },
           ),
         ),
       ),
@@ -209,7 +223,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
     final isDark = theme.brightness == Brightness.dark;
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 300),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
         gradient: LinearGradient(
@@ -247,50 +260,64 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
         child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingXL),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildSubjectBadge(context, AppTheme.successColor, true),
-              const SizedBox(height: AppTheme.spacingXL),
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 600),
-                builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: 0.8 + (0.2 * value),
-                    child: Container(
-                      padding: const EdgeInsets.all(AppTheme.spacingM),
-                      decoration: BoxDecoration(
-                        color: AppTheme.successColor.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.lightbulb_outline_rounded,
-                        size: 48,
-                        color: AppTheme.successColor,
-                      ),
+          padding: const EdgeInsets.all(AppTheme.spacingL),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildSubjectBadge(context, AppTheme.successColor, true),
+                        const SizedBox(height: AppTheme.spacingL),
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          duration: const Duration(milliseconds: 600),
+                          builder: (context, value, child) {
+                            return Transform.scale(
+                              scale: 0.8 + (0.2 * value),
+                              child: Container(
+                                padding: const EdgeInsets.all(AppTheme.spacingM),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.successColor.withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.lightbulb_outline_rounded,
+                                  size: 40,
+                                  color: AppTheme.successColor,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: AppTheme.spacingL),
+                        Flexible(
+                          child: Text(
+                            widget.flashcard.answer,
+                            style: AppTypography.getTextStyle(context, 'headlineMedium').copyWith(
+                              fontWeight: AppTypography.extraBold,
+                              height: 1.2,
+                              letterSpacing: -0.3,
+                              color: Theme.of(context).brightness == Brightness.dark 
+                                  ? Colors.white.withValues(alpha: 0.95)
+                                  : AppTheme.successColor.withValues(alpha: 0.9),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spacingL),
+                        _buildCardStats(context),
+                      ],
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: AppTheme.spacingXL),
-              Text(
-                widget.flashcard.answer,
-                style: AppTypography.getTextStyle(context, 'headlineLarge').copyWith(
-                  fontWeight: AppTypography.extraBold,
-                  height: 1.2,
-                  letterSpacing: -0.3,
-                  fontSize: 24,
-                  color: Theme.of(context).brightness == Brightness.dark 
-                      ? Colors.white.withValues(alpha: 0.95)
-                      : AppTheme.successColor.withValues(alpha: 0.9),
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppTheme.spacingXL),
-              _buildCardStats(context),
-            ],
+              );
+            },
           ),
         ),
       ),

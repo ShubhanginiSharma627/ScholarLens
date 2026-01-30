@@ -11,6 +11,7 @@ class DifficultyRatingBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           'How difficult was this card?',
@@ -18,7 +19,7 @@ class DifficultyRatingBar extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -45,13 +46,16 @@ class DifficultyRatingBar extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
           _getDifficultyDescription(),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Colors.grey[600],
+            fontSize: 12,
           ),
           textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
@@ -74,7 +78,7 @@ class DifficultyRatingBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
               decoration: BoxDecoration(
                 color: isSelected ? color.withValues(alpha: 0.2) : Colors.grey[100],
                 borderRadius: BorderRadius.circular(12),
@@ -88,7 +92,7 @@ class DifficultyRatingBar extends StatelessWidget {
                 children: [
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: isSelected ? color : Colors.grey[400],
                       shape: BoxShape.circle,
@@ -96,26 +100,28 @@ class DifficultyRatingBar extends StatelessWidget {
                     child: Icon(
                       icon,
                       color: Colors.white,
-                      size: 24,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     label,
                     style: TextStyle(
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                       color: isSelected ? color : Colors.grey[700],
-                      fontSize: 14,
+                      fontSize: 12,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     _getNextReviewText(difficulty),
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 9,
                       color: Colors.grey[600],
                     ),
                     textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

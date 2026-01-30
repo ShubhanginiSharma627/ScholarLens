@@ -1,9 +1,52 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/flashcard.dart';
+import 'api_service.dart';
+
+class StudySession {
+  final String id;
+  final String flashcardId;
+  final DateTime timestamp;
+  final double duration; // in hours
+  final bool isCorrect;
+  final String activityType;
+
+  StudySession({
+    required this.id,
+    required this.flashcardId,
+    required this.timestamp,
+    required this.duration,
+    required this.isCorrect,
+    required this.activityType,
+  });
+
+  factory StudySession.fromJson(Map<String, dynamic> json) {
+    return StudySession(
+      id: json['id'],
+      flashcardId: json['flashcardId'],
+      timestamp: DateTime.parse(json['timestamp']),
+      duration: json['duration'].toDouble(),
+      isCorrect: json['isCorrect'],
+      activityType: json['activityType'] ?? 'Flashcards',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'flashcardId': flashcardId,
+      'timestamp': timestamp.toIso8601String(),
+      'duration': duration,
+      'isCorrect': isCorrect,
+      'activityType': activityType,
+    };
+  }
+}
+
 class FlashcardService {
   static const String _flashcardsKey = 'flashcards';
   static const String _subjectsKey = 'flashcard_subjects';
+  final ApiService _apiService = ApiService();
   Future<List<Flashcard>> getAllFlashcards() async {
     final prefs = await SharedPreferences.getInstance();
     final flashcardsJson = prefs.getStringList(_flashcardsKey) ?? [];
@@ -44,6 +87,50 @@ class FlashcardService {
     await _saveFlashcards(allFlashcards);
     await _updateSubjectsList(flashcard.subject);
   }
+
+  Future<List<Flashcard>> generateFlashcardsWithAI({
+    required String topic,
+    required String subject,
+    String? category,
+    int count = 5,
+  }) async {
+    try {
+      // Call the API to generate flashcards
+      final generatedFlashcards = await _apiService.generateFlashcards(
+        topic: topic,
+        count: count,
+        difficulty: 'medium',
+      );
+
+      // Save all generated flashcards locally and update with subject/category
+      final allFlashcards = await getAllFlashcards();
+      final updatedFlashcards = <Flashcard>[];
+      
+      for (final flashcard in generatedFlashcards) {
+        // Update subject and category if provided, and ensure proper field mapping
+        final updatedFlashcard = Flashcard(
+          id: flashcard.id,
+          subject: subject, // Use the provided subject instead of backend's tags
+          question: flashcard.question,
+          answer: flashcard.answer,
+          difficulty: flashcard.difficulty,
+          nextReviewDate: flashcard.nextReviewDate,
+          reviewCount: flashcard.reviewCount,
+          createdAt: flashcard.createdAt,
+          category: category ?? flashcard.category,
+        );
+        allFlashcards.add(updatedFlashcard);
+        updatedFlashcards.add(updatedFlashcard);
+      }
+      
+      await _saveFlashcards(allFlashcards);
+      await _updateSubjectsList(subject);
+      
+      return updatedFlashcards;
+    } catch (e) {
+      throw Exception('Failed to generate flashcards: $e');
+    }
+  }
   Future<void> updateFlashcard(Flashcard updatedFlashcard) async {
     final allFlashcards = await getAllFlashcards();
     final index = allFlashcards.indexWhere((card) => card.id == updatedFlashcard.id);
@@ -60,6 +147,49 @@ class FlashcardService {
       final updatedCard = allFlashcards[index].updateAfterReview(difficulty);
       allFlashcards[index] = updatedCard;
       await _saveFlashcards(allFlashcards);
+      
+      // Record study session for analytics
+      await _recordStudySession(updatedCard, difficulty);
+    }
+  }
+
+  Future<void> _recordStudySession(Flashcard flashcard, Difficulty difficulty) async {
+    try {
+      // Record locally for offline support
+      final session = StudySession(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        flashcardId: flashcard.id,
+        timestamp: DateTime.now(),
+        duration: 0.05, // Assume 3 minutes per card
+        isCorrect: difficulty == Difficulty.easy,
+        activityType: 'Flashcards',
+      );
+      
+      // Store locally
+      final prefs = await SharedPreferences.getInstance();
+      final sessionsJson = prefs.getStringList('study_sessions') ?? [];
+      sessionsJson.add(jsonEncode(session.toJson()));
+      
+      // Keep only last 100 sessions
+      if (sessionsJson.length > 100) {
+        sessionsJson.removeAt(0);
+      }
+      
+      await prefs.setStringList('study_sessions', sessionsJson);
+      
+      // Try to record on backend
+      try {
+        await _apiService.studyFlashcard(
+          flashcardId: flashcard.id,
+          correct: difficulty == Difficulty.easy,
+          timeSpent: 180000, // 3 minutes in milliseconds
+        );
+      } catch (e) {
+        // Backend recording failed, but local recording succeeded
+        print('Failed to record study session on backend: $e');
+      }
+    } catch (e) {
+      print('Failed to record study session: $e');
     }
   }
   Future<void> deleteFlashcard(String cardId) async {
