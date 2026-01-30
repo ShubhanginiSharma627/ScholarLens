@@ -53,7 +53,7 @@ An intelligent educational assistant powered by AI that helps students learn eff
 
 1. **Clone the repository**
    ```bash
-   git clone <[repository-url](https://github.com/ShubhanginiSharma627/ScholarLens.git)>
+   git clone https://github.com/ShubhanginiSharma627/ScholarLens.git
    cd ScholarLens/backend
    ```
 
