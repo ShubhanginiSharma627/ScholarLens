@@ -440,20 +440,34 @@ async function generateTutorResponse(message, options = {}) {
     const startTime = Date.now();
     const response = await generateText(userPrompt, 'chat_response', 'medium', options);
     const duration = Date.now() - startTime;
+    
+    let finalResponse = response;
+    
+    try {
+      const parsedResponse = JSON.parse(response);
+      if (parsedResponse.response && parsedResponse.response.main_message) {
+        finalResponse = parsedResponse.response.main_message;
+        logger.info(`[${requestId}] Extracted main message from structured response`);
+      } else {
+        logger.warn(`[${requestId}] Structured response missing main_message, using full response`);
+      }
+    } catch (parseError) {
+      logger.info(`[${requestId}] Response is not JSON, using as plain text`);
+    }
+    
     logger.info(`[${requestId}] Tutor response generated successfully`, {
-      responseLength: response.length,
-      response:response,
+      responseLength: finalResponse.length,
       duration,
-      isEmpty: response.trim().length === 0
+      isEmpty: finalResponse.trim().length === 0
     });
-    if (!response || response.trim().length === 0) {
+    if (!finalResponse || finalResponse.trim().length === 0) {
       logger.error(`[${requestId}] Empty tutor response generated`, {
         originalMessage: message,
         options
       });
       throw new Error('Generated tutor response is empty');
     }
-    return response;
+    return finalResponse;
   } catch (error) {
     logger.error(`[${requestId}] Tutor response generation failed`, {
       error: error.message,
