@@ -169,17 +169,26 @@ class GCSStorageService {
       throw new Error('Google Cloud Storage not initialized');
     }
     try {
+      logger.info(`Listing files with prefix: "${prefix}"`);
       const [files] = await this.bucket.getFiles({
         prefix,
         maxResults: options.maxResults || 100,
       });
-      return files.map(file => ({
-        name: file.name,
-        size: file.metadata.size,
-        contentType: file.metadata.contentType,
-        created: file.metadata.timeCreated,
-        updated: file.metadata.updated,
-      }));
+      logger.info(`Found ${files.length} files with prefix "${prefix}"`);
+      
+      return files.map(file => {
+        logger.info(`File: ${file.name}, Size: ${file.metadata.size}, Metadata: ${JSON.stringify(file.metadata.metadata || {})}`);
+        return {
+          name: file.name,
+          bucket: this.bucket.name,
+          size: parseInt(file.metadata.size) || 0,
+          contentType: file.metadata.contentType || 'application/octet-stream',
+          timeCreated: file.metadata.timeCreated,
+          updated: file.metadata.updated,
+          metadata: file.metadata.metadata || {},
+          isPublic: false,
+        };
+      });
     } catch (error) {
       logger.error(`List files failed: ${error.message}`);
       throw error;
