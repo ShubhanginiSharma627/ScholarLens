@@ -224,11 +224,9 @@ function _extractAnalysisMetadata(analysis) {
       return _generateMinimalFallback();
     }
 
-    // First, try to parse as JSON (expected format from syllabus_analysis.prompts.txt)
     try {
       const jsonResponse = JSON.parse(analysis);
       
-      // Extract from structured JSON response
       if (jsonResponse.course_overview) {
         metadata.subject = jsonResponse.course_overview.subject_area || 
                           jsonResponse.course_overview.title || 
@@ -266,17 +264,14 @@ function _extractAnalysisMetadata(analysis) {
         }
       }
       
-      // Remove duplicates and limit size
       metadata.chapters = [...new Set(metadata.chapters)].slice(0, 8);
       metadata.keyTopics = [...new Set(metadata.keyTopics)].slice(0, 10);
       
       return metadata;
     } catch (jsonError) {
-      // If JSON parsing fails, fall back to text parsing
       console.log('JSON parsing failed, falling back to text analysis:', jsonError.message);
     }
 
-    // Fallback: Parse as plain text (in case AI doesn't return JSON)
     const lines = analysis.split('\n');
     let currentSection = '';
     
@@ -286,7 +281,6 @@ function _extractAnalysisMetadata(analysis) {
       
       if (cleanLine.length === 0) continue;
       
-      // Detect sections from our structured prompt or natural language
       if (lowerLine.includes('subject:') || lowerLine.includes('1. subject') || lowerLine.includes('course:')) {
         currentSection = 'subject';
         const match = cleanLine.match(/(?:subject|course|1\.\s*subject):\s*(.+)/i);
@@ -317,7 +311,6 @@ function _extractAnalysisMetadata(analysis) {
         continue;
       }
       
-      // Process content based on current section
       if (currentSection === 'chapters' && cleanLine.length > 3 && cleanLine.length < 120) {
         let chapter = cleanLine.replace(/^[-*•]\s*/, '');
         chapter = chapter.replace(/^\d+\.\s*/, '');
@@ -335,7 +328,6 @@ function _extractAnalysisMetadata(analysis) {
         }
       }
       
-      // General fallback patterns if no sections detected
       if (!currentSection) {
         if (lowerLine.includes('subject:') || lowerLine.includes('course:') || lowerLine.includes('topic:')) {
           const match = cleanLine.match(/(?:subject|course|topic):\s*([^,.\n]+)/i);
@@ -364,11 +356,9 @@ function _extractAnalysisMetadata(analysis) {
       }
     }
     
-    // Remove duplicates and limit size
     metadata.chapters = [...new Set(metadata.chapters)].slice(0, 8);
     metadata.keyTopics = [...new Set(metadata.keyTopics)].slice(0, 10);
     
-    // Only use minimal fallback if we have absolutely nothing
     if (metadata.chapters.length === 0 && metadata.keyTopics.length === 0) {
       const fallback = _generateMinimalFallback();
       metadata.chapters = fallback.chapters;
