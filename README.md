@@ -53,7 +53,7 @@ An intelligent educational assistant powered by AI that helps students learn eff
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone <[repository-url](https://github.com/ShubhanginiSharma627/ScholarLens.git)>
    cd ScholarLens/backend
    ```
 
@@ -80,9 +80,9 @@ An intelligent educational assistant powered by AI that helps students learn eff
    FIREBASE_STORAGE_BUCKET=your-bucket.appspot.com
    
    # AI Model Configuration
-   DEFAULT_TEXT_MODEL=gemini-1.5-pro
-   DEFAULT_VISION_MODEL=gemini-1.5-pro
-   DEFAULT_DOCUMENT_MODEL=gemini-1.5-pro
+   DEFAULT_TEXT_MODEL=gemini-2.5-pro
+   DEFAULT_VISION_MODEL=gemini-2.5-pro
+   DEFAULT_DOCUMENT_MODEL=gemini-3.0-pro
    
    # Security
    JWT_SECRET=your-jwt-secret
@@ -202,7 +202,7 @@ Logs are stored in `backend/logs/` with different categories:
 ### Data Protection
 - Encrypted local storage
 - Secure API communication (HTTPS)
-- Input validation and sanitization
+- Input validation and sanitisation
 - Rate limiting on API endpoints
 
 ## 🚨 Troubleshooting
@@ -241,7 +241,7 @@ Logs are stored in `backend/logs/` with different categories:
    flutter pub deps
    ```
 
-### Performance Optimization
+### Performance Optimisation
 
 #### Recent Fixes Applied
 - ✅ Fixed animation controller double disposal
@@ -252,7 +252,7 @@ Logs are stored in `backend/logs/` with different categories:
 #### Known Issues
 - Some Gemini models may not be available in all regions
 - Large image uploads may timeout (implement chunked upload)
-- Animation performance on older devices needs optimization
+- Animation performance on older devices needs optimisation
 
 ## 📈 Performance Metrics
 
@@ -285,10 +285,6 @@ flutter run --profile
 - Update documentation
 - Ensure performance benchmarks are met
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🙏 Acknowledgments
 
 - Google Cloud AI Platform for Vertex AI services
@@ -296,13 +292,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Firebase for backend services
 - Open source community for various packages used
 
-## 📞 Support
-
-For support and questions:
-- Create an issue in the repository
-- Check the troubleshooting section
-- Review the logs for error details
-
----
-
-**Built with ❤️ for better education through AI**
