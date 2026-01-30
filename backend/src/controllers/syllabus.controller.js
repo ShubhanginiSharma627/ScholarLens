@@ -4,7 +4,7 @@ const path = require('path');
 const syllabusService = require('../services/syllabus.service');
 const gcsStorage = require('../services/gcs-storage.service');
 const { analyzeDocument } = require('../services/vertexai.service');
-const { socraticTutorPrompt } = require('../utils/promptUtils');
+const { syllabusAnalysisPrompt } = require('../utils/promptUtils');
 const firestore = require('@google-cloud/firestore');
 const db = new firestore.Firestore();
 async function extractTextFromPdf(filePath) {
@@ -83,6 +83,12 @@ exports.scanSyllabus = async (req, res) => {
         await fs.remove(file.path);
         
         const existingAnalysis = duplicateFile.metadata?.analysis || 'This document has been previously analyzed.';
+        const existingMetadata = {
+          chapters: duplicateFile.metadata?.chapters ? JSON.parse(duplicateFile.metadata.chapters) : [],
+          keyTopics: duplicateFile.metadata?.keyTopics ? JSON.parse(duplicateFile.metadata.keyTopics) : [],
+          subject: duplicateFile.metadata?.subject || 'Unknown',
+          totalPages: parseInt(duplicateFile.metadata?.totalPages || '0')
+        };
         
         return res.status(200).json({
           success: true,
@@ -91,7 +97,8 @@ exports.scanSyllabus = async (req, res) => {
             fileUri: `gs://${process.env.GCS_BUCKET}/${duplicateFile.name}`,
             downloadUrl: await gcsStorage.getDownloadUrl(duplicateFile.name),
             isDuplicate: true,
-            message: 'File already exists. Returning previous analysis.'
+            message: 'File already exists. Returning previous analysis.',
+            metadata: existingMetadata
           }
         });
       }
@@ -111,18 +118,21 @@ exports.scanSyllabus = async (req, res) => {
 
     await fs.remove(file.path);
 
-    const userPrompt = req.body.prompt || 'Analyze this syllabus and provide a study plan.';
-    const fullPrompt = socraticTutorPrompt(userPrompt, 'Syllabus analysis');
+    const userPrompt = req.body.prompt || 'Analyze this document and provide a structured overview.';
+    const analysisPrompt = syllabusAnalysisPrompt(userPrompt);
     const gcsStoragePath = `gs://${process.env.GCS_BUCKET}/${fileName}`;
 
     try {
-      const analysis = await analyzeDocument(gcsStoragePath, fullPrompt, 'gemini-1.5-pro');
+      const analysis = await analyzeDocument(gcsStoragePath, analysisPrompt, 'gemini-1.5-pro');
 
       try {
         const analysisMetadata = _extractAnalysisMetadata(analysis);
         await gcsStorage.updateFileMetadata(fileName, {
           analysis: analysis,
-          ...analysisMetadata,
+          chapters: JSON.stringify(analysisMetadata.chapters),
+          keyTopics: JSON.stringify(analysisMetadata.keyTopics),
+          subject: analysisMetadata.subject,
+          totalPages: analysisMetadata.totalPages.toString(),
           analyzedAt: new Date().toISOString(),
         });
       } catch (metadataError) {
@@ -210,50 +220,174 @@ function _extractAnalysisMetadata(analysis) {
       totalPages: 0
     };
 
+    if (!analysis || typeof analysis !== 'string') {
+      return _generateMinimalFallback();
+    }
+
+    // First, try to parse as JSON (expected format from syllabus_analysis.prompts.txt)
+    try {
+      const jsonResponse = JSON.parse(analysis);
+      
+      // Extract from structured JSON response
+      if (jsonResponse.course_overview) {
+        metadata.subject = jsonResponse.course_overview.subject_area || 
+                          jsonResponse.course_overview.title || 
+                          'Unknown';
+      }
+      
+      if (jsonResponse.content_structure && jsonResponse.content_structure.units) {
+        for (const unit of jsonResponse.content_structure.units) {
+          if (unit.title) {
+            metadata.chapters.push(unit.title);
+          }
+          if (unit.topics) {
+            for (const topic of unit.topics) {
+              if (topic.name) {
+                metadata.keyTopics.push(topic.name);
+              }
+            }
+          }
+          if (unit.key_concepts) {
+            metadata.keyTopics.push(...unit.key_concepts);
+          }
+        }
+      }
+      
+      if (jsonResponse.learning_objectives) {
+        if (jsonResponse.learning_objectives.knowledge_areas) {
+          for (const area of jsonResponse.learning_objectives.knowledge_areas) {
+            if (area.area) {
+              metadata.keyTopics.push(area.area);
+            }
+          }
+        }
+        if (jsonResponse.learning_objectives.primary_goals) {
+          metadata.keyTopics.push(...jsonResponse.learning_objectives.primary_goals);
+        }
+      }
+      
+      // Remove duplicates and limit size
+      metadata.chapters = [...new Set(metadata.chapters)].slice(0, 8);
+      metadata.keyTopics = [...new Set(metadata.keyTopics)].slice(0, 10);
+      
+      return metadata;
+    } catch (jsonError) {
+      // If JSON parsing fails, fall back to text parsing
+      console.log('JSON parsing failed, falling back to text analysis:', jsonError.message);
+    }
+
+    // Fallback: Parse as plain text (in case AI doesn't return JSON)
     const lines = analysis.split('\n');
+    let currentSection = '';
     
     for (const line of lines) {
       const lowerLine = line.toLowerCase().trim();
+      const cleanLine = line.trim();
       
-      if (lowerLine.includes('chapter') || lowerLine.includes('unit')) {
-        if (line.length < 100) {
-          metadata.chapters.push(line.trim());
+      if (cleanLine.length === 0) continue;
+      
+      // Detect sections from our structured prompt or natural language
+      if (lowerLine.includes('subject:') || lowerLine.includes('1. subject') || lowerLine.includes('course:')) {
+        currentSection = 'subject';
+        const match = cleanLine.match(/(?:subject|course|1\.\s*subject):\s*(.+)/i);
+        if (match) {
+          metadata.subject = match[1].trim();
         }
+        continue;
       }
       
-      if (lowerLine.includes('topic') || lowerLine.includes('concept')) {
-        if (line.length < 80) {
-          metadata.keyTopics.push(line.trim());
-        }
+      if (lowerLine.includes('chapters') || lowerLine.includes('sections') || lowerLine.includes('units') || 
+          lowerLine.includes('2. chapters') || lowerLine.includes('content structure')) {
+        currentSection = 'chapters';
+        continue;
       }
       
-      if (lowerLine.includes('subject') || lowerLine.includes('course')) {
-        const subjectMatch = line.match(/(?:subject|course):\s*([^,.\n]+)/i);
-        if (subjectMatch) {
-          metadata.subject = subjectMatch[1].trim();
-        }
+      if (lowerLine.includes('key topics') || lowerLine.includes('topics') || lowerLine.includes('3. key topics') ||
+          lowerLine.includes('learning objectives')) {
+        currentSection = 'topics';
+        continue;
       }
       
-      if (lowerLine.includes('page')) {
-        const pageMatch = line.match(/(\d+)\s*pages?/i);
+      if (lowerLine.includes('pages') || lowerLine.includes('4. pages')) {
+        currentSection = 'pages';
+        const pageMatch = cleanLine.match(/(\d+)\s*pages?/i);
         if (pageMatch) {
           metadata.totalPages = parseInt(pageMatch[1]);
+        }
+        continue;
+      }
+      
+      // Process content based on current section
+      if (currentSection === 'chapters' && cleanLine.length > 3 && cleanLine.length < 120) {
+        let chapter = cleanLine.replace(/^[-*•]\s*/, '');
+        chapter = chapter.replace(/^\d+\.\s*/, '');
+        chapter = chapter.replace(/^(chapter|unit|section|lesson|module|part)\s*/i, '');
+        if (chapter.length > 3) {
+          metadata.chapters.push(chapter.charAt(0).toUpperCase() + chapter.slice(1));
+        }
+      }
+      
+      if (currentSection === 'topics' && cleanLine.length > 3 && cleanLine.length < 100) {
+        let topic = cleanLine.replace(/^[-*•]\s*/, '');
+        topic = topic.replace(/^\d+\.\s*/, '');
+        if (topic.length > 3) {
+          metadata.keyTopics.push(topic.charAt(0).toUpperCase() + topic.slice(1));
+        }
+      }
+      
+      // General fallback patterns if no sections detected
+      if (!currentSection) {
+        if (lowerLine.includes('subject:') || lowerLine.includes('course:') || lowerLine.includes('topic:')) {
+          const match = cleanLine.match(/(?:subject|course|topic):\s*([^,.\n]+)/i);
+          if (match) {
+            metadata.subject = match[1].trim();
+          }
+        }
+        
+        if (lowerLine.match(/^(chapter|unit|section|lesson|module|part)\s*\d+/i) || 
+            lowerLine.match(/^\d+\.\s/) ||
+            lowerLine.match(/^[ivx]+\.\s/i)) {
+          if (cleanLine.length < 120 && cleanLine.length > 5) {
+            let chapterTitle = cleanLine.replace(/^(chapter|unit|section|lesson|module|part)\s*/i, '');
+            chapterTitle = chapterTitle.replace(/^\d+\.?\s*/, '');
+            chapterTitle = chapterTitle.replace(/^[ivx]+\.?\s*/i, '');
+            if (chapterTitle.length > 3) {
+              metadata.chapters.push(chapterTitle.charAt(0).toUpperCase() + chapterTitle.slice(1));
+            }
+          }
+        }
+        
+        const pageMatch = lowerLine.match(/(\d+)\s*pages?/i);
+        if (pageMatch) {
+          metadata.totalPages = Math.max(metadata.totalPages, parseInt(pageMatch[1]));
         }
       }
     }
     
-    metadata.chapters = metadata.chapters.slice(0, 10);
-    metadata.keyTopics = metadata.keyTopics.slice(0, 15);
+    // Remove duplicates and limit size
+    metadata.chapters = [...new Set(metadata.chapters)].slice(0, 8);
+    metadata.keyTopics = [...new Set(metadata.keyTopics)].slice(0, 10);
+    
+    // Only use minimal fallback if we have absolutely nothing
+    if (metadata.chapters.length === 0 && metadata.keyTopics.length === 0) {
+      const fallback = _generateMinimalFallback();
+      metadata.chapters = fallback.chapters;
+      metadata.keyTopics = fallback.keyTopics;
+    }
     
     return metadata;
   } catch (error) {
     console.log('Error extracting analysis metadata:', error.message);
-    return {
-      chapters: [],
-      keyTopics: [],
-      subject: 'Unknown',
-      totalPages: 0
-    };
+    return _generateMinimalFallback();
   }
+}
+
+function _generateMinimalFallback() {
+  return {
+    chapters: ['Document Overview'],
+    keyTopics: ['Key Concepts'],
+    subject: 'General',
+    totalPages: 0
+  };
 }
 module.exports = { uploadSyllabus, getSyllabus, listSyllabi, scanSyllabus: exports.scanSyllabus };
