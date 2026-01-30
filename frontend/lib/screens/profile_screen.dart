@@ -1,22 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../providers/providers.dart';
 import '../services/profile_service.dart';
 import '../widgets/common/top_navigation_bar.dart';
 import 'edit_profile_screen.dart';
-
-/// Profile screen displaying user information, metrics, and settings
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
-
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
-
 class _ProfileScreenState extends State<ProfileScreen> {
   final _profileService = ProfileService();
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,35 +28,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: CircularProgressIndicator(),
             );
           }
-
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile Header Card
                 _buildProfileHeader(appState),
-                
                 const SizedBox(height: 16),
-                
-                // Stats Grid
                 _buildStatsGrid(appState),
-                
                 const SizedBox(height: 16),
-                
-                // Preferences Section
                 _buildPreferencesSection(),
-                
                 const SizedBox(height: 16),
-                
-                // Account Section
                 _buildAccountSection(),
-                
                 const SizedBox(height: 16),
-                
-                // Sign Out Button
                 _buildSignOutButton(context),
-                
                 const SizedBox(height: 32),
               ],
             ),
@@ -71,7 +50,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-
   Widget _buildProfileHeader(AppStateProvider appState) {
     return Container(
       width: double.infinity,
@@ -88,7 +66,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
-          // Purple header background
           Container(
             height: 120,
             decoration: const BoxDecoration(
@@ -103,13 +80,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
-          
-          // Profile content
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // Profile avatar (positioned to overlap header)
                 Transform.translate(
                   offset: const Offset(0, -60),
                   child: Container(
@@ -130,8 +104,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
-                
-                // User info (adjust spacing due to avatar overlap)
                 Transform.translate(
                   offset: const Offset(0, -40),
                   child: Column(
@@ -181,10 +153,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-
   Widget _buildStatsGrid(AppStateProvider appState) {
     final userProgress = appState.userProgress;
-    
     return Row(
       children: [
         Expanded(
@@ -225,7 +195,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
     );
   }
-
   Widget _buildStatCard({
     required IconData icon,
     required String value,
@@ -273,7 +242,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-
   Widget _buildPreferencesSection() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -306,7 +274,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             hasSwitch: true,
             switchValue: true,
             onSwitchChanged: (value) {
-              // Handle notifications toggle
             },
           ),
           const SizedBox(height: 8),
@@ -316,14 +283,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             hasSwitch: true,
             switchValue: false,
             onSwitchChanged: (value) {
-              // Handle dark mode toggle
             },
           ),
         ],
       ),
     );
   }
-
   Widget _buildAccountSection() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -368,7 +333,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: 'Help & Support',
             hasArrow: true,
             onTap: () {
-              // Navigate to help screen
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Help & Support coming soon!'),
@@ -380,7 +344,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-
   Widget _buildSettingsTile({
     required IconData icon,
     required String title,
@@ -429,7 +392,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-
   Widget _buildSignOutButton(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -469,7 +431,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -487,17 +448,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: authProvider.isLoading
                     ? null
                     : () async {
-                        // Sign out using authentication provider
                         await authProvider.signOut();
-                        
-                        // Clear app state data
                         final appState = context.read<AppStateProvider>();
                         await appState.clearData();
                         await _profileService.clearAllUserData();
-                        
                         if (context.mounted) {
                           Navigator.of(context).pop();
-                          // Navigation will be handled automatically by AuthWrapper
                         }
                       },
                 style: ElevatedButton.styleFrom(

@@ -9,53 +9,38 @@ import '../widgets/common/top_navigation_bar.dart';
 import '../services/tutor_service.dart';
 import '../animations/animated_interactive_element.dart';
 import '../utils/performance_utils.dart';
-
-/// Screen for chat interface with AI tutor
 class TutorChatScreen extends StatefulWidget {
   const TutorChatScreen({super.key});
-
   @override
   State<TutorChatScreen> createState() => _TutorChatScreenState();
 }
-
 class _TutorChatScreenState extends State<TutorChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
   late TutorService _tutorService;
-
-  // Suggested topics
   final List<String> _suggestedTopics = [
     "Explain the mitochondria's role in cellular respiration",
     "Help me understand quadratic equations",
     "What's the difference between velocity and acceleration?",
     "Guide me through photosynthesis",
   ];
-
   @override
   void initState() {
     super.initState();
     _tutorService = TutorServiceFactory.createProduction();
-    
-    // Initialize chat provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ChatProvider>().initialize();
     });
   }
-
   @override
   void dispose() {
-    // Cancel any active tutor requests to prevent memory leaks
     if (_tutorService is HttpTutorService) {
       (_tutorService as HttpTutorService).cancelActiveRequests();
     }
-    
-    // Dispose controllers safely
     _scrollController.dispose();
     _textController.dispose();
-    
     super.dispose();
   }
-
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
@@ -65,30 +50,17 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
       );
     }
   }
-
   Future<void> _sendMessage(String content) async {
     if (content.trim().isEmpty) return;
-
     final chatProvider = context.read<ChatProvider>();
-    
     try {
-      // Clear input immediately for better UX
       _textController.clear();
-      
-      // Send user message (this should be fast)
       chatProvider.setSending(true);
       final userMessage = await chatProvider.sendUserMessage(content);
-      
-      // Scroll to bottom after adding user message
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-      
-      // Get conversation context for AI
       final context = chatProvider.getConversationContext();
-      
-      // Get AI response with timeout handling
       String aiResponse;
       try {
-        // Add a shorter timeout for better UX
         aiResponse = await _tutorService.askFollowUpQuestion(content, context)
             .timeout(
               const Duration(seconds: 20), // Even shorter timeout for UI
@@ -98,25 +70,15 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
             );
       } on TimeoutException catch (e) {
         aiResponse = e.message ?? 'Request timed out. Please try again with a simpler question.';
-        // Mark user message as failed
         await chatProvider.updateMessageStatus(userMessage.id, MessageStatus.failed);
       }
-      
-      // Update user message status to delivered (only if not failed)
       if (!userMessage.hasFailed) {
         await chatProvider.updateMessageStatus(userMessage.id, MessageStatus.delivered);
       }
-      
-      // Add AI response
       await chatProvider.addAIResponse(aiResponse);
-      
-      // Scroll to bottom after adding AI response
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-      
     } catch (e) {
       debugPrint('Error in _sendMessage: $e');
-      
-      // Handle error - mark user message as failed
       final failedMessages = chatProvider.getFailedMessages();
       if (failedMessages.isNotEmpty) {
         await chatProvider.updateMessageStatus(
@@ -124,8 +86,6 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
           MessageStatus.failed,
         );
       }
-      
-      // Show error message with shorter, more user-friendly text
       if (mounted) {
         String errorMessage = 'Failed to send message';
         if (e is TutorServiceException) {
@@ -133,7 +93,6 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
         } else if (e is TimeoutException) {
           errorMessage = 'Request timed out. Please try again.';
         }
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -151,17 +110,12 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
       chatProvider.setSending(false);
     }
   }
-
   void _handleSuggestedTopic(String topic) {
-    // Animate transition from suggested topic to input field
     _textController.text = topic;
-    
-    // Add a small delay to show the text appearing in the input field
     Future.delayed(const Duration(milliseconds: 100), () {
       _sendMessage(topic);
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return PerformanceMonitor(
@@ -173,7 +127,6 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header section
               const Text(
                 'AI Tutor',
                 style: TextStyle(
@@ -191,16 +144,10 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              
-              // Chat area with fixed height
               _buildChatArea(),
               const SizedBox(height: 24),
-              
-              // Suggested Topics section (always visible)
               _buildSuggestedTopicsSection(),
               const SizedBox(height: 24),
-              
-              // How it works section (always visible)
               _buildHowItWorksSection(),
             ],
           ),
@@ -208,7 +155,6 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
       ),
     );
   }
-
   Widget _buildChatArea() {
     return Container(
       height: 400, // Fixed height for chat area
@@ -225,7 +171,6 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
       ),
       child: Column(
         children: [
-          // Chat messages area
           Expanded(
             child: Consumer<ChatProvider>(
               builder: (context, chatProvider, child) {
@@ -234,7 +179,6 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
                     child: CircularProgressIndicator(),
                   );
                 }
-
                 if (chatProvider.error != null) {
                   return Center(
                     child: Column(
@@ -259,11 +203,9 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
                     ),
                   );
                 }
-
                 if (!chatProvider.hasMessages) {
                   return _buildInitialMessage();
                 }
-
                 return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),
@@ -272,15 +214,12 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
                     if (index == 0) {
                       return _buildInitialMessage();
                     }
-                    
-                    // Show typing indicator as the last item when sending
                     if (index == chatProvider.messages.length + 1) {
                       return ChatTypingIndicator(
                         isVisible: chatProvider.isSending,
                         message: "AI is thinking...",
                       );
                     }
-                    
                     final messageIndex = index - 1;
                     final message = chatProvider.messages[messageIndex];
                     return ChatMessageWidget(
@@ -296,8 +235,6 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
               },
             ),
           ),
-          
-          // Chat input (inside the chat area)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -366,7 +303,6 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
       ),
     );
   }
-
   Widget _buildInitialMessage() {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -408,7 +344,6 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
       ),
     );
   }
-
   Widget _buildSuggestedTopicsSection() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -471,7 +406,6 @@ class _TutorChatScreenState extends State<TutorChatScreen> {
       ),
     );
   }
-
   Widget _buildHowItWorksSection() {
     return Container(
       padding: const EdgeInsets.all(20),

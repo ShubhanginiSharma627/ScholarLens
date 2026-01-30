@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/responsive.dart';
-
-/// Modern progress tracker widget with gradient progress bar and statistics display
-/// Validates: Requirements 1.2, 1.3, 3.4
 class ModernProgressTracker extends StatelessWidget {
   final int totalCards;
   final int masteredCards;
@@ -12,7 +9,6 @@ class ModernProgressTracker extends StatelessWidget {
   final double completionPercentage;
   final bool showCounters;
   final bool showMasteryStats;
-
   const ModernProgressTracker({
     super.key,
     required this.totalCards,
@@ -23,7 +19,6 @@ class ModernProgressTracker extends StatelessWidget {
     this.showCounters = false,
     this.showMasteryStats = true,
   });
-
   @override
   Widget build(BuildContext context) {
     return ResponsiveBuilder(
@@ -51,16 +46,11 @@ class ModernProgressTracker extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Statistics row
               if (showMasteryStats) ...[
                 _buildStatisticsRow(context, isMobile),
                 SizedBox(height: AppTheme.spacingM),
               ],
-              
-              // Progress bar with label
               _buildProgressSection(context, isMobile),
-              
-              // Counters (for study sessions)
               if (showCounters) ...[
                 SizedBox(height: AppTheme.spacingM),
                 _buildCountersRow(context, isMobile),
@@ -71,10 +61,8 @@ class ModernProgressTracker extends StatelessWidget {
       },
     );
   }
-
   Widget _buildStatisticsRow(BuildContext context, bool isMobile) {
     final masteryPercentage = totalCards > 0 ? (masteredCards / totalCards * 100) : 0.0;
-    
     return Row(
       children: [
         Expanded(
@@ -112,7 +100,6 @@ class ModernProgressTracker extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildStatItem(
     BuildContext context, {
     required IconData icon,
@@ -157,7 +144,6 @@ class ModernProgressTracker extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildProgressSection(BuildContext context, bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,10 +183,8 @@ class ModernProgressTracker extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildGradientProgressBar(BuildContext context, bool isMobile) {
     final progressHeight = isMobile ? 8.0 : 10.0;
-    
     return Container(
       height: progressHeight,
       decoration: BoxDecoration(
@@ -245,7 +229,6 @@ class ModernProgressTracker extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildCountersRow(BuildContext context, bool isMobile) {
     return Row(
       children: [
@@ -285,7 +268,6 @@ class ModernProgressTracker extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildCounterItem(
     BuildContext context, {
     required IconData icon,
@@ -348,7 +330,6 @@ class ModernProgressTracker extends StatelessWidget {
       ),
     );
   }
-
   int _calculateAccuracyPercentage() {
     final total = correctCount + incorrectCount;
     if (total == 0) return 0;

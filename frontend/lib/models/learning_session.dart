@@ -1,6 +1,4 @@
 import 'lesson_content.dart';
-
-/// Represents a complete learning session from start to finish
 class LearningSession {
   final String id;
   final String subject;
@@ -10,7 +8,6 @@ class LearningSession {
   final int questionsAnswered;
   final int correctAnswers;
   final LessonContent content;
-
   const LearningSession({
     required this.id,
     required this.subject,
@@ -21,8 +18,6 @@ class LearningSession {
     required this.correctAnswers,
     required this.content,
   });
-
-  /// Creates a LearningSession from JSON
   factory LearningSession.fromJson(Map<String, dynamic> json) {
     return LearningSession(
       id: json['id'] as String,
@@ -35,8 +30,6 @@ class LearningSession {
       content: LessonContent.fromJson(json['content'] as Map<String, dynamic>),
     );
   }
-
-  /// Converts LearningSession to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -49,17 +42,9 @@ class LearningSession {
       'content': content.toJson(),
     };
   }
-
-  /// Gets the duration of the learning session
   Duration get duration => endTime.difference(startTime);
-
-  /// Gets the accuracy as a percentage (0.0 to 1.0)
   double get accuracy => questionsAnswered > 0 ? correctAnswers / questionsAnswered : 0.0;
-
-  /// Gets the accuracy as a percentage string
   String get accuracyPercentage => '${(accuracy * 100).round()}%';
-
-  /// Gets formatted duration string
   String get formattedDuration {
     final minutes = duration.inMinutes;
     if (minutes < 60) {
@@ -70,11 +55,7 @@ class LearningSession {
       return '${hours}h ${remainingMinutes}m';
     }
   }
-
-  /// Checks if the session was completed successfully
   bool get isCompleted => questionsAnswered > 0;
-
-  /// Creates a copy with updated fields
   LearningSession copyWith({
     String? id,
     String? subject,
@@ -96,8 +77,6 @@ class LearningSession {
       content: content ?? this.content,
     );
   }
-
-  /// Creates a new session with the current time as start time
   factory LearningSession.start({
     required String subject,
     required String topic,
@@ -115,8 +94,6 @@ class LearningSession {
       content: content,
     );
   }
-
-  /// Ends the session with quiz results
   LearningSession end({
     required int questionsAnswered,
     required int correctAnswers,
@@ -127,7 +104,6 @@ class LearningSession {
       correctAnswers: correctAnswers,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -141,7 +117,6 @@ class LearningSession {
         other.correctAnswers == correctAnswers &&
         other.content == content;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -155,7 +130,6 @@ class LearningSession {
       content,
     );
   }
-
   @override
   String toString() {
     return 'LearningSession(id: $id, subject: $subject, topic: $topic, duration: $formattedDuration, accuracy: $accuracyPercentage)';

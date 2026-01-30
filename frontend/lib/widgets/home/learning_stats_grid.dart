@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../providers/progress_provider.dart';
 import 'stat_card.dart';
-
-/// Grid widget that displays learning statistics in a 2x2 layout
 class LearningStatsGrid extends StatelessWidget {
   const LearningStatsGrid({super.key});
-
   @override
   Widget build(BuildContext context) {
     final progress = context.watch<ProgressProvider>();
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

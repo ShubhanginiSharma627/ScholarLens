@@ -5,42 +5,18 @@ import 'package:scholar_lens/models/text_highlight.dart';
 import 'package:scholar_lens/widgets/highlighted_text_widget.dart';
 import 'package:scholar_lens/theme/responsive.dart';
 import 'package:scholar_lens/utils/responsive_chapter_utils.dart';
-
-/// Main content display area for chapter reading with section management
 class ContentDisplayArea extends StatefulWidget {
-  /// List of chapter sections
   final List<ChapterSection> sections;
-  
-  /// Current section index being displayed
   final int currentSectionIndex;
-  
-  /// List of highlights for the current section
   final List<TextHighlight> highlights;
-  
-  /// Whether highlight mode is active
   final bool isHighlightMode;
-  
-  /// Callback when text is highlighted
   final Function(String selectedText, int startOffset, int endOffset)? onTextHighlighted;
-  
-  /// Callback when a highlight is tapped
   final Function(TextHighlight highlight)? onHighlightTapped;
-  
-  /// Callback when a highlight should be removed
   final Function(String highlightId)? onHighlightRemoved;
-  
-  /// Callback when a highlight color should be changed
   final Function(TextHighlight highlight, Color newColor)? onHighlightColorChanged;
-  
-  /// Callback when scroll position changes for progress tracking
   final Function(double scrollOffset, double maxScrollExtent)? onScrollChanged;
-  
-  /// Callback when section reading is completed
   final Function(int sectionIndex)? onSectionCompleted;
-  
-  /// Custom text style for content
   final TextStyle? contentTextStyle;
-
   const ContentDisplayArea({
     super.key,
     required this.sections,
@@ -55,28 +31,21 @@ class ContentDisplayArea extends StatefulWidget {
     this.onSectionCompleted,
     this.contentTextStyle,
   });
-
   @override
   State<ContentDisplayArea> createState() => _ContentDisplayAreaState();
 }
-
 class _ContentDisplayAreaState extends State<ContentDisplayArea> {
   late ScrollController _scrollController;
   double _lastScrollOffset = 0.0;
   DateTime? _sectionStartTime;
   bool _hasReachedBottom = false;
-  
-  // Progress tracking variables
   double _totalReadingTime = 0.0; // in seconds
   double _currentScrollProgress = 0.0;
   Timer? _progressTimer;
   DateTime? _lastProgressUpdate;
-  
-  // Reading behavior tracking
   int _scrollEvents = 0;
   double _maxScrollReached = 0.0;
   bool _isActivelyReading = false;
-
   @override
   void initState() {
     super.initState();
@@ -86,18 +55,14 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
     _lastProgressUpdate = DateTime.now();
     _startProgressTracking();
   }
-
   @override
   void didUpdateWidget(ContentDisplayArea oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
-    // Reset section tracking when section changes
     if (oldWidget.currentSectionIndex != widget.currentSectionIndex) {
       _resetSectionTracking();
       _scrollToTop();
     }
   }
-
   @override
   void dispose() {
     _progressTimer?.cancel();
@@ -105,8 +70,6 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
     _scrollController.dispose();
     super.dispose();
   }
-
-  /// Starts the progress tracking timer
   void _startProgressTracking() {
     _progressTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_isActivelyReading) {
@@ -115,8 +78,6 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
       }
     });
   }
-
-  /// Resets section tracking when changing sections
   void _resetSectionTracking() {
     _sectionStartTime = DateTime.now();
     _lastProgressUpdate = DateTime.now();
@@ -127,39 +88,22 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
     _maxScrollReached = 0.0;
     _isActivelyReading = false;
   }
-
-  /// Updates reading progress based on time and scroll behavior
   void _updateReadingProgress() {
     final now = DateTime.now();
     if (_lastProgressUpdate != null) {
-      // Progress calculation methods are available for future enhancement
-      // Currently using scroll-based progress tracking
-      
-      // Notify parent of progress changes
       widget.onScrollChanged?.call(_scrollController.offset, _scrollController.position.maxScrollExtent);
-      
       _lastProgressUpdate = now;
     }
   }
-
-  /// Handles scroll position changes for progress tracking
   void _handleScrollChange() {
     final currentOffset = _scrollController.offset;
     final maxScrollExtent = _scrollController.position.maxScrollExtent;
-    
-    // Update scroll tracking variables
     _scrollEvents++;
     _maxScrollReached = currentOffset > _maxScrollReached ? currentOffset : _maxScrollReached;
     _currentScrollProgress = maxScrollExtent > 0 ? currentOffset / maxScrollExtent : 0.0;
-    
-    // Determine if user is actively reading based on scroll behavior
     final scrollDelta = (currentOffset - _lastScrollOffset).abs();
     _isActivelyReading = scrollDelta > 0; // User is scrolling
-    
-    // Notify parent of scroll changes
     widget.onScrollChanged?.call(currentOffset, maxScrollExtent);
-    
-    // Track if user has reached the bottom of the section
     if (!_hasReachedBottom && maxScrollExtent > 0) {
       final scrollPercentage = currentOffset / maxScrollExtent;
       if (scrollPercentage >= 0.9) { // 90% scrolled
@@ -167,34 +111,24 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
         _checkSectionCompletion();
       }
     }
-    
     _lastScrollOffset = currentOffset;
-    
-    // Update reading progress
     _updateReadingProgress();
   }
-
-  /// Checks if section should be marked as completed
   void _checkSectionCompletion() {
     if (_hasReachedBottom && _sectionStartTime != null) {
       final readingTime = DateTime.now().difference(_sectionStartTime!);
       final currentSection = _currentSection;
-      
       if (currentSection != null) {
-        // More sophisticated completion criteria
         final minReadingTime = (currentSection.estimatedReadingTimeMinutes * 0.3 * 60).round(); // 30% of estimated time
         final hasMinimumTime = readingTime.inSeconds >= minReadingTime;
         final hasMinimumScrollActivity = _scrollEvents >= 5;
         final hasReachedSignificantProgress = _currentScrollProgress >= 0.8;
-        
         if (hasMinimumTime && hasMinimumScrollActivity && hasReachedSignificantProgress) {
           widget.onSectionCompleted?.call(widget.currentSectionIndex);
         }
       }
     }
   }
-
-  /// Scrolls to the top of the content
   void _scrollToTop() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
@@ -204,29 +138,21 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
       );
     }
   }
-
-  /// Handles highlight tap with options menu
   void _handleHighlightTapped(TextHighlight highlight) {
     if (widget.onHighlightTapped != null) {
       widget.onHighlightTapped!(highlight);
     } else {
-      // Show default highlight options
       _showHighlightOptionsMenu(highlight);
     }
   }
-
-  /// Shows highlight options menu
   void _showHighlightOptionsMenu(TextHighlight highlight) {
     showModalBottomSheet(
       context: context,
       builder: (context) => _buildHighlightOptionsSheet(highlight),
     );
   }
-
-  /// Builds the highlight options bottom sheet
   Widget _buildHighlightOptionsSheet(TextHighlight highlight) {
     final theme = Theme.of(context);
-    
     return Container(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -240,8 +166,6 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
             ),
           ),
           const SizedBox(height: 16),
-          
-          // Highlight preview
           Container(
             padding: const EdgeInsets.all(12.0),
             decoration: BoxDecoration(
@@ -253,10 +177,7 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
               style: theme.textTheme.bodyMedium,
             ),
           ),
-          
           const SizedBox(height: 16),
-          
-          // Color options
           Text(
             'Change Color',
             style: theme.textTheme.titleSmall?.copyWith(
@@ -264,7 +185,6 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
             ),
           ),
           const SizedBox(height: 8),
-          
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -302,10 +222,7 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
               );
             }).toList(),
           ),
-          
           const SizedBox(height: 16),
-          
-          // Action buttons
           Row(
             children: [
               Expanded(
@@ -332,14 +249,11 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
               ),
             ],
           ),
-          
           const SizedBox(height: 16),
         ],
       ),
     );
   }
-
-  /// Gets the current section being displayed
   ChapterSection? get _currentSection {
     if (widget.currentSectionIndex >= 0 && 
         widget.currentSectionIndex < widget.sections.length) {
@@ -347,22 +261,17 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
     }
     return null;
   }
-
-  /// Gets highlights for the current section
   List<TextHighlight> get _currentSectionHighlights {
     final currentSection = _currentSection;
     if (currentSection == null) return [];
-    
     return widget.highlights.where((highlight) =>
         highlight.sectionNumber == currentSection.sectionNumber).toList();
   }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentSection = _currentSection;
     final borderRadius = ResponsiveChapterUtils.getCardBorderRadius(context);
-    
     return ResponsiveChapterLayout(
       child: Container(
         decoration: BoxDecoration(
@@ -382,10 +291,7 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Section header
             _buildSectionHeader(theme, currentSection),
-            
-            // Content area
             Expanded(
               child: _buildContentArea(theme, currentSection),
             ),
@@ -394,12 +300,9 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
       ),
     );
   }
-
-  /// Builds the section header with indicator and title
   Widget _buildSectionHeader(ThemeData theme, ChapterSection? currentSection) {
     final borderRadius = ResponsiveChapterUtils.getCardBorderRadius(context);
     final isCompact = ResponsiveChapterUtils.shouldUseCompactLayout(context);
-    
     return Container(
       padding: ResponsiveChapterUtils.getContentPadding(context),
       decoration: BoxDecoration(
@@ -412,7 +315,6 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section indicator
           Row(
             children: [
               Container(
@@ -442,10 +344,7 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
                 ),
             ],
           ),
-          
           SizedBox(height: ResponsiveChapterUtils.getSectionSpacing(context) * 0.5),
-          
-          // Section title
           if (currentSection != null)
             Text(
               currentSection.title,
@@ -461,23 +360,18 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
       ),
     );
   }
-
-  /// Builds the main content area with scrollable text
   Widget _buildContentArea(ThemeData theme, ChapterSection? currentSection) {
     if (currentSection == null) {
       return _buildEmptyState(theme);
     }
-
     final contentPadding = ResponsiveChapterUtils.getContentPadding(context);
     final sectionSpacing = ResponsiveChapterUtils.getSectionSpacing(context);
-
     return SingleChildScrollView(
       controller: _scrollController,
       padding: contentPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Main content with highlighting support
           HighlightedTextWidget(
             text: currentSection.content,
             highlights: _currentSectionHighlights,
@@ -490,22 +384,15 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
               fontSize: ResponsiveChapterUtils.getContentFontSize(context),
             ),
           ),
-          
           SizedBox(height: sectionSpacing),
-          
-          // Key terms section if available
           if (currentSection.hasKeyTerms)
             _buildKeyTermsSection(theme, currentSection),
-          
-          // Reading progress indicator
           SizedBox(height: sectionSpacing * 1.5),
           _buildReadingProgressIndicator(theme),
         ],
       ),
     );
   }
-
-  /// Builds the empty state when no section is available
   Widget _buildEmptyState(ThemeData theme) {
     return Center(
       child: Padding(
@@ -537,8 +424,6 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
       ),
     );
   }
-
-  /// Builds the key terms section
   Widget _buildKeyTermsSection(ThemeData theme, ChapterSection section) {
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -592,12 +477,9 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
       ),
     );
   }
-
-  /// Builds a reading progress indicator at the bottom
   Widget _buildReadingProgressIndicator(ThemeData theme) {
     final progressPercentage = (_currentScrollProgress * 100).round();
     final readingTimeMinutes = (_totalReadingTime / 60).round();
-    
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
@@ -607,7 +489,6 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Progress bar
           Row(
             children: [
               Icon(
@@ -635,10 +516,7 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
               ),
             ],
           ),
-          
           const SizedBox(height: 8),
-          
-          // Status text
           Row(
             children: [
               Text(

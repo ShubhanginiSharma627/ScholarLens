@@ -1,23 +1,16 @@
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import '../services/profile_service.dart' as profile_service;
-
-/// Provider for managing user profile and achievements
 class ProfileProvider extends ChangeNotifier {
   final profile_service.ProfileService _profileService = profile_service.ProfileService();
-  
   profile_service.UserProfile? _userProfile;
   List<profile_service.UserAchievement> _achievements = [];
   bool _isLoading = false;
   String? _error;
-
-  // Getters
   profile_service.UserProfile? get userProfile => _userProfile;
   List<profile_service.UserAchievement> get achievements => _achievements;
   bool get isLoading => _isLoading;
   String? get error => _error;
-
-  /// Initialize profile data
   Future<void> initialize() async {
     _setLoading(true);
     try {
@@ -30,8 +23,6 @@ class ProfileProvider extends ChangeNotifier {
       _setLoading(false);
     }
   }
-
-  /// Load user profile
   Future<void> _loadProfile() async {
     try {
       _userProfile = await _profileService.getUserProfile();
@@ -40,8 +31,6 @@ class ProfileProvider extends ChangeNotifier {
       throw Exception('Failed to load profile: $e');
     }
   }
-
-  /// Load user achievements
   Future<void> _loadAchievements() async {
     try {
       _achievements = await _profileService.getUserAchievements();
@@ -50,8 +39,6 @@ class ProfileProvider extends ChangeNotifier {
       throw Exception('Failed to load achievements: $e');
     }
   }
-
-  /// Update user profile
   Future<void> updateProfile({
     String? name,
     String? email,
@@ -76,8 +63,6 @@ class ProfileProvider extends ChangeNotifier {
       rethrow;
     }
   }
-
-  /// Check for new achievements based on user progress
   Future<List<profile_service.UserAchievement>> checkForNewAchievements(UserProgress progress) async {
     try {
       final newAchievements = await _profileService.checkForNewAchievements(progress);
@@ -91,8 +76,6 @@ class ProfileProvider extends ChangeNotifier {
       return [];
     }
   }
-
-  /// Unlock a specific achievement
   Future<bool> unlockAchievement(String achievementId, UserProgress progress) async {
     try {
       final wasUnlocked = await _profileService.unlockAchievement(achievementId, progress);
@@ -105,8 +88,6 @@ class ProfileProvider extends ChangeNotifier {
       return false;
     }
   }
-
-  /// Export user data
   Future<Map<String, dynamic>> exportUserData() async {
     try {
       return await _profileService.exportUserData();
@@ -115,8 +96,6 @@ class ProfileProvider extends ChangeNotifier {
       rethrow;
     }
   }
-
-  /// Import user data
   Future<void> importUserData(Map<String, dynamic> data) async {
     try {
       await _profileService.importUserData(data);
@@ -127,8 +106,6 @@ class ProfileProvider extends ChangeNotifier {
       rethrow;
     }
   }
-
-  /// Clear all user data
   Future<void> clearAllData() async {
     try {
       await _profileService.clearAllUserData();
@@ -141,33 +118,23 @@ class ProfileProvider extends ChangeNotifier {
       rethrow;
     }
   }
-
-  /// Get achievements that are unlocked
   List<profile_service.UserAchievement> get unlockedAchievements {
     return _achievements.where((achievement) => achievement.isUnlocked).toList();
   }
-
-  /// Get achievements that are still locked
   List<profile_service.UserAchievement> get lockedAchievements {
     return _achievements.where((achievement) => !achievement.isUnlocked).toList();
   }
-
-  /// Get achievement count
   int get totalAchievements => _achievements.length;
   int get unlockedCount => unlockedAchievements.length;
   double get achievementProgress => totalAchievements > 0 ? unlockedCount / totalAchievements : 0.0;
-
-  // Private helper methods
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();
   }
-
   void _setError(String error) {
     _error = error;
     notifyListeners();
   }
-
   void _clearError() {
     _error = null;
     notifyListeners();

@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
-
 import '../../providers/progress_provider.dart';
 import '../../models/recent_activity.dart';
 import 'activity_list_tile.dart';
-
-/// Widget that displays recent activities as list tiles with timestamps and descriptions
 class RecentActivityFeed extends StatelessWidget {
   const RecentActivityFeed({super.key});
-
   @override
   Widget build(BuildContext context) {
     final progress = context.watch<ProgressProvider>();
     final recentActivities = progress.recentActivities;
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -54,10 +49,8 @@ class RecentActivityFeed extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
-    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -95,16 +88,12 @@ class RecentActivityFeed extends StatelessWidget {
       ),
     );
   }
-
   void _handleViewAll(BuildContext context) {
-    // TODO: Navigate to all activities screen
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('View all activities coming soon!')),
     );
   }
-
   void _handleActivityTap(BuildContext context, RecentActivity activity) {
-    // TODO: Navigate to activity details
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('View ${activity.title} details')),
     );

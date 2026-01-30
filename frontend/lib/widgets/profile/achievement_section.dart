@@ -1,42 +1,32 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../services/profile_service.dart';
-
-/// Achievement section displaying badges, streaks, and milestone accomplishments
 class AchievementSection extends StatefulWidget {
   final UserProgress userProgress;
-
   const AchievementSection({
     super.key,
     required this.userProgress,
   });
-
   @override
   State<AchievementSection> createState() => _AchievementSectionState();
 }
-
 class _AchievementSectionState extends State<AchievementSection> {
   final _profileService = ProfileService();
   List<UserAchievement> _achievements = [];
   bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
     _loadAchievements();
   }
-
   Future<void> _loadAchievements() async {
     try {
       final achievements = await _profileService.getUserAchievements();
       final newAchievements = await _profileService.checkForNewAchievements(widget.userProgress);
-      
       setState(() {
         _achievements = [...achievements, ...newAchievements];
         _isLoading = false;
       });
-      
-      // Show notifications for new achievements
       for (final achievement in newAchievements) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -54,7 +44,6 @@ class _AchievementSectionState extends State<AchievementSection> {
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -66,9 +55,7 @@ class _AchievementSectionState extends State<AchievementSection> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        
         const SizedBox(height: 16),
-        
         if (_isLoading)
           const Center(child: CircularProgressIndicator())
         else if (_achievements.isEmpty)
@@ -120,11 +107,9 @@ class _AchievementSectionState extends State<AchievementSection> {
       ],
     );
   }
-
   Widget _buildAchievementBadge(BuildContext context, UserAchievement achievement) {
     final iconData = IconData(achievement.icon, fontFamily: 'MaterialIcons');
     final color = Color(achievement.color);
-    
     return Card(
       elevation: achievement.isUnlocked ? 4 : 1,
       child: Container(
@@ -153,9 +138,7 @@ class _AchievementSectionState extends State<AchievementSection> {
                     ? color
                     : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
-              
               const SizedBox(height: 8),
-              
               Text(
                 achievement.title,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -166,9 +149,7 @@ class _AchievementSectionState extends State<AchievementSection> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
               const SizedBox(height: 4),
-              
               Text(
                 achievement.description,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -180,7 +161,6 @@ class _AchievementSectionState extends State<AchievementSection> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              
               if (achievement.isUnlocked && achievement.unlockedAt != null) ...[
                 const SizedBox(height: 4),
                 Text(
@@ -198,11 +178,9 @@ class _AchievementSectionState extends State<AchievementSection> {
       ),
     );
   }
-
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
     if (difference.inDays == 0) {
       return 'today';
     } else if (difference.inDays == 1) {

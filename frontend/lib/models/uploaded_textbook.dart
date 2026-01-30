@@ -1,4 +1,3 @@
-/// Enhanced data model for uploaded textbooks with detailed properties
 class UploadedTextbook {
   final String id;
   final String title;
@@ -10,7 +9,6 @@ class UploadedTextbook {
   final int totalPages;
   final List<String> keyTopics;
   final String subject;
-
   const UploadedTextbook({
     required this.id,
     required this.title,
@@ -23,7 +21,6 @@ class UploadedTextbook {
     required this.keyTopics,
     required this.subject,
   });
-
   factory UploadedTextbook.fromJson(Map<String, dynamic> json) {
     return UploadedTextbook(
       id: json['id'] as String,
@@ -41,7 +38,6 @@ class UploadedTextbook {
       subject: json['subject'] as String,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -56,7 +52,6 @@ class UploadedTextbook {
       'subject': subject,
     };
   }
-
   UploadedTextbook copyWith({
     String? id,
     String? title,
@@ -83,8 +78,6 @@ class UploadedTextbook {
     );
   }
 }
-
-/// Progress tracking model for textbook study
 class TextbookProgress {
   final String textbookId;
   final int completedChapters;
@@ -94,7 +87,6 @@ class TextbookProgress {
   final List<String> keyTopics;
   final List<ChapterProgress> chapterProgresses;
   final DateTime lastStudied;
-
   const TextbookProgress({
     required this.textbookId,
     required this.completedChapters,
@@ -105,7 +97,6 @@ class TextbookProgress {
     required this.chapterProgresses,
     required this.lastStudied,
   });
-
   factory TextbookProgress.fromJson(Map<String, dynamic> json) {
     return TextbookProgress(
       textbookId: json['textbookId'] as String,
@@ -120,7 +111,6 @@ class TextbookProgress {
       lastStudied: DateTime.parse(json['lastStudied'] as String),
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'textbookId': textbookId,
@@ -133,10 +123,8 @@ class TextbookProgress {
       'lastStudied': lastStudied.toIso8601String(),
     };
   }
-
   double get completionPercentage =>
       totalChapters > 0 ? (completedChapters / totalChapters) * 100 : 0;
-
   TextbookProgress copyWith({
     String? textbookId,
     int? completedChapters,
@@ -159,8 +147,6 @@ class TextbookProgress {
     );
   }
 }
-
-/// Individual chapter progress tracking
 class ChapterProgress {
   final int chapterNumber;
   final String chapterTitle;
@@ -170,7 +156,6 @@ class ChapterProgress {
   final double progressPercentage;
   final DateTime? completedAt;
   final DateTime? lastAccessed;
-
   const ChapterProgress({
     required this.chapterNumber,
     required this.chapterTitle,
@@ -181,7 +166,6 @@ class ChapterProgress {
     this.completedAt,
     this.lastAccessed,
   });
-
   factory ChapterProgress.fromJson(Map<String, dynamic> json) {
     return ChapterProgress(
       chapterNumber: json['chapterNumber'] as int,
@@ -198,7 +182,6 @@ class ChapterProgress {
           : null,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'chapterNumber': chapterNumber,
@@ -211,7 +194,6 @@ class ChapterProgress {
       'lastAccessed': lastAccessed?.toIso8601String(),
     };
   }
-
   ChapterProgress copyWith({
     int? chapterNumber,
     String? chapterTitle,
@@ -234,5 +216,4 @@ class ChapterProgress {
     );
   }
 }
-
 enum TextbookStatus { uploading, processing, ready, error }

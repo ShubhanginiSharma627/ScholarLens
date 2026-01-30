@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
-
-/// Consistent icon system for ScholarLens app
 class AppIcons {
-  // Navigation icons
   static const IconData home = Icons.home_rounded;
   static const IconData tutor = Icons.psychology_rounded;
   static const IconData cards = Icons.style_rounded;
   static const IconData profile = Icons.person_rounded;
-  
-  // Action icons
   static const IconData camera = Icons.camera_alt_rounded;
   static const IconData upload = Icons.upload_rounded;
   static const IconData microphone = Icons.mic_rounded;
@@ -21,15 +16,11 @@ class AppIcons {
   static const IconData cancel = Icons.cancel_rounded;
   static const IconData check = Icons.check_rounded;
   static const IconData close = Icons.close_rounded;
-  
-  // Audio controls
   static const IconData play = Icons.play_arrow_rounded;
   static const IconData pause = Icons.pause_rounded;
   static const IconData stop = Icons.stop_rounded;
   static const IconData volumeUp = Icons.volume_up_rounded;
   static const IconData volumeOff = Icons.volume_off_rounded;
-  
-  // Learning icons
   static const IconData quiz = Icons.quiz_rounded;
   static const IconData lesson = Icons.menu_book_rounded;
   static const IconData flashcard = Icons.style_rounded;
@@ -38,8 +29,6 @@ class AppIcons {
   static const IconData streak = Icons.local_fire_department_rounded;
   static const IconData time = Icons.access_time_rounded;
   static const IconData calendar = Icons.calendar_today_rounded;
-  
-  // Subject icons
   static const IconData math = Icons.calculate_rounded;
   static const IconData science = Icons.science_rounded;
   static const IconData history = Icons.history_edu_rounded;
@@ -48,8 +37,6 @@ class AppIcons {
   static const IconData music = Icons.music_note_rounded;
   static const IconData sports = Icons.sports_basketball_rounded;
   static const IconData computer = Icons.computer_rounded;
-  
-  // Status icons
   static const IconData online = Icons.wifi_rounded;
   static const IconData offline = Icons.wifi_off_rounded;
   static const IconData loading = Icons.hourglass_empty_rounded;
@@ -57,8 +44,6 @@ class AppIcons {
   static const IconData warning = Icons.warning_rounded;
   static const IconData success = Icons.check_circle_rounded;
   static const IconData info = Icons.info_rounded;
-  
-  // Settings icons
   static const IconData settings = Icons.settings_rounded;
   static const IconData notifications = Icons.notifications_rounded;
   static const IconData notificationsOff = Icons.notifications_off_rounded;
@@ -68,27 +53,19 @@ class AppIcons {
   static const IconData help = Icons.help_rounded;
   static const IconData feedback = Icons.feedback_rounded;
   static const IconData logout = Icons.logout_rounded;
-  
-  // Navigation arrows
   static const IconData arrowBack = Icons.arrow_back_rounded;
   static const IconData arrowForward = Icons.arrow_forward_rounded;
   static const IconData arrowUp = Icons.keyboard_arrow_up_rounded;
   static const IconData arrowDown = Icons.keyboard_arrow_down_rounded;
   static const IconData arrowLeft = Icons.keyboard_arrow_left_rounded;
   static const IconData arrowRight = Icons.keyboard_arrow_right_rounded;
-  
-  // Difficulty levels
   static const IconData easy = Icons.sentiment_satisfied_rounded;
   static const IconData medium = Icons.sentiment_neutral_rounded;
   static const IconData hard = Icons.sentiment_dissatisfied_rounded;
-  
-  // Chat icons
   static const IconData chat = Icons.chat_rounded;
   static const IconData message = Icons.message_rounded;
   static const IconData attach = Icons.attach_file_rounded;
   static const IconData emoji = Icons.emoji_emotions_rounded;
-  
-  // More icons
   static const IconData more = Icons.more_horiz_rounded;
   static const IconData moreVert = Icons.more_vert_rounded;
   static const IconData menu = Icons.menu_rounded;
@@ -101,15 +78,11 @@ class AppIcons {
   static const IconData favoriteOutline = Icons.favorite_border_rounded;
   static const IconData bookmark = Icons.bookmark_rounded;
   static const IconData bookmarkOutline = Icons.bookmark_border_rounded;
-  
-  // File icons
   static const IconData file = Icons.description_rounded;
   static const IconData image = Icons.image_rounded;
   static const IconData video = Icons.videocam_rounded;
   static const IconData audio = Icons.audiotrack_rounded;
   static const IconData pdf = Icons.picture_as_pdf_rounded;
-  
-  // Utility method to get subject icon by name
   static IconData getSubjectIcon(String subject) {
     switch (subject.toLowerCase()) {
       case 'math':
@@ -149,8 +122,6 @@ class AppIcons {
         return lesson;
     }
   }
-  
-  // Utility method to get difficulty icon
   static IconData getDifficultyIcon(String difficulty) {
     switch (difficulty.toLowerCase()) {
       case 'easy':
@@ -163,8 +134,6 @@ class AppIcons {
         return medium;
     }
   }
-  
-  // Utility method to get status icon
   static IconData getStatusIcon(String status) {
     switch (status.toLowerCase()) {
       case 'success':

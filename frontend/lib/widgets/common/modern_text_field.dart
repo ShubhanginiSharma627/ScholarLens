@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../animations/animated_form_input.dart';
-
-/// Modern styled text field for authentication forms
-/// Provides consistent styling with icons, rounded corners, and proper spacing
 class ModernTextField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
@@ -17,7 +14,6 @@ class ModernTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
   final void Function(String)? onFieldSubmitted;
-
   const ModernTextField({
     super.key,
     required this.controller,
@@ -33,7 +29,6 @@ class ModernTextField extends StatelessWidget {
     this.onChanged,
     this.onFieldSubmitted,
   });
-
   @override
   Widget build(BuildContext context) {
     return AnimatedFormInput(

@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
-
-/// Learning metrics section displaying comprehensive learning statistics
 class LearningMetricsSection extends StatelessWidget {
   final UserProgress userProgress;
-
   const LearningMetricsSection({
     super.key,
     required this.userProgress,
   });
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -21,10 +17,7 @@ class LearningMetricsSection extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        
         const SizedBox(height: 16),
-        
-        // Metrics Grid
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -63,10 +56,7 @@ class LearningMetricsSection extends StatelessWidget {
             ),
           ],
         ),
-        
         const SizedBox(height: 16),
-        
-        // Subject Progress
         if (userProgress.subjectProgress.isNotEmpty) ...[
           Text(
             'Subject Progress',
@@ -74,9 +64,7 @@ class LearningMetricsSection extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          
           const SizedBox(height: 12),
-          
           ...userProgress.subjectProgress.entries.map(
             (entry) => _buildSubjectProgress(context, entry.key, entry.value),
           ),
@@ -84,7 +72,6 @@ class LearningMetricsSection extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildMetricCard(
     BuildContext context,
     IconData icon,
@@ -104,9 +91,7 @@ class LearningMetricsSection extends StatelessWidget {
               size: 32,
               color: color,
             ),
-            
             const SizedBox(height: 8),
-            
             Text(
               value,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -114,9 +99,7 @@ class LearningMetricsSection extends StatelessWidget {
                 color: color,
               ),
             ),
-            
             const SizedBox(height: 4),
-            
             Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -129,7 +112,6 @@ class LearningMetricsSection extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildSubjectProgress(BuildContext context, String subject, double progress) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
@@ -154,9 +136,7 @@ class LearningMetricsSection extends StatelessWidget {
               ),
             ],
           ),
-          
           const SizedBox(height: 4),
-          
           LinearProgressIndicator(
             value: progress,
             backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,

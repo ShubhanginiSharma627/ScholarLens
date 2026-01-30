@@ -6,24 +6,19 @@ import '../models/lesson_content.dart';
 import '../services/progress_service.dart';
 import '../providers/progress_provider.dart';
 import '../widgets/common/top_navigation_bar.dart';
-
-/// Screen for displaying interactive quiz questions with multiple choice options
 class QuizScreen extends StatefulWidget {
   final List<QuizQuestion> questions;
   final LessonContent lessonContent;
   final String subject;
-
   const QuizScreen({
     super.key,
     required this.questions,
     required this.lessonContent,
     this.subject = 'General',
   });
-
   @override
   State<QuizScreen> createState() => _QuizScreenState();
 }
-
 class _QuizScreenState extends State<QuizScreen> {
   int _currentQuestionIndex = 0;
   int? _selectedAnswerIndex;
@@ -33,14 +28,12 @@ class _QuizScreenState extends State<QuizScreen> {
   final List<bool> _correctAnswers = [];
   late DateTime _quizStartTime;
   late ProgressService _progressService;
-
   @override
   void initState() {
     super.initState();
     _quizStartTime = DateTime.now();
     _progressService = ProgressService();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,26 +43,20 @@ class _QuizScreenState extends State<QuizScreen> {
       body: _buildQuizContent(),
     );
   }
-
   Widget _buildQuizContent() {
     if (_currentQuestionIndex >= widget.questions.length) {
       return _buildQuizComplete();
     }
-
     return Column(
       children: [
-        // Progress indicator
         _buildProgressIndicator(),
-        // Question content
         Expanded(
           child: _buildQuestionContent(),
         ),
-        // Navigation buttons
         _buildNavigationButtons(),
       ],
     );
   }
-
   Widget _buildProgressIndicator() {
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -91,16 +78,13 @@ class _QuizScreenState extends State<QuizScreen> {
       ),
     );
   }
-
   Widget _buildQuestionContent() {
     final question = widget.questions[_currentQuestionIndex];
-    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Question text
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -113,24 +97,20 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          // Answer options
           ...question.options.asMap().entries.map((entry) {
             final index = entry.key;
             final option = entry.value;
             return _buildAnswerOption(index, option, question);
           }),
-          // Feedback section
           if (_showFeedback) _buildFeedback(question),
         ],
       ),
     );
   }
-
   Widget _buildAnswerOption(int index, String option, QuizQuestion question) {
     Color? backgroundColor;
     Color? textColor;
     IconData? icon;
-
     if (_showFeedback) {
       if (index == question.correctIndex) {
         backgroundColor = Colors.green[100];
@@ -142,7 +122,6 @@ class _QuizScreenState extends State<QuizScreen> {
         icon = Icons.cancel;
       }
     }
-
     return Container(
       margin: const EdgeInsets.only(bottom: 8.0),
       child: Card(
@@ -178,7 +157,6 @@ class _QuizScreenState extends State<QuizScreen> {
       ),
     );
   }
-
   Widget _buildFeedback(QuizQuestion question) {
     return Container(
       margin: const EdgeInsets.only(top: 16.0),
@@ -217,19 +195,16 @@ class _QuizScreenState extends State<QuizScreen> {
       ),
     );
   }
-
   Widget _buildNavigationButtons() {
     return Container(
       padding: const EdgeInsets.all(16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Previous button
           ElevatedButton(
             onPressed: _currentQuestionIndex > 0 ? _previousQuestion : null,
             child: const Text('Previous'),
           ),
-          // Next/Submit button
           ElevatedButton(
             onPressed: _selectedAnswerIndex != null ? _nextQuestion : null,
             style: ElevatedButton.styleFrom(
@@ -246,13 +221,11 @@ class _QuizScreenState extends State<QuizScreen> {
       ),
     );
   }
-
   Widget _buildQuizComplete() {
     final correctCount = _correctAnswers.where((correct) => correct).length;
     final totalQuestions = widget.questions.length;
     final accuracy = correctCount / totalQuestions;
     final accuracyPercentage = (accuracy * 100).round();
-
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -318,27 +291,21 @@ class _QuizScreenState extends State<QuizScreen> {
       ),
     );
   }
-
   void _selectAnswer(int index) {
     setState(() {
       _selectedAnswerIndex = index;
     });
   }
-
   void _nextQuestion() {
     if (!_showFeedback && _selectedAnswerIndex != null) {
-      // Show feedback first
       final question = widget.questions[_currentQuestionIndex];
       _isAnswerCorrect = question.isCorrectAnswer(_selectedAnswerIndex!);
-      
       _userAnswers.add(_selectedAnswerIndex!);
       _correctAnswers.add(_isAnswerCorrect);
-      
       setState(() {
         _showFeedback = true;
       });
     } else if (_showFeedback) {
-      // Move to next question
       if (_currentQuestionIndex < widget.questions.length - 1) {
         setState(() {
           _currentQuestionIndex++;
@@ -347,14 +314,12 @@ class _QuizScreenState extends State<QuizScreen> {
           _isAnswerCorrect = false;
         });
       } else {
-        // Quiz complete
         setState(() {
           _currentQuestionIndex++;
         });
       }
     }
   }
-
   void _previousQuestion() {
     if (_currentQuestionIndex > 0) {
       setState(() {
@@ -367,10 +332,8 @@ class _QuizScreenState extends State<QuizScreen> {
       });
     }
   }
-
   Future<void> _finishQuiz() async {
     try {
-      // Create learning session
       final session = LearningSession(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         subject: widget.subject,
@@ -381,18 +344,12 @@ class _QuizScreenState extends State<QuizScreen> {
         correctAnswers: _correctAnswers.where((correct) => correct).length,
         content: widget.lessonContent,
       );
-
-      // Update progress
       await _progressService.updateLearningStats(session);
       await _progressService.updateDayStreak();
-
-      // Update progress provider
       if (mounted) {
         final progressProvider = Provider.of<ProgressProvider>(context, listen: false);
         await progressProvider.updateWithSession(session);
       }
-
-      // Navigate back to home or lesson content
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }

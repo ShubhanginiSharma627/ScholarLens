@@ -1,44 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../providers/providers.dart';
 import '../services/form_validator.dart';
 import '../theme/app_theme.dart';
 import '../animations/animated_form_input.dart';
 import 'login_screen.dart';
-
 class PasswordResetScreen extends StatefulWidget {
   const PasswordResetScreen({super.key});
-
   static const String routeName = '/password-reset';
-
   @override
   State<PasswordResetScreen> createState() => _PasswordResetScreenState();
 }
-
 class _PasswordResetScreenState extends State<PasswordResetScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  
   bool _isEmailSent = false;
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    
-    // Get the email from route arguments if provided
     final String? initialEmail = ModalRoute.of(context)?.settings.arguments as String?;
     if (initialEmail != null && _emailController.text.isEmpty) {
       _emailController.text = initialEmail;
     }
   }
-
   @override
   void dispose() {
     _emailController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,33 +46,19 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             if (_isEmailSent) {
               return _buildSuccessView();
             }
-
             return SingleChildScrollView(
               padding: const EdgeInsets.all(AppTheme.spacingL),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: AppTheme.spacingXL),
-                  
-                  // Header
                   _buildHeader(),
-                  
                   const SizedBox(height: AppTheme.spacingXXL),
-                  
-                  // Reset Form
                   _buildResetForm(authProvider),
-                  
                   const SizedBox(height: AppTheme.spacingXL),
-                  
-                  // Reset Button
                   _buildResetButton(authProvider),
-                  
                   const SizedBox(height: AppTheme.spacingL),
-                  
-                  // Back to Login Link
                   _buildBackToLoginLink(),
-                  
-                  // Error Message
                   if (authProvider.error != null) ...[
                     const SizedBox(height: AppTheme.spacingL),
                     _buildErrorMessage(authProvider.error!),
@@ -96,11 +71,9 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       ),
     );
   }
-
   Widget _buildHeader() {
     return Column(
       children: [
-        // Reset Icon
         Container(
           width: 80,
           height: 80,
@@ -114,10 +87,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             color: AppTheme.primaryColor,
           ),
         ),
-        
         const SizedBox(height: AppTheme.spacingL),
-        
-        // Title
         Text(
           'Reset Your Password',
           style: Theme.of(context).textTheme.displaySmall?.copyWith(
@@ -125,10 +95,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           ),
           textAlign: TextAlign.center,
         ),
-        
         const SizedBox(height: AppTheme.spacingS),
-        
-        // Description
         Text(
           'Enter your email address and we\'ll send you a link to reset your password.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -139,13 +106,11 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       ],
     );
   }
-
   Widget _buildResetForm(AuthenticationProvider authProvider) {
     return Form(
       key: _formKey,
       child: Column(
         children: [
-          // Email Field
           AnimatedFormInputConfigs.email(
             controller: _emailController,
             validator: FormValidator.validateEmail,
@@ -157,7 +122,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       ),
     );
   }
-
   Widget _buildResetButton(AuthenticationProvider authProvider) {
     return SizedBox(
       width: double.infinity,
@@ -187,7 +151,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       ),
     );
   }
-
   Widget _buildBackToLoginLink() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -209,7 +172,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       ],
     );
   }
-
   Widget _buildErrorMessage(String error) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -247,14 +209,12 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       ),
     );
   }
-
   Widget _buildSuccessView() {
     return Padding(
       padding: const EdgeInsets.all(AppTheme.spacingL),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Success Icon
           Container(
             width: 120,
             height: 120,
@@ -268,10 +228,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
               color: AppTheme.successColor,
             ),
           ),
-          
           const SizedBox(height: AppTheme.spacingXL),
-          
-          // Success Title
           Text(
             'Check Your Email',
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
@@ -279,10 +236,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             ),
             textAlign: TextAlign.center,
           ),
-          
           const SizedBox(height: AppTheme.spacingM),
-          
-          // Success Message
           Text(
             'We\'ve sent a password reset link to:',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -290,10 +244,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             ),
             textAlign: TextAlign.center,
           ),
-          
           const SizedBox(height: AppTheme.spacingS),
-          
-          // Email Address
           Text(
             _emailController.text.trim(),
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -302,10 +253,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             ),
             textAlign: TextAlign.center,
           ),
-          
           const SizedBox(height: AppTheme.spacingXL),
-          
-          // Instructions
           Container(
             padding: const EdgeInsets.all(AppTheme.spacingM),
             decoration: BoxDecoration(
@@ -333,13 +281,9 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
               ],
             ),
           ),
-          
           const SizedBox(height: AppTheme.spacingXL),
-          
-          // Action Buttons
           Column(
             children: [
-              // Back to Login Button
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -358,10 +302,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                   ),
                 ),
               ),
-              
               const SizedBox(height: AppTheme.spacingM),
-              
-              // Resend Email Button
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -386,10 +327,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
               ),
             ],
           ),
-          
           const SizedBox(height: AppTheme.spacingL),
-          
-          // Help Text
           Text(
             'Didn\'t receive the email? Check your spam folder or try again.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -401,7 +339,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       ),
     );
   }
-
   void _handlePasswordReset(AuthenticationProvider authProvider) {
     if (_formKey.currentState?.validate() ?? false) {
       authProvider.resetPassword(_emailController.text.trim()).then((_) {
@@ -413,7 +350,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       });
     }
   }
-
   void _navigateToLogin() {
     Navigator.of(context).pushNamedAndRemoveUntil(
       LoginScreen.routeName,

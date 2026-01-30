@@ -2,26 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
-
-/// Service for handling platform-specific UI guidelines and behaviors
 class PlatformUIService {
   static PlatformUIService? _instance;
   static PlatformUIService get instance => _instance ??= PlatformUIService._();
-
   PlatformUIService._();
-
-  /// Gets the current platform
   TargetPlatform get currentPlatform => Platform.isIOS 
       ? TargetPlatform.iOS 
       : TargetPlatform.android;
-
-  /// Whether the current platform is iOS
   bool get isIOS => Platform.isIOS;
-
-  /// Whether the current platform is Android
   bool get isAndroid => Platform.isAndroid;
-
-  /// Gets platform-appropriate theme data
   ThemeData getPlatformTheme({
     required ColorScheme colorScheme,
     bool useMaterial3 = true,
@@ -32,8 +21,6 @@ class PlatformUIService {
       return _getAndroidTheme(colorScheme, useMaterial3);
     }
   }
-
-  /// Gets platform-appropriate app bar
   PreferredSizeWidget getPlatformAppBar({
     required String title,
     List<Widget>? actions,
@@ -66,8 +53,6 @@ class PlatformUIService {
       );
     }
   }
-
-  /// Gets platform-appropriate button
   Widget getPlatformButton({
     required String text,
     required VoidCallback? onPressed,
@@ -133,8 +118,6 @@ class PlatformUIService {
       }
     }
   }
-
-  /// Gets platform-appropriate dialog
   Widget getPlatformDialog({
     required String title,
     required String content,
@@ -165,8 +148,6 @@ class PlatformUIService {
       );
     }
   }
-
-  /// Shows platform-appropriate dialog
   Future<T?> showPlatformDialog<T>({
     required BuildContext context,
     required String title,
@@ -196,8 +177,6 @@ class PlatformUIService {
       );
     }
   }
-
-  /// Gets platform-appropriate loading indicator
   Widget getPlatformLoadingIndicator({
     Color? color,
     double? size,
@@ -214,8 +193,6 @@ class PlatformUIService {
       );
     }
   }
-
-  /// Gets platform-appropriate switch
   Widget getPlatformSwitch({
     required bool value,
     required ValueChanged<bool>? onChanged,
@@ -235,8 +212,6 @@ class PlatformUIService {
       );
     }
   }
-
-  /// Gets platform-appropriate slider
   Widget getPlatformSlider({
     required double value,
     required ValueChanged<double>? onChanged,
@@ -265,8 +240,6 @@ class PlatformUIService {
       );
     }
   }
-
-  /// Gets platform-appropriate text field
   Widget getPlatformTextField({
     TextEditingController? controller,
     String? placeholder,
@@ -317,8 +290,6 @@ class PlatformUIService {
       );
     }
   }
-
-  /// Gets platform-appropriate bottom sheet
   Future<T?> showPlatformBottomSheet<T>({
     required BuildContext context,
     required Widget child,
@@ -346,8 +317,6 @@ class PlatformUIService {
       );
     }
   }
-
-  /// Gets platform-appropriate navigation transition
   PageRouteBuilder<T> getPlatformPageRoute<T>({
     required Widget child,
     RouteSettings? settings,
@@ -382,8 +351,6 @@ class PlatformUIService {
       );
     }
   }
-
-  /// Sets platform-appropriate status bar style
   void setPlatformStatusBarStyle({
     Brightness? brightness,
     Color? backgroundColor,
@@ -408,8 +375,6 @@ class PlatformUIService {
       );
     }
   }
-
-  /// Gets platform-appropriate haptic feedback
   void providePlatformHapticFeedback(HapticFeedbackType type) {
     switch (type) {
       case HapticFeedbackType.light:
@@ -426,9 +391,6 @@ class PlatformUIService {
         break;
     }
   }
-
-  // Private methods
-
   ThemeData _getIOSTheme(ColorScheme colorScheme, bool useMaterial3) {
     return ThemeData(
       useMaterial3: useMaterial3,
@@ -457,7 +419,6 @@ class PlatformUIService {
       ),
     );
   }
-
   ThemeData _getAndroidTheme(ColorScheme colorScheme, bool useMaterial3) {
     return ThemeData(
       useMaterial3: useMaterial3,
@@ -482,14 +443,11 @@ class PlatformUIService {
     );
   }
 }
-
-/// Platform dialog action
 class PlatformDialogAction {
   final String text;
   final VoidCallback? onPressed;
   final bool isDefault;
   final bool isDestructive;
-
   const PlatformDialogAction({
     required this.text,
     this.onPressed,
@@ -497,20 +455,14 @@ class PlatformDialogAction {
     this.isDestructive = false,
   });
 }
-
-/// Haptic feedback types
 enum HapticFeedbackType {
   light,
   medium,
   heavy,
   selection,
 }
-
-/// Mixin for widgets that need platform-specific UI
 mixin PlatformUIMixin<T extends StatefulWidget> on State<T> {
   PlatformUIService get platformUI => PlatformUIService.instance;
-
-  /// Shows platform-appropriate dialog
   Future<T?> showPlatformDialog<T>({
     required String title,
     required String content,
@@ -523,8 +475,6 @@ mixin PlatformUIMixin<T extends StatefulWidget> on State<T> {
       actions: actions,
     );
   }
-
-  /// Shows platform-appropriate bottom sheet
   Future<T?> showPlatformBottomSheet<T>({
     required Widget child,
     bool isScrollControlled = false,
@@ -535,13 +485,9 @@ mixin PlatformUIMixin<T extends StatefulWidget> on State<T> {
       isScrollControlled: isScrollControlled,
     );
   }
-
-  /// Provides platform-appropriate haptic feedback
   void hapticFeedback(HapticFeedbackType type) {
     platformUI.providePlatformHapticFeedback(type);
   }
-
-  /// Navigates with platform-appropriate transition
   Future<T?> pushWithPlatformTransition<T>(Widget child) {
     return Navigator.of(context).push<T>(
       platformUI.getPlatformPageRoute<T>(child: child),

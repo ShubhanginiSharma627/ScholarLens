@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/common/top_navigation_bar.dart';
-
-/// Analytics screen showing detailed learning statistics and insights
 class AnalyticsScreen extends StatelessWidget {
   const AnalyticsScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -15,7 +12,6 @@ class AnalyticsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title and description
             const Text(
               'Analytics Dashboard',
               style: TextStyle(
@@ -33,24 +29,14 @@ class AnalyticsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            
-            // Key Metrics Cards
             _buildKeyMetricsGrid(context),
             const SizedBox(height: 20),
-            
-            // Study Time Chart
             _buildStudyTimeChart(context),
             const SizedBox(height: 20),
-            
-            // Activity Breakdown
             _buildActivityBreakdown(context),
             const SizedBox(height: 20),
-            
-            // Performance by Subject
             _buildPerformanceBySubject(context),
             const SizedBox(height: 20),
-            
-            // Areas to Improve
             _buildAreasToImprove(context),
             const SizedBox(height: 100), // Bottom padding for navigation
           ],
@@ -58,7 +44,6 @@ class AnalyticsScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildKeyMetricsGrid(BuildContext context) {
     return GridView.count(
       crossAxisCount: 2,
@@ -95,7 +80,6 @@ class AnalyticsScreen extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildMetricCard({
     required IconData icon,
     required Color iconColor,
@@ -119,7 +103,6 @@ class AnalyticsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Icon at the top
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -132,8 +115,6 @@ class AnalyticsScreen extends StatelessWidget {
               size: 20,
             ),
           ),
-          
-          // Value and label at the bottom
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -163,7 +144,6 @@ class AnalyticsScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildStudyTimeChart(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -217,7 +197,6 @@ class AnalyticsScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildActivityBreakdown(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -285,7 +264,6 @@ class AnalyticsScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildActivityItem(String label, String percentage, Color color) {
     return Row(
       children: [
@@ -317,7 +295,6 @@ class AnalyticsScreen extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildPerformanceBySubject(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -363,7 +340,6 @@ class AnalyticsScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildAreasToImprove(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -442,7 +418,6 @@ class AnalyticsScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildImprovementItem(String subject, int percentage, int change, Color changeColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,8 +467,6 @@ class AnalyticsScreen extends StatelessWidget {
     );
   }
 }
-
-// Custom painters for charts
 class StudyTimeChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -501,12 +474,9 @@ class StudyTimeChartPainter extends CustomPainter {
       ..color = const Color(0xFF7C3AED)
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
-
     final fillPaint = Paint()
       ..color = const Color(0xFF7C3AED).withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
-
-    // Sample data points for the week
     final points = [
       Offset(size.width * 0.1, size.height * 0.7),
       Offset(size.width * 0.25, size.height * 0.6),
@@ -515,8 +485,6 @@ class StudyTimeChartPainter extends CustomPainter {
       Offset(size.width * 0.7, size.height * 0.6),
       Offset(size.width * 0.85, size.height * 0.3),
     ];
-
-    // Draw filled area
     final path = Path();
     path.moveTo(points.first.dx, size.height);
     for (final point in points) {
@@ -525,20 +493,15 @@ class StudyTimeChartPainter extends CustomPainter {
     path.lineTo(points.last.dx, size.height);
     path.close();
     canvas.drawPath(path, fillPaint);
-
-    // Draw line
     final linePath = Path();
     linePath.moveTo(points.first.dx, points.first.dy);
     for (int i = 1; i < points.length; i++) {
       linePath.lineTo(points[i].dx, points[i].dy);
     }
     canvas.drawPath(linePath, paint);
-
-    // Draw days labels
     final textPainter = TextPainter(
       textDirection: TextDirection.ltr,
     );
-    
     final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     for (int i = 0; i < days.length; i++) {
       textPainter.text = TextSpan(
@@ -555,33 +518,27 @@ class StudyTimeChartPainter extends CustomPainter {
       );
     }
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
 class PieChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 10;
-
     final colors = [
       const Color(0xFF7C3AED), // Flashcards
       const Color(0xFF14B8A6), // Mock Exams
       const Color(0xFFFF9500), // AI Tutor
       const Color(0xFF10B981), // Snap & Solve
     ];
-
     final percentages = [35, 25, 20, 20];
     double startAngle = -90 * (3.14159 / 180); // Start from top
-
     for (int i = 0; i < percentages.length; i++) {
       final sweepAngle = (percentages[i] / 100) * 2 * 3.14159;
       final paint = Paint()
         ..color = colors[i]
         ..style = PaintingStyle.fill;
-
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
         startAngle,
@@ -589,21 +546,16 @@ class PieChartPainter extends CustomPainter {
         true,
         paint,
       );
-
       startAngle += sweepAngle;
     }
-
-    // Draw center circle
     final centerPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, radius * 0.4, centerPaint);
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
 class BarChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -611,16 +563,13 @@ class BarChartPainter extends CustomPainter {
     final scores = [85, 92, 78];
     final barWidth = size.width / (subjects.length * 2);
     final maxScore = 100;
-
     for (int i = 0; i < subjects.length; i++) {
       final barHeight = (scores[i] / maxScore) * (size.height - 40);
       final x = (i + 0.5) * (size.width / subjects.length) - barWidth / 2;
       final y = size.height - 40 - barHeight;
-
       final paint = Paint()
         ..color = const Color(0xFF14B8A6)
         ..style = PaintingStyle.fill;
-
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(x, y, barWidth, barHeight),
@@ -628,8 +577,6 @@ class BarChartPainter extends CustomPainter {
         ),
         paint,
       );
-
-      // Draw subject labels
       final textPainter = TextPainter(
         text: TextSpan(
           text: subjects[i],
@@ -647,7 +594,6 @@ class BarChartPainter extends CustomPainter {
       );
     }
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

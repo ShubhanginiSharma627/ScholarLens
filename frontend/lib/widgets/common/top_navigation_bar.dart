@@ -2,18 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/progress_provider.dart';
 import '../../screens/profile_screen.dart';
-
-/// Common top navigation bar widget used across all screens
 class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBackButton;
   final VoidCallback? onBackPressed;
-
   const TopNavigationBar({
     super.key,
     this.showBackButton = false,
     this.onBackPressed,
   });
-
   @override
   Widget build(BuildContext context) {
     return AppBar(
@@ -137,7 +133,6 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
       ),
     );
   }
-
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }

@@ -2,15 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../../animations/animation_manager.dart';
 import '../../animations/animation_config.dart';
-
-/// Enhanced speed dial with improved animations and backdrop blur
 class EnhancedSpeedDial extends StatefulWidget {
   final List<SpeedDialAction> actions;
   final VoidCallback? onClose;
   final Color? backgroundColor;
   final Color? backdropColor;
   final double? blurSigma;
-
   const EnhancedSpeedDial({
     super.key,
     required this.actions,
@@ -19,11 +16,9 @@ class EnhancedSpeedDial extends StatefulWidget {
     this.backdropColor,
     this.blurSigma,
   });
-
   @override
   State<EnhancedSpeedDial> createState() => _EnhancedSpeedDialState();
 }
-
 class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
     with TickerProviderStateMixin {
   late AnimationManager _animationManager;
@@ -31,9 +26,7 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
   late String _containerAnimationId;
   final Map<int, String> _actionAnimationIds = {};
   final Map<int, String> _actionScaleIds = {};
-  
   bool _isVisible = false;
-
   @override
   void initState() {
     super.initState();
@@ -41,9 +34,7 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
     _initializeAnimations();
     _showSpeedDial();
   }
-
   void _initializeAnimations() {
-    // Backdrop fade animation
     _backdropAnimationId = _animationManager.createFadeAnimation(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -52,8 +43,6 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
       curve: Curves.easeOut,
       category: AnimationCategory.transition,
     );
-
-    // Container slide animation
     _containerAnimationId = _animationManager.createSlideAnimation(
       vsync: this,
       duration: const Duration(milliseconds: 350),
@@ -62,10 +51,7 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
       curve: Curves.easeOutCubic,
       category: AnimationCategory.transition,
     );
-
-    // Individual action animations
     for (int i = 0; i < widget.actions.length; i++) {
-      // Slide animation for each action
       _actionAnimationIds[i] = _animationManager.createSlideAnimation(
         vsync: this,
         duration: Duration(milliseconds: 250 + (i * 50)), // Staggered timing
@@ -74,8 +60,6 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
         curve: Curves.easeOutBack,
         category: AnimationCategory.content,
       );
-
-      // Scale animation for tap feedback
       _actionScaleIds[i] = _animationManager.createScaleAnimation(
         vsync: this,
         duration: const Duration(milliseconds: 150),
@@ -86,23 +70,16 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
       );
     }
   }
-
   void _showSpeedDial() {
     setState(() {
       _isVisible = true;
     });
-
-    // Start backdrop animation
     _animationManager.startAnimation(_backdropAnimationId);
-    
-    // Start container animation
     Future.delayed(const Duration(milliseconds: 50), () {
       if (mounted) {
         _animationManager.startAnimation(_containerAnimationId);
       }
     });
-
-    // Start staggered action animations
     for (int i = 0; i < widget.actions.length; i++) {
       Future.delayed(Duration(milliseconds: 100 + (i * 50)), () {
         if (mounted) {
@@ -111,47 +88,35 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
       });
     }
   }
-
   void _hideSpeedDial() {
-    // Reverse all animations
     final backdropAnimation = _animationManager.getAnimation(_backdropAnimationId);
     final containerAnimation = _animationManager.getAnimation(_containerAnimationId);
-    
     backdropAnimation?.controller.reverse();
     containerAnimation?.controller.reverse();
-
     for (int i = 0; i < widget.actions.length; i++) {
       final actionAnimation = _animationManager.getAnimation(_actionAnimationIds[i]!);
       actionAnimation?.controller.reverse();
     }
-
-    // Close after animation completes
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         widget.onClose?.call();
       }
     });
   }
-
   void _onActionTap(int index, VoidCallback? onTap) {
-    // Animate button press
     final scaleAnimation = _animationManager.getAnimation(_actionScaleIds[index]!);
     if (scaleAnimation != null) {
       scaleAnimation.controller.forward().then((_) {
         scaleAnimation.controller.reverse();
       });
     }
-
-    // Execute action after brief delay for visual feedback
     Future.delayed(const Duration(milliseconds: 100), () {
       onTap?.call();
       _hideSpeedDial();
     });
   }
-
   @override
   void dispose() {
-    // Dispose all animations
     _animationManager.disposeController(_backdropAnimationId);
     _animationManager.disposeController(_containerAnimationId);
     for (final id in _actionAnimationIds.values) {
@@ -162,24 +127,19 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
     }
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     final bottomNavHeight = MediaQuery.of(context).padding.bottom + 80;
-    
     return Material(
       color: Colors.transparent,
       child: Stack(
         children: [
-          // Enhanced backdrop with blur
           _buildAnimatedBackdrop(bottomNavHeight),
-          // Speed dial actions
           _buildSpeedDialActions(bottomNavHeight),
         ],
       ),
     );
   }
-
   Widget _buildAnimatedBackdrop(double bottomNavHeight) {
     return AnimatedBuilder(
       animation: _animationManager.getAnimation(_backdropAnimationId)?.controller ?? 
@@ -187,7 +147,6 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
       builder: (context, child) {
         final fadeAnimation = _animationManager.getAnimation(_backdropAnimationId)?.animation as Animation<double>?;
         final opacity = fadeAnimation?.value ?? 0.0;
-        
         return Positioned(
           top: 0,
           left: 0,
@@ -213,7 +172,6 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
       },
     );
   }
-
   Widget _buildSpeedDialActions(double bottomNavHeight) {
     return AnimatedBuilder(
       animation: _animationManager.getAnimation(_containerAnimationId)?.controller ?? 
@@ -221,7 +179,6 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
       builder: (context, child) {
         final slideAnimation = _animationManager.getAnimation(_containerAnimationId)?.animation as Animation<Offset>?;
         final slideOffset = slideAnimation?.value ?? const Offset(0.0, 0.3);
-        
         return Positioned(
           left: 40,
           right: 40,
@@ -241,7 +198,6 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
       },
     );
   }
-
   Widget _buildAnimatedAction(int index, SpeedDialAction action) {
     return AnimatedBuilder(
       animation: _animationManager.getAnimation(_actionAnimationIds[index]!)?.controller ?? 
@@ -249,10 +205,8 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
       builder: (context, child) {
         final slideAnimation = _animationManager.getAnimation(_actionAnimationIds[index]!)?.animation as Animation<Offset>?;
         final scaleAnimation = _animationManager.getAnimation(_actionScaleIds[index]!)?.animation as Animation<double>?;
-        
         final slideOffset = slideAnimation?.value ?? const Offset(0.0, 0.5);
         final scale = scaleAnimation?.value ?? 1.0;
-        
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: Transform.translate(
@@ -266,7 +220,6 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
       },
     );
   }
-
   Widget _buildSpeedDialButton(SpeedDialAction action, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -312,15 +265,12 @@ class _EnhancedSpeedDialState extends State<EnhancedSpeedDial>
     );
   }
 }
-
-/// Speed dial action configuration
 class SpeedDialAction {
   final IconData icon;
   final String label;
   final Color backgroundColor;
   final Color foregroundColor;
   final VoidCallback? onTap;
-
   const SpeedDialAction({
     required this.icon,
     required this.label,
@@ -329,8 +279,6 @@ class SpeedDialAction {
     this.onTap,
   });
 }
-
-/// Helper function to show enhanced speed dial
 void showEnhancedSpeedDial(
   BuildContext context, {
   required List<SpeedDialAction> actions,
@@ -340,7 +288,6 @@ void showEnhancedSpeedDial(
 }) {
   final overlay = Overlay.of(context);
   late OverlayEntry overlayEntry;
-  
   overlayEntry = OverlayEntry(
     builder: (context) => EnhancedSpeedDial(
       actions: actions,
@@ -350,6 +297,5 @@ void showEnhancedSpeedDial(
       onClose: () => overlayEntry.remove(),
     ),
   );
-  
   overlay.insert(overlayEntry);
 }

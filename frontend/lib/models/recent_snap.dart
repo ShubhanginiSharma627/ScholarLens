@@ -1,4 +1,3 @@
-/// Model representing a recently captured problem snap
 class RecentSnap {
   final String id;
   final String problemTitle;
@@ -6,7 +5,6 @@ class RecentSnap {
   final String lessonId;
   final DateTime createdAt;
   final String? thumbnailPath;
-
   const RecentSnap({
     required this.id,
     required this.problemTitle,
@@ -15,7 +13,6 @@ class RecentSnap {
     required this.createdAt,
     this.thumbnailPath,
   });
-
   factory RecentSnap.fromJson(Map<String, dynamic> json) {
     return RecentSnap(
       id: json['id'] as String,
@@ -26,7 +23,6 @@ class RecentSnap {
       thumbnailPath: json['thumbnail_path'] as String?,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -37,7 +33,6 @@ class RecentSnap {
       'thumbnail_path': thumbnailPath,
     };
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -49,7 +44,6 @@ class RecentSnap {
         other.createdAt == createdAt &&
         other.thumbnailPath == thumbnailPath;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -61,7 +55,6 @@ class RecentSnap {
       thumbnailPath,
     );
   }
-
   @override
   String toString() {
     return 'RecentSnap(id: $id, problemTitle: $problemTitle, subject: $subject, lessonId: $lessonId, createdAt: $createdAt, thumbnailPath: $thumbnailPath)';

@@ -1,24 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
-
-/// Service for handling graceful degradation when features are unavailable
 class GracefulDegradationService {
   static GracefulDegradationService? _instance;
   static GracefulDegradationService get instance => _instance ??= GracefulDegradationService._();
-
   GracefulDegradationService._();
-
-  // Feature availability cache
   final Map<String, bool> _featureAvailability = {};
   final Map<String, DateTime> _lastChecked = {};
   final Duration _cacheExpiry = const Duration(minutes: 5);
-
-  /// Checks if camera functionality is available
   Future<bool> isCameraAvailable() async {
     return await _checkFeatureAvailability('camera', () async {
       try {
-        // Check if camera permission can be requested
         const platform = MethodChannel('flutter/camera');
         final cameras = await platform.invokeMethod('availableCameras');
         return cameras != null && (cameras as List).isNotEmpty;
@@ -28,12 +20,9 @@ class GracefulDegradationService {
       }
     });
   }
-
-  /// Checks if audio/TTS functionality is available
   Future<bool> isAudioAvailable() async {
     return await _checkFeatureAvailability('audio', () async {
       try {
-        // Check if TTS is available on the platform
         if (Platform.isIOS || Platform.isAndroid) {
           return true; // TTS is generally available on mobile platforms
         }
@@ -44,12 +33,9 @@ class GracefulDegradationService {
       }
     });
   }
-
-  /// Checks if voice input/speech recognition is available
   Future<bool> isVoiceInputAvailable() async {
     return await _checkFeatureAvailability('voice', () async {
       try {
-        // Check if speech recognition is available
         const platform = MethodChannel('speech_to_text');
         final available = await platform.invokeMethod('has_permission');
         return available == true;
@@ -59,8 +45,6 @@ class GracefulDegradationService {
       }
     });
   }
-
-  /// Checks if network connectivity is available
   Future<bool> isNetworkAvailable() async {
     return await _checkFeatureAvailability('network', () async {
       try {
@@ -73,13 +57,9 @@ class GracefulDegradationService {
       }
     });
   }
-
-  /// Checks if storage is available and has sufficient space
   Future<bool> isStorageAvailable({int requiredSpaceMB = 10}) async {
     return await _checkFeatureAvailability('storage_$requiredSpaceMB', () async {
       try {
-        // This is a simplified check - in a real app you'd use a plugin
-        // to check actual storage space
         return true; // Assume storage is available for now
       } catch (e) {
         debugPrint('Storage availability check failed: $e');
@@ -87,8 +67,6 @@ class GracefulDegradationService {
       }
     });
   }
-
-  /// Gets feature availability with fallback options
   Future<FeatureAvailability> getFeatureAvailability() async {
     final results = await Future.wait([
       isCameraAvailable(),
@@ -97,7 +75,6 @@ class GracefulDegradationService {
       isNetworkAvailable(),
       isStorageAvailable(),
     ]);
-
     return FeatureAvailability(
       camera: results[0],
       audio: results[1],
@@ -106,8 +83,6 @@ class GracefulDegradationService {
       storage: results[4],
     );
   }
-
-  /// Gets degradation strategy for a specific feature
   DegradationStrategy getDegradationStrategy(String feature, bool isAvailable) {
     if (isAvailable) {
       return DegradationStrategy(
@@ -117,7 +92,6 @@ class GracefulDegradationService {
         actionRequired: false,
       );
     }
-
     switch (feature.toLowerCase()) {
       case 'camera':
         return DegradationStrategy(
@@ -128,7 +102,6 @@ class GracefulDegradationService {
           fallbackIcon: 'photo_library',
           fallbackLabel: 'Choose from Gallery',
         );
-
       case 'audio':
         return DegradationStrategy(
           isAvailable: false,
@@ -138,7 +111,6 @@ class GracefulDegradationService {
           fallbackIcon: 'text_fields',
           fallbackLabel: 'Text Mode',
         );
-
       case 'voice':
         return DegradationStrategy(
           isAvailable: false,
@@ -148,7 +120,6 @@ class GracefulDegradationService {
           fallbackIcon: 'keyboard',
           fallbackLabel: 'Type Instead',
         );
-
       case 'network':
         return DegradationStrategy(
           isAvailable: false,
@@ -158,7 +129,6 @@ class GracefulDegradationService {
           fallbackIcon: 'offline_bolt',
           fallbackLabel: 'Offline Mode',
         );
-
       case 'storage':
         return DegradationStrategy(
           isAvailable: false,
@@ -168,7 +138,6 @@ class GracefulDegradationService {
           fallbackIcon: 'storage',
           fallbackLabel: 'Free Space',
         );
-
       default:
         return DegradationStrategy(
           isAvailable: false,
@@ -178,14 +147,10 @@ class GracefulDegradationService {
         );
     }
   }
-
-  /// Gets user-friendly message for feature unavailability
   String getUnavailabilityMessage(String feature) {
     final strategy = getDegradationStrategy(feature, false);
     return strategy.userMessage ?? 'Feature unavailable';
   }
-
-  /// Gets fallback options for a feature
   List<FallbackOption> getFallbackOptions(String feature) {
     switch (feature.toLowerCase()) {
       case 'camera':
@@ -203,7 +168,6 @@ class GracefulDegradationService {
             description: 'Use a sample image to explore features',
           ),
         ];
-
       case 'audio':
         return [
           FallbackOption(
@@ -219,7 +183,6 @@ class GracefulDegradationService {
             description: 'Enhanced visual presentation',
           ),
         ];
-
       case 'voice':
         return [
           FallbackOption(
@@ -235,7 +198,6 @@ class GracefulDegradationService {
             description: 'Choose from common questions',
           ),
         ];
-
       case 'network':
         return [
           FallbackOption(
@@ -251,17 +213,12 @@ class GracefulDegradationService {
             description: 'View previously loaded content',
           ),
         ];
-
       default:
         return [];
     }
   }
-
-  /// Checks if a feature should be hidden completely
   bool shouldHideFeature(String feature, bool isAvailable) {
     if (isAvailable) return false;
-
-    // Some features should be hidden if not available
     switch (feature.toLowerCase()) {
       case 'voice':
         return true; // Hide voice button if not available
@@ -273,8 +230,6 @@ class GracefulDegradationService {
         return false;
     }
   }
-
-  /// Invalidates feature availability cache
   void invalidateCache([String? feature]) {
     if (feature != null) {
       _featureAvailability.remove(feature);
@@ -284,21 +239,16 @@ class GracefulDegradationService {
       _lastChecked.clear();
     }
   }
-
-  /// Generic method to check feature availability with caching
   Future<bool> _checkFeatureAvailability(
     String feature,
     Future<bool> Function() checker,
   ) async {
-    // Check cache first
     final lastCheck = _lastChecked[feature];
     if (lastCheck != null && 
         DateTime.now().difference(lastCheck) < _cacheExpiry &&
         _featureAvailability.containsKey(feature)) {
       return _featureAvailability[feature]!;
     }
-
-    // Perform actual check
     try {
       final isAvailable = await checker();
       _featureAvailability[feature] = isAvailable;
@@ -312,15 +262,12 @@ class GracefulDegradationService {
     }
   }
 }
-
-/// Overall feature availability status
 class FeatureAvailability {
   final bool camera;
   final bool audio;
   final bool voiceInput;
   final bool network;
   final bool storage;
-
   const FeatureAvailability({
     required this.camera,
     required this.audio,
@@ -328,13 +275,10 @@ class FeatureAvailability {
     required this.network,
     required this.storage,
   });
-
-  /// Gets the overall app functionality level
   AppFunctionalityLevel get functionalityLevel {
     final availableFeatures = [camera, audio, voiceInput, network, storage]
         .where((feature) => feature)
         .length;
-
     if (availableFeatures >= 4) {
       return AppFunctionalityLevel.full;
     } else if (availableFeatures >= 2) {
@@ -343,8 +287,6 @@ class FeatureAvailability {
       return AppFunctionalityLevel.minimal;
     }
   }
-
-  /// Gets a user-friendly description of current functionality
   String get functionalityDescription {
     switch (functionalityLevel) {
       case AppFunctionalityLevel.full:
@@ -355,14 +297,11 @@ class FeatureAvailability {
         return 'Limited functionality - some features may not work';
     }
   }
-
   @override
   String toString() {
     return 'FeatureAvailability(camera: $camera, audio: $audio, voice: $voiceInput, network: $network, storage: $storage)';
   }
 }
-
-/// Strategy for handling feature degradation
 class DegradationStrategy {
   final bool isAvailable;
   final String? fallbackOption;
@@ -370,7 +309,6 @@ class DegradationStrategy {
   final bool actionRequired;
   final String? fallbackIcon;
   final String? fallbackLabel;
-
   const DegradationStrategy({
     required this.isAvailable,
     this.fallbackOption,
@@ -380,14 +318,11 @@ class DegradationStrategy {
     this.fallbackLabel,
   });
 }
-
-/// Fallback option for unavailable features
 class FallbackOption {
   final String id;
   final String label;
   final String icon;
   final String description;
-
   const FallbackOption({
     required this.id,
     required this.label,
@@ -395,17 +330,12 @@ class FallbackOption {
     required this.description,
   });
 }
-
-/// App functionality levels
 enum AppFunctionalityLevel {
   full,    // All features available
   limited, // Some features unavailable
   minimal, // Most features unavailable
 }
-
-/// Mixin for widgets that need graceful degradation
 mixin GracefulDegradationMixin<T extends StatefulWidget> on State<T> {
-  /// Checks feature availability and handles degradation
   Future<bool> checkFeatureOrDegrade(
     String feature,
     VoidCallback onAvailable, {
@@ -414,7 +344,6 @@ mixin GracefulDegradationMixin<T extends StatefulWidget> on State<T> {
   }) async {
     final service = GracefulDegradationService.instance;
     bool isAvailable = false;
-
     switch (feature.toLowerCase()) {
       case 'camera':
         isAvailable = await service.isCameraAvailable();
@@ -432,7 +361,6 @@ mixin GracefulDegradationMixin<T extends StatefulWidget> on State<T> {
         isAvailable = await service.isStorageAvailable();
         break;
     }
-
     if (isAvailable) {
       onAvailable();
       return true;
@@ -445,20 +373,16 @@ mixin GracefulDegradationMixin<T extends StatefulWidget> on State<T> {
       return false;
     }
   }
-
-  /// Shows fallback options for unavailable feature
   void _showFallbackOptions(String feature) {
     final service = GracefulDegradationService.instance;
     final options = service.getFallbackOptions(feature);
     final message = service.getUnavailabilityMessage(feature);
-
     if (options.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
       return;
     }
-
     showModalBottomSheet(
       context: context,
       builder: (context) => Container(
@@ -493,18 +417,13 @@ mixin GracefulDegradationMixin<T extends StatefulWidget> on State<T> {
       ),
     );
   }
-
-  /// Handles selection of fallback option
   void _handleFallbackOption(String feature, String optionId) {
-    // Override this method in implementing widgets
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Selected fallback: $optionId for $feature'),
       ),
     );
   }
-
-  /// Converts icon string to IconData
   IconData _getIconData(String iconName) {
     switch (iconName) {
       case 'photo_library':

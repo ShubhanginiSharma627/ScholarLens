@@ -5,32 +5,24 @@ import '../models/models.dart';
 import '../services/storage_service.dart';
 import '../widgets/common/polished_components.dart';
 import 'textbook_detail_screen.dart';
-
-/// Syllabus Scanner screen that allows users to upload textbooks and PDFs
 class SyllabusScannerScreen extends StatefulWidget {
   const SyllabusScannerScreen({super.key});
-
   @override
   State<SyllabusScannerScreen> createState() => _SyllabusScannerScreenState();
 }
-
 class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
   List<UploadedTextbook> uploadedTextbooks = [];
   final StorageService _storageService = StorageService();
   bool _isUploading = false;
   double _uploadProgress = 0.0;
-
   @override
   void initState() {
     super.initState();
     _loadUploadedTextbooks();
   }
-
   void _loadUploadedTextbooks() async {
     try {
-      // Load uploaded textbooks from storage
       final files = await _storageService.listFiles(folder: 'syllabus');
-      
       setState(() {
         uploadedTextbooks = files.map((file) => UploadedTextbook(
           id: file.name,
@@ -46,7 +38,6 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
         )).toList();
       });
     } catch (e) {
-      // Fall back to mock data if storage fails
       setState(() {
         uploadedTextbooks = [
           UploadedTextbook(
@@ -77,7 +68,6 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
       });
     }
   }
-
   Future<void> _handleFileUpload(File file) async {
     if (!_storageService.isSupportedFileType(file)) {
       if (mounted) {
@@ -90,19 +80,15 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
       }
       return;
     }
-
     setState(() {
       _isUploading = true;
       _uploadProgress = 0.0;
     });
-
     try {
-      // Upload and scan the syllabus
       final analysisResult = await _storageService.uploadAndScanSyllabus(
         file: file,
         prompt: 'Analyze this syllabus and extract key information including chapters, topics, and subject area.',
       );
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -111,10 +97,7 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
           ),
         );
       }
-
-      // Reload textbooks to show the new upload
       _loadUploadedTextbooks();
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -133,7 +116,6 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
       }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,11 +150,8 @@ class _SyllabusScannerScreenState extends State<SyllabusScannerScreen> {
     );
   }
 }
-
-/// Header section with title and subtitle
 class SyllabusHeader extends StatelessWidget {
   const SyllabusHeader({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -209,20 +188,16 @@ class SyllabusHeader extends StatelessWidget {
     );
   }
 }
-
-/// Upload interface with drag and drop area
 class UploadInterface extends StatelessWidget {
   final bool isUploading;
   final double uploadProgress;
   final Function(File) onFileSelected;
-
   const UploadInterface({
     super.key,
     required this.isUploading,
     required this.uploadProgress,
     required this.onFileSelected,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -309,20 +284,16 @@ class UploadInterface extends StatelessWidget {
       ),
     );
   }
-
   void _chooseFile(BuildContext context) async {
     if (isUploading) return;
-
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
         allowMultiple: false,
       );
-
       if (result != null && context.mounted) {
         PlatformFile platformFile = result.files.first;
-        
         if (platformFile.path != null) {
           File file = File(platformFile.path!);
           onFileSelected(file);
@@ -347,16 +318,12 @@ class UploadInterface extends StatelessWidget {
     }
   }
 }
-
-/// Your textbooks section with uploaded files
 class YourTextbooksSection extends StatelessWidget {
   final List<UploadedTextbook> textbooks;
-
   const YourTextbooksSection({
     super.key,
     required this.textbooks,
   });
-
   @override
   Widget build(BuildContext context) {
     if (textbooks.isEmpty) {
@@ -409,7 +376,6 @@ class YourTextbooksSection extends StatelessWidget {
         ),
       );
     }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -433,16 +399,12 @@ class YourTextbooksSection extends StatelessWidget {
     );
   }
 }
-
-/// Individual textbook card
 class TextbookCard extends StatelessWidget {
   final UploadedTextbook textbook;
-
   const TextbookCard({
     super.key,
     required this.textbook,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -562,7 +524,6 @@ class TextbookCard extends StatelessWidget {
       ),
     );
   }
-
   void _studyTextbook(BuildContext context, UploadedTextbook textbook) {
     Navigator.push(
       context,
@@ -572,11 +533,8 @@ class TextbookCard extends StatelessWidget {
     );
   }
 }
-
-/// Gemini promotion card for textbook processing
 class GeminiTextbookPromotionCard extends StatelessWidget {
   const GeminiTextbookPromotionCard({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -641,11 +599,8 @@ class GeminiTextbookPromotionCard extends StatelessWidget {
     );
   }
 }
-
-/// Features card showing what users can do
 class TextbookFeaturesCard extends StatelessWidget {
   const TextbookFeaturesCard({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -700,7 +655,6 @@ class TextbookFeaturesCard extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildFeatureItem({
     required IconData icon,
     required String text,

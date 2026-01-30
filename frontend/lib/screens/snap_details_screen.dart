@@ -2,22 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/recent_snap.dart';
 import '../animations/camera_animations.dart';
-
-/// Detailed view screen for a specific snap showing AI solution and explanation
 class SnapDetailsScreen extends StatefulWidget {
   final RecentSnap snap;
   final String? imagePath;
-
   const SnapDetailsScreen({
     super.key,
     required this.snap,
     this.imagePath,
   });
-
   @override
   State<SnapDetailsScreen> createState() => _SnapDetailsScreenState();
 }
-
 class _SnapDetailsScreenState extends State<SnapDetailsScreen>
     with TickerProviderStateMixin {
   bool? wasHelpful;
@@ -25,16 +20,12 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
   String aiAnswer = '';
   String explanation = '';
   List<String> stepByStepSolution = [];
-  
   late AnimationController _revealController;
   late AnimationController _successController;
   bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
-    
-    // Initialize animation controllers
     _revealController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -43,23 +34,16 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
     _loadSnapDetails();
   }
-
   @override
   void dispose() {
     _revealController.dispose();
     _successController.dispose();
     super.dispose();
   }
-
   Future<void> _loadSnapDetails() async {
-    // Simulate loading delay
     await Future.delayed(const Duration(milliseconds: 500));
-    
-    // TODO: Load actual snap details from backend using widget.snap.lessonId
-    // For now, using mock data based on the subject
     setState(() {
       if (widget.snap.subject.toLowerCase() == 'algebra') {
         detectedQuestion = 'Solve: 2x² + 5x - 3 = 0';
@@ -96,15 +80,10 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
       }
       _isLoading = false;
     });
-    
-    // Start reveal animation
     await CameraAnimations.triggerResultsReveal(_revealController);
-    
-    // Show success animation after reveal
     await Future.delayed(const Duration(milliseconds: 200));
     await CameraAnimations.triggerSuccessAnimation(_successController);
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,7 +118,6 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
       ),
     );
   }
-
   Widget _buildLoadingState() {
     return const Center(
       child: Column(
@@ -160,7 +138,6 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
       ),
     );
   }
-
   Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -256,7 +233,6 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
       ),
     );
   }
-
   Widget _buildImageSection() {
     return Container(
       width: double.infinity,
@@ -290,7 +266,6 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
             ),
     );
   }
-
   Widget _buildSubjectAndTime() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -335,7 +310,6 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
       ),
     );
   }
-
   Widget _buildDetectedQuestion() {
     return Container(
       width: double.infinity,
@@ -376,7 +350,6 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
       ),
     );
   }
-
   Widget _buildAISolution() {
     return Container(
       width: double.infinity,
@@ -422,8 +395,6 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
             ],
           ),
           const SizedBox(height: 20),
-          
-          // Answer highlight box
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -454,10 +425,7 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
               ],
             ),
           ),
-          
           const SizedBox(height: 20),
-          
-          // Explanation
           Text(
             'Explanation',
             style: TextStyle(
@@ -475,10 +443,7 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
               color: Colors.black87,
             ),
           ),
-          
           const SizedBox(height: 20),
-          
-          // Step-by-step solution
           Text(
             'Step-by-Step Solution',
             style: TextStyle(
@@ -488,7 +453,6 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
             ),
           ),
           const SizedBox(height: 12),
-          
           ...stepByStepSolution.asMap().entries.map((entry) {
             final index = entry.key + 1;
             final step = entry.value;
@@ -534,7 +498,6 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
       ),
     );
   }
-
   Widget _buildFeedbackSection() {
     return Container(
       width: double.infinity,
@@ -628,7 +591,6 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
       ),
     );
   }
-
   Widget _buildActionButtons() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -685,7 +647,6 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
       ),
     );
   }
-
   Widget _buildSolveAnotherButton() {
     return Container(
       width: double.infinity,
@@ -706,12 +667,10 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
       ),
     );
   }
-
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final snapDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
-    
     if (snapDate == today) {
       return 'Today, ${_formatTime(dateTime)}';
     } else if (snapDate == today.subtract(const Duration(days: 1))) {
@@ -720,7 +679,6 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
       return '${dateTime.day}/${dateTime.month}/${dateTime.year}, ${_formatTime(dateTime)}';
     }
   }
-
   String _formatTime(DateTime dateTime) {
     final hour = dateTime.hour;
     final minute = dateTime.minute.toString().padLeft(2, '0');
@@ -728,19 +686,14 @@ class _SnapDetailsScreenState extends State<SnapDetailsScreen>
     final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
     return '$displayHour:$minute $period';
   }
-
   void _copyToClipboard() {
     final content = '''
 Question: $detectedQuestion
-
 Answer: $aiAnswer
-
 Explanation: $explanation
-
 Step-by-Step Solution:
 ${stepByStepSolution.asMap().entries.map((e) => '${e.key + 1}. ${e.value}').join('\n')}
 ''';
-    
     Clipboard.setData(ClipboardData(text: content));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -749,9 +702,7 @@ ${stepByStepSolution.asMap().entries.map((e) => '${e.key + 1}. ${e.value}').join
       ),
     );
   }
-
   void _saveSnap() {
-    // TODO: Implement save functionality
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Snap saved to your collection'),
@@ -759,9 +710,7 @@ ${stepByStepSolution.asMap().entries.map((e) => '${e.key + 1}. ${e.value}').join
       ),
     );
   }
-
   void _shareSnap() {
-    // TODO: Implement share functionality
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Share functionality coming soon'),
@@ -769,10 +718,7 @@ ${stepByStepSolution.asMap().entries.map((e) => '${e.key + 1}. ${e.value}').join
       ),
     );
   }
-
   void _solveAnotherProblem() {
-    // Navigate back to Snap & Solve screen
     Navigator.of(context).popUntil((route) => route.isFirst);
-    // TODO: Navigate to specific tab if needed
   }
 }

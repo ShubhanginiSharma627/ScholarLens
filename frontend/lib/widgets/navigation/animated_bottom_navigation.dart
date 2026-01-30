@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../animations/animation_manager.dart';
 import '../../animations/animation_config.dart';
-
-/// Enhanced bottom navigation bar with smooth animations
 class AnimatedBottomNavigation extends StatefulWidget {
   final List<NavigationTab> tabs;
   final int currentIndex;
@@ -11,7 +9,6 @@ class AnimatedBottomNavigation extends StatefulWidget {
   final Color? selectedColor;
   final Color? unselectedColor;
   final double? elevation;
-
   const AnimatedBottomNavigation({
     super.key,
     required this.tabs,
@@ -22,35 +19,28 @@ class AnimatedBottomNavigation extends StatefulWidget {
     this.unselectedColor,
     this.elevation,
   });
-
   @override
   State<AnimatedBottomNavigation> createState() => _AnimatedBottomNavigationState();
 }
-
 class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
     with TickerProviderStateMixin {
   late AnimationManager _animationManager;
   final Map<int, String> _colorAnimationIds = {};
   final Map<int, String> _scaleAnimationIds = {};
   final Map<int, String> _badgeAnimationIds = {};
-  
-  // Badge counts for demonstration (in real app, this would come from providers)
   final Map<int, int> _badgeCounts = {1: 3, 3: 1}; // Tutor has 3, Cards has 1
   final Map<int, int> _previousBadgeCounts = {};
   bool _animationsInitialized = false;
-
   @override
   void initState() {
     super.initState();
     _animationManager = AnimationManager();
     _previousBadgeCounts.addAll(_badgeCounts);
   }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_animationsInitialized) {
-      // Ensure animation manager is initialized
       if (!_animationManager.isInitialized) {
         _animationManager.initialize().then((_) {
           if (mounted) {
@@ -64,15 +54,11 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
       }
     }
   }
-
   void _initializeAnimations() {
-    // Clear any existing animations first
     _disposeExistingAnimations();
-    
     try {
       for (int i = 0; i < widget.tabs.length; i++) {
         if (widget.tabs[i].isCenter != true) {
-          // Color transition animation
           _colorAnimationIds[i] = _animationManager.createThemeAwareFadeAnimation(
             vsync: this,
             context: context,
@@ -80,8 +66,6 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
             curve: Curves.easeInOut,
             category: AnimationCategory.microInteraction,
           );
-
-          // Scale animation for selection
           _scaleAnimationIds[i] = _animationManager.createThemeAwareScaleAnimation(
             vsync: this,
             context: context,
@@ -91,8 +75,6 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
             curve: Curves.elasticOut,
             category: AnimationCategory.microInteraction,
           );
-
-          // Badge animation
           _badgeAnimationIds[i] = _animationManager.createScaleAnimation(
             vsync: this,
             duration: const Duration(milliseconds: 300),
@@ -104,15 +86,11 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
         }
       }
     } catch (e) {
-      // If animation creation fails, log the error but don't crash
       debugPrint('Failed to initialize animations: $e');
-      // Clear any partially created animations
       _disposeExistingAnimations();
     }
   }
-
   void _disposeExistingAnimations() {
-    // Dispose existing animations if any
     try {
       for (final id in _colorAnimationIds.values) {
         _animationManager.disposeController(id);
@@ -124,59 +102,42 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
         _animationManager.disposeController(id);
       }
     } catch (e) {
-      // Log error but don't crash
       debugPrint('Error disposing animations: $e');
     }
-    
-    // Clear the maps
     _colorAnimationIds.clear();
     _scaleAnimationIds.clear();
     _badgeAnimationIds.clear();
   }
-
   @override
   void didUpdateWidget(AnimatedBottomNavigation oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
-    // Reinitialize animations if the number of tabs changed
     if (oldWidget.tabs.length != widget.tabs.length) {
       _animationsInitialized = false;
       _initializeAnimations();
       _animationsInitialized = true;
     }
-    
-    // Animate selection changes
     if (oldWidget.currentIndex != widget.currentIndex) {
       _animateSelectionChange(oldWidget.currentIndex, widget.currentIndex);
     }
-
-    // Check for badge count changes
     _checkBadgeChanges();
   }
-
   void _animateSelectionChange(int oldIndex, int newIndex) {
-    // Animate old tab deselection
     if (_scaleAnimationIds.containsKey(oldIndex)) {
       final animation = _animationManager.getAnimation(_scaleAnimationIds[oldIndex]!);
       if (animation != null) {
         animation.controller.reverse();
       }
     }
-
-    // Animate new tab selection
     if (_scaleAnimationIds.containsKey(newIndex)) {
       _animationManager.startAnimation(_scaleAnimationIds[newIndex]!);
     }
   }
-
   void _checkBadgeChanges() {
     for (final entry in _badgeCounts.entries) {
       final index = entry.key;
       final currentCount = entry.value;
       final previousCount = _previousBadgeCounts[index] ?? 0;
-
       if (currentCount != previousCount && currentCount > 0) {
-        // Animate badge appearance or update
         if (_badgeAnimationIds.containsKey(index)) {
           _animationManager.startAnimation(_badgeAnimationIds[index]!);
         }
@@ -185,11 +146,9 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
     _previousBadgeCounts.clear();
     _previousBadgeCounts.addAll(_badgeCounts);
   }
-
   @override
   void dispose() {
     try {
-      // Dispose all animations
       for (final id in _colorAnimationIds.values) {
         _animationManager.disposeController(id);
       }
@@ -200,24 +159,18 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
         _animationManager.disposeController(id);
       }
     } catch (e) {
-      // Log error but don't crash during disposal
       debugPrint('Error disposing animations in dispose(): $e');
     }
-    
-    // Clear the maps
     _colorAnimationIds.clear();
     _scaleAnimationIds.clear();
     _badgeAnimationIds.clear();
-    
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final selectedColor = widget.selectedColor ?? theme.primaryColor;
     final unselectedColor = widget.unselectedColor ?? Colors.grey;
-
     return Container(
       decoration: BoxDecoration(
         color: widget.backgroundColor ?? Colors.white,
@@ -238,23 +191,17 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
               final index = entry.key;
               final tab = entry.value;
               final isCenter = tab.isCenter ?? false;
-              
-              // Map current screen index back to tab index for selection state
               bool isSelected = false;
               if (!isCenter) {
                 if (index < 2) {
-                  // Home (0) and Tutor (1) map directly
                   isSelected = widget.currentIndex == index;
                 } else {
-                  // Cards (3) and Analytics (4) map from screen indices 2 and 3
                   isSelected = widget.currentIndex == (index - 1);
                 }
               }
-
               if (isCenter) {
                 return _buildCenterButton(tab, index);
               }
-
               return _buildNavigationTab(
                 tab: tab,
                 index: index,
@@ -268,7 +215,6 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
       ),
     );
   }
-
   Widget _buildCenterButton(NavigationTab tab, int index) {
     return GestureDetector(
       onTap: () => widget.onTap(index),
@@ -296,7 +242,6 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
       ),
     );
   }
-
   Widget _buildNavigationTab({
     required NavigationTab tab,
     required int index,
@@ -306,7 +251,6 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
   }) {
     final scaleAnimationId = _scaleAnimationIds[index];
     final badgeCount = _badgeCounts[index] ?? 0;
-
     return GestureDetector(
       onTap: () => widget.onTap(index),
       child: AnimatedBuilder(
@@ -318,9 +262,7 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
           final scaleAnimation = scaleAnimationId != null 
               ? _animationManager.getAnimation(scaleAnimationId)?.animation as Animation<double>?
               : null;
-          
           final scale = scaleAnimation?.value ?? 1.0;
-          
           return Transform.scale(
             scale: isSelected ? (1.0 + (scale * 0.1)) : 1.0,
             child: Container(
@@ -331,7 +273,6 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Animated icon with color transition
                       TweenAnimationBuilder<Color?>(
                         duration: const Duration(milliseconds: 200),
                         tween: ColorTween(
@@ -347,7 +288,6 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
                         },
                       ),
                       const SizedBox(height: 4),
-                      // Animated label with color transition
                       TweenAnimationBuilder<Color?>(
                         duration: const Duration(milliseconds: 200),
                         tween: ColorTween(
@@ -367,7 +307,6 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
                       ),
                     ],
                   ),
-                  // Animated badge
                   if (badgeCount > 0)
                     Positioned(
                       right: -6,
@@ -382,10 +321,8 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
       ),
     );
   }
-
   Widget _buildAnimatedBadge(int index, int count) {
     final badgeAnimationId = _badgeAnimationIds[index];
-    
     return AnimatedBuilder(
       animation: badgeAnimationId != null 
           ? _animationManager.getAnimation(badgeAnimationId)?.controller ?? 
@@ -395,9 +332,7 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
         final scaleAnimation = badgeAnimationId != null 
             ? _animationManager.getAnimation(badgeAnimationId)?.animation as Animation<double>?
             : null;
-        
         final scale = scaleAnimation?.value ?? 1.0;
-        
         return Transform.scale(
           scale: scale,
           child: Container(
@@ -425,14 +360,11 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
     );
   }
 }
-
-/// Navigation tab configuration
 class NavigationTab {
   final IconData icon;
   final IconData activeIcon;
   final String label;
   final bool? isCenter;
-
   const NavigationTab({
     required this.icon,
     required this.activeIcon,

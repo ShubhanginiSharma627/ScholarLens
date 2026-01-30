@@ -1,7 +1,5 @@
 const axios = require('axios');
 const winston = require('winston');
-
-// Configure logger
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
@@ -13,25 +11,16 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: 'logs/scienceqa-service.log' })
   ]
 });
-
-// ScienceQA Configuration
 const SCIENCEQA_CONFIG = {
   baseUrl: process.env.SCIENCEQA_BASE_URL || 'http://localhost:8000',
   timeout: parseInt(process.env.SCIENCEQA_TIMEOUT) || 10000,
   enabled: process.env.SCIENCEQA_ENABLED !== 'false'
 };
-
 logger.info('ScienceQA Configuration:', SCIENCEQA_CONFIG);
-
-/**
- * Check if ScienceQA service is available
- * @returns {Promise<boolean>}
- */
 async function isServiceAvailable() {
   if (!SCIENCEQA_CONFIG.enabled) {
     return false;
   }
-
   try {
     const response = await axios.get(`${SCIENCEQA_CONFIG.baseUrl}/`, {
       timeout: 5000
@@ -42,27 +31,17 @@ async function isServiceAvailable() {
     return false;
   }
 }
-
-/**
- * Retrieve context from ScienceQA RAG system
- * @param {string} query - The question/topic to search for
- * @param {string} subject - Optional subject filter
- * @returns {Promise<Object|null>} - Context data or null if not found
- */
 async function retrieveContext(query, subject = null) {
   if (!SCIENCEQA_CONFIG.enabled) {
     logger.debug('ScienceQA disabled, skipping context retrieval');
     return null;
   }
-
   try {
     logger.info(`Retrieving context from ScienceQA for query: "${query.substring(0, 100)}..."`);
-    
     const requestData = {
       question_text: query,
       subject: subject
     };
-
     const response = await axios.post(
       `${SCIENCEQA_CONFIG.baseUrl}/retrieve`,
       requestData,
@@ -73,18 +52,13 @@ async function retrieveContext(query, subject = null) {
         }
       }
     );
-
     if (response.status === 200 && response.data) {
       const { answer_context, source_topic, confidence_score } = response.data;
-      
-      // Check if we got meaningful context (not just "No relevant textbook info found")
       if (answer_context && 
           answer_context.length > 50 && 
           !answer_context.includes('No relevant textbook info found') &&
           confidence_score > 0.7) {
-        
         logger.info(`ScienceQA context retrieved successfully. Topic: ${source_topic}, Confidence: ${confidence_score}`);
-        
         return {
           context: answer_context,
           topic: source_topic,
@@ -96,35 +70,23 @@ async function retrieveContext(query, subject = null) {
         return null;
       }
     }
-
     return null;
   } catch (error) {
     logger.error('Error retrieving context from ScienceQA:', error.message);
     return null;
   }
 }
-
-/**
- * Generate quiz questions from ScienceQA
- * @param {string} topic - The topic for quiz generation
- * @param {string} difficulty - Difficulty level (Easy, Medium, Hard)
- * @param {number} count - Number of questions (default: 5)
- * @returns {Promise<Array|null>} - Quiz questions or null if not found
- */
 async function generateQuiz(topic, difficulty = 'Medium', count = 5) {
   if (!SCIENCEQA_CONFIG.enabled) {
     logger.debug('ScienceQA disabled, skipping quiz generation');
     return null;
   }
-
   try {
     logger.info(`Generating quiz from ScienceQA for topic: "${topic}", difficulty: ${difficulty}, count: ${count}`);
-    
     const requestData = {
       topic: topic,
       difficulty: difficulty
     };
-
     const response = await axios.post(
       `${SCIENCEQA_CONFIG.baseUrl}/quiz/generate`,
       requestData,
@@ -135,23 +97,17 @@ async function generateQuiz(topic, difficulty = 'Medium', count = 5) {
         }
       }
     );
-
     if (response.status === 200 && response.data?.quiz) {
       const questions = response.data.quiz;
-      
       if (questions.length > 0) {
-        // Limit to requested count
         const limitedQuestions = questions.slice(0, count);
-        
         logger.info(`ScienceQA quiz generated successfully. Questions: ${limitedQuestions.length}`);
-        
         return limitedQuestions.map(q => ({
           ...q,
           source: 'scienceqa'
         }));
       }
     }
-
     logger.debug('ScienceQA returned no quiz questions');
     return null;
   } catch (error) {
@@ -159,25 +115,16 @@ async function generateQuiz(topic, difficulty = 'Medium', count = 5) {
     return null;
   }
 }
-
-/**
- * Analyze quiz performance using ScienceQA
- * @param {Array} results - Array of quiz results
- * @returns {Promise<string|null>} - Performance feedback or null
- */
 async function analyzePerformance(results) {
   if (!SCIENCEQA_CONFIG.enabled) {
     logger.debug('ScienceQA disabled, skipping performance analysis');
     return null;
   }
-
   try {
     logger.info(`Analyzing performance with ScienceQA for ${results.length} results`);
-    
     const requestData = {
       results: results
     };
-
     const response = await axios.post(
       `${SCIENCEQA_CONFIG.baseUrl}/quiz/analyze`,
       requestData,
@@ -188,16 +135,13 @@ async function analyzePerformance(results) {
         }
       }
     );
-
     if (response.status === 200 && response.data?.feedback) {
       const feedback = response.data.feedback;
-      
       if (feedback && feedback.length > 10) {
         logger.info('ScienceQA performance analysis completed successfully');
         return feedback;
       }
     }
-
     logger.debug('ScienceQA returned no performance feedback');
     return null;
   } catch (error) {
@@ -205,14 +149,8 @@ async function analyzePerformance(results) {
     return null;
   }
 }
-
-/**
- * Get ScienceQA service status and configuration
- * @returns {Promise<Object>}
- */
 async function getServiceStatus() {
   const available = await isServiceAvailable();
-  
   return {
     enabled: SCIENCEQA_CONFIG.enabled,
     available: available,
@@ -225,7 +163,6 @@ async function getServiceStatus() {
     ]
   };
 }
-
 module.exports = {
   retrieveContext,
   generateQuiz,

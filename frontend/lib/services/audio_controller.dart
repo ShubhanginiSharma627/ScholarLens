@@ -4,21 +4,16 @@ import '../models/app_state.dart';
 import 'audio_service.dart';
 import 'voice_input_service.dart';
 import 'tutor_service.dart';
-
-/// Controller that manages audio and voice input services
 class AudioController extends ChangeNotifier {
   final AudioService _audioService;
   final VoiceInputService _voiceInputService;
   final TutorService _tutorService;
-  
   late StreamSubscription<AudioState> _audioStateSubscription;
   late StreamSubscription<VoiceInputState> _voiceStateSubscription;
-  
   AudioState _audioState = AudioState.idle;
   VoiceInputState _voiceState = VoiceInputState.idle;
   String _currentAudioText = '';
   bool _isProcessingVoiceInput = false;
-  
   AudioController({
     required AudioService audioService,
     required VoiceInputService voiceInputService,
@@ -28,29 +23,22 @@ class AudioController extends ChangeNotifier {
        _tutorService = tutorService {
     _initializeStreams();
   }
-  
-  // Getters
   AudioState get audioState => _audioState;
   VoiceInputState get voiceState => _voiceState;
   String get currentAudioText => _currentAudioText;
   bool get isProcessingVoiceInput => _isProcessingVoiceInput;
   bool get isAudioPlaying => _audioState == AudioState.playing;
   bool get isListening => _voiceState == VoiceInputState.listening;
-  
-  /// Initializes stream subscriptions
   void _initializeStreams() {
     _audioStateSubscription = _audioService.audioStateStream.listen((state) {
       _audioState = state;
       notifyListeners();
     });
-    
     _voiceStateSubscription = _voiceInputService.voiceStateStream.listen((state) {
       _voiceState = state;
       notifyListeners();
     });
   }
-  
-  /// Speaks the given text using TTS
   Future<void> speak(String text) async {
     try {
       _currentAudioText = text;
@@ -60,8 +48,6 @@ class AudioController extends ChangeNotifier {
       rethrow;
     }
   }
-  
-  /// Pauses the current TTS playback
   Future<void> pauseAudio() async {
     try {
       await _audioService.pause();
@@ -70,8 +56,6 @@ class AudioController extends ChangeNotifier {
       rethrow;
     }
   }
-  
-  /// Stops the current TTS playback
   Future<void> stopAudio() async {
     try {
       await _audioService.stop();
@@ -81,18 +65,13 @@ class AudioController extends ChangeNotifier {
       rethrow;
     }
   }
-  
-  /// Starts voice input and returns the recognized text
   Future<String> startVoiceInput() async {
     try {
       _isProcessingVoiceInput = true;
       notifyListeners();
-      
       final recognizedText = await _voiceInputService.startListening();
-      
       _isProcessingVoiceInput = false;
       notifyListeners();
-      
       return recognizedText;
     } catch (e) {
       _isProcessingVoiceInput = false;
@@ -101,8 +80,6 @@ class AudioController extends ChangeNotifier {
       rethrow;
     }
   }
-  
-  /// Stops voice input
   void stopVoiceInput() {
     try {
       _voiceInputService.stopListening();
@@ -112,33 +89,22 @@ class AudioController extends ChangeNotifier {
       debugPrint('Error stopping voice input: $e');
     }
   }
-  
-  /// Processes voice input and sends it to the tutor service
   Future<String> processVoiceQuestion(String context) async {
     try {
-      // Stop any current audio playback
       if (isAudioPlaying) {
         await stopAudio();
       }
-      
-      // Start voice input
       final question = await startVoiceInput();
-      
       if (question.isEmpty) {
         throw AudioControllerException('No voice input received');
       }
-      
-      // Send question to tutor service
       final response = await _tutorService.askFollowUpQuestion(question, context);
-      
       return response;
     } catch (e) {
       debugPrint('Error processing voice question: $e');
       rethrow;
     }
   }
-  
-  /// Checks if voice input is available
   Future<bool> isVoiceInputAvailable() async {
     try {
       return await _voiceInputService.isAvailable;
@@ -147,8 +113,6 @@ class AudioController extends ChangeNotifier {
       return false;
     }
   }
-  
-  /// Automatically stops audio when navigating away (as per requirements)
   void handleNavigation() {
     if (isAudioPlaying) {
       stopAudio();
@@ -157,8 +121,6 @@ class AudioController extends ChangeNotifier {
       stopVoiceInput();
     }
   }
-  
-  /// Speaks lesson content with proper markdown cleaning
   Future<void> speakLessonContent(String audioTranscript) async {
     try {
       await speak(audioTranscript);
@@ -166,8 +128,6 @@ class AudioController extends ChangeNotifier {
       throw AudioControllerException('Failed to speak lesson content: $e');
     }
   }
-  
-  /// Handles voice input for chat interface
   Future<String> handleChatVoiceInput() async {
     try {
       return await startVoiceInput();
@@ -175,7 +135,6 @@ class AudioController extends ChangeNotifier {
       throw AudioControllerException('Failed to process chat voice input: $e');
     }
   }
-  
   @override
   void dispose() {
     _audioStateSubscription.cancel();
@@ -185,14 +144,10 @@ class AudioController extends ChangeNotifier {
     super.dispose();
   }
 }
-
-/// Audio controller exception
 class AudioControllerException implements Exception {
   final String message;
   final dynamic originalError;
-  
   const AudioControllerException(this.message, [this.originalError]);
-  
   @override
   String toString() => 'AudioControllerException: $message';
 }

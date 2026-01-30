@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../services/storage_service.dart';
 import '../../models/models.dart';
-
-/// A reusable file upload widget with progress tracking
 class FileUploadWidget extends StatefulWidget {
   final String? folder;
   final bool makePublic;
@@ -16,7 +14,6 @@ class FileUploadWidget extends StatefulWidget {
   final Function(String)? onUploadError;
   final Function(double)? onProgress;
   final bool allowMultiple;
-
   const FileUploadWidget({
     super.key,
     this.folder,
@@ -30,17 +27,14 @@ class FileUploadWidget extends StatefulWidget {
     this.onProgress,
     this.allowMultiple = false,
   });
-
   @override
   State<FileUploadWidget> createState() => _FileUploadWidgetState();
 }
-
 class _FileUploadWidgetState extends State<FileUploadWidget> {
   final StorageService _storageService = StorageService();
   bool _isUploading = false;
   double _uploadProgress = 0.0;
   String? _currentFileName;
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -141,14 +135,12 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
       ),
     );
   }
-
   String _getSupportedExtensionsText() {
     if (widget.allowedExtensions != null && widget.allowedExtensions!.isNotEmpty) {
       return widget.allowedExtensions!.map((ext) => ext.toUpperCase()).join(', ');
     }
     return _storageService.supportedExtensions;
   }
-
   Future<void> _selectAndUploadFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -158,7 +150,6 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
         allowedExtensions: widget.allowedExtensions,
         allowMultiple: widget.allowMultiple,
       );
-
       if (result != null) {
         if (widget.allowMultiple) {
           await _uploadMultipleFiles(result.files);
@@ -170,26 +161,21 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
       _handleError('Failed to select file: $e');
     }
   }
-
   Future<void> _uploadSingleFile(PlatformFile platformFile) async {
     if (platformFile.path == null) {
       _handleError('Failed to access selected file');
       return;
     }
-
     final file = File(platformFile.path!);
-    
     if (!_storageService.isSupportedFileType(file)) {
       _handleError('Unsupported file type');
       return;
     }
-
     setState(() {
       _isUploading = true;
       _uploadProgress = 0.0;
       _currentFileName = platformFile.name;
     });
-
     try {
       final response = await _storageService.uploadFile(
         file: file,
@@ -202,9 +188,7 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
           widget.onProgress?.call(progress);
         },
       );
-
       widget.onUploadComplete?.call(response);
-      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -225,24 +209,20 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
       }
     }
   }
-
   Future<void> _uploadMultipleFiles(List<PlatformFile> platformFiles) async {
     final files = platformFiles
         .where((pf) => pf.path != null)
         .map((pf) => File(pf.path!))
         .toList();
-
     if (files.isEmpty) {
       _handleError('No valid files selected');
       return;
     }
-
     setState(() {
       _isUploading = true;
       _uploadProgress = 0.0;
       _currentFileName = '${files.length} files';
     });
-
     try {
       final responses = await _storageService.uploadMultipleFiles(
         files: files,
@@ -258,7 +238,6 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
           widget.onUploadComplete?.call(response);
         },
       );
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -279,10 +258,8 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
       }
     }
   }
-
   void _handleError(String message) {
     widget.onUploadError?.call(message);
-    
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

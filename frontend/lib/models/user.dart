@@ -9,7 +9,6 @@ class User {
   final bool isEmailVerified;
   final UserProfile? profile;
   final UserStats? stats;
-
   const User({
     required this.id,
     required this.email,
@@ -22,7 +21,6 @@ class User {
     this.profile,
     this.stats,
   });
-
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'] as String,
@@ -48,7 +46,6 @@ class User {
           : null,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -63,7 +60,6 @@ class User {
       'stats': stats?.toJson(),
     };
   }
-
   User copyWith({
     String? id,
     String? email,
@@ -89,7 +85,6 @@ class User {
       stats: stats ?? this.stats,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -105,7 +100,6 @@ class User {
         other.profile == profile &&
         other.stats == stats;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -121,31 +115,26 @@ class User {
       stats,
     );
   }
-
   @override
   String toString() {
     return 'User(id: $id, email: $email, name: $name, provider: $provider)';
   }
 }
-
 enum AuthProvider {
   email,
   google,
 }
-
 class UserProfile {
   final String bio;
   final String avatar;
   final String learningStyle;
   final String preferredLanguage;
-
   const UserProfile({
     required this.bio,
     required this.avatar,
     required this.learningStyle,
     required this.preferredLanguage,
   });
-
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       bio: json['bio'] as String? ?? '',
@@ -154,7 +143,6 @@ class UserProfile {
       preferredLanguage: json['preferredLanguage'] as String? ?? 'en',
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'bio': bio,
@@ -163,7 +151,6 @@ class UserProfile {
       'preferredLanguage': preferredLanguage,
     };
   }
-
   UserProfile copyWith({
     String? bio,
     String? avatar,
@@ -177,7 +164,6 @@ class UserProfile {
       preferredLanguage: preferredLanguage ?? this.preferredLanguage,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -187,20 +173,17 @@ class UserProfile {
         other.learningStyle == learningStyle &&
         other.preferredLanguage == preferredLanguage;
   }
-
   @override
   int get hashCode {
     return Object.hash(bio, avatar, learningStyle, preferredLanguage);
   }
 }
-
 class UserStats {
   final int totalMinutesLearned;
   final int currentStreak;
   final int longestStreak;
   final int quizzesCompleted;
   final double averageScore;
-
   const UserStats({
     required this.totalMinutesLearned,
     required this.currentStreak,
@@ -208,7 +191,6 @@ class UserStats {
     required this.quizzesCompleted,
     required this.averageScore,
   });
-
   factory UserStats.fromJson(Map<String, dynamic> json) {
     return UserStats(
       totalMinutesLearned: json['totalMinutesLearned'] as int? ?? 0,
@@ -218,7 +200,6 @@ class UserStats {
       averageScore: (json['averageScore'] as num?)?.toDouble() ?? 0.0,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'totalMinutesLearned': totalMinutesLearned,
@@ -228,7 +209,6 @@ class UserStats {
       'averageScore': averageScore,
     };
   }
-
   UserStats copyWith({
     int? totalMinutesLearned,
     int? currentStreak,
@@ -244,7 +224,6 @@ class UserStats {
       averageScore: averageScore ?? this.averageScore,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -255,7 +234,6 @@ class UserStats {
         other.quizzesCompleted == quizzesCompleted &&
         other.averageScore == averageScore;
   }
-
   @override
   int get hashCode {
     return Object.hash(

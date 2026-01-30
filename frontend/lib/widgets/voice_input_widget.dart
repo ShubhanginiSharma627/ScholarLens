@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../models/app_state.dart';
 import '../services/voice_input_service.dart';
-
-/// Widget that displays voice input UI with waveform animation
 class VoiceInputWidget extends StatefulWidget {
   final VoiceInputService voiceInputService;
   final VoidCallback? onStartListening;
   final ValueChanged<String>? onTextReceived;
   final VoidCallback? onError;
-  
   const VoiceInputWidget({
     super.key,
     required this.voiceInputService,
@@ -17,35 +14,27 @@ class VoiceInputWidget extends StatefulWidget {
     this.onTextReceived,
     this.onError,
   });
-  
   @override
   State<VoiceInputWidget> createState() => _VoiceInputWidgetState();
 }
-
 class _VoiceInputWidgetState extends State<VoiceInputWidget>
     with TickerProviderStateMixin {
   late AnimationController _waveformController;
   late AnimationController _pulseController;
   late Animation<double> _waveformAnimation;
   late Animation<double> _pulseAnimation;
-  
   VoiceInputState _currentState = VoiceInputState.idle;
-  
   @override
   void initState() {
     super.initState();
-    
-    // Initialize animations
     _waveformController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
     _waveformAnimation = Tween<double>(
       begin: 0.0,
       end: 2 * math.pi,
@@ -53,7 +42,6 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
       parent: _waveformController,
       curve: Curves.linear,
     ));
-    
     _pulseAnimation = Tween<double>(
       begin: 0.8,
       end: 1.2,
@@ -61,24 +49,19 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
       parent: _pulseController,
       curve: Curves.easeInOut,
     ));
-    
-    // Listen to voice input state changes
     widget.voiceInputService.voiceStateStream.listen(_onVoiceStateChanged);
     _currentState = widget.voiceInputService.currentState;
   }
-  
   @override
   void dispose() {
     _waveformController.dispose();
     _pulseController.dispose();
     super.dispose();
   }
-  
   void _onVoiceStateChanged(VoiceInputState state) {
     setState(() {
       _currentState = state;
     });
-    
     switch (state) {
       case VoiceInputState.listening:
         _waveformController.repeat();
@@ -99,7 +82,6 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
         break;
     }
   }
-  
   Future<void> _startListening() async {
     try {
       widget.onStartListening?.call();
@@ -111,17 +93,14 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
       widget.onError?.call();
     }
   }
-  
   void _stopListening() {
     widget.voiceInputService.stopListening();
   }
-  
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Waveform visualization
         if (_currentState == VoiceInputState.listening)
           Container(
             height: 100,
@@ -137,10 +116,7 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
               },
             ),
           ),
-        
         const SizedBox(height: 20),
-        
-        // Status text
         Text(
           _getStatusText(),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -148,10 +124,7 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
           ),
           textAlign: TextAlign.center,
         ),
-        
         const SizedBox(height: 20),
-        
-        // Microphone button
         AnimatedBuilder(
           animation: _pulseAnimation,
           builder: (context, child) {
@@ -187,10 +160,7 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
             );
           },
         ),
-        
         const SizedBox(height: 10),
-        
-        // Helper text
         Text(
           _getHelperText(),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -201,7 +171,6 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
       ],
     );
   }
-  
   String _getStatusText() {
     switch (_currentState) {
       case VoiceInputState.idle:
@@ -214,7 +183,6 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
         return 'Error occurred';
     }
   }
-  
   Color _getStatusColor(BuildContext context) {
     switch (_currentState) {
       case VoiceInputState.idle:
@@ -227,7 +195,6 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
         return Colors.red;
     }
   }
-  
   Color _getMicrophoneColor(BuildContext context) {
     switch (_currentState) {
       case VoiceInputState.idle:
@@ -240,7 +207,6 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
         return Colors.grey;
     }
   }
-  
   IconData _getMicrophoneIcon() {
     switch (_currentState) {
       case VoiceInputState.idle:
@@ -253,7 +219,6 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
         return Icons.mic_off;
     }
   }
-  
   String _getHelperText() {
     switch (_currentState) {
       case VoiceInputState.idle:
@@ -267,33 +232,25 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget>
     }
   }
 }
-
-/// Custom painter for waveform visualization
 class WaveformPainter extends CustomPainter {
   final double animationValue;
-  
   WaveformPainter(this.animationValue);
-  
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.blue.withValues(alpha: 0.6)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
-    
     final path = Path();
     final centerY = size.height / 2;
     final waveCount = 3;
-    
     for (int i = 0; i < waveCount; i++) {
       final waveOffset = (i * size.width / waveCount);
       final amplitude = (i + 1) * 15.0; // Different amplitudes for each wave
-      
       for (double x = 0; x <= size.width; x += 2) {
         final normalizedX = x / size.width;
         final wavePhase = (normalizedX * 4 * math.pi) + animationValue + (i * math.pi / 2);
         final y = centerY + math.sin(wavePhase) * amplitude * (0.5 + 0.5 * math.sin(animationValue));
-        
         if (x == 0) {
           path.moveTo(x, y);
         } else {
@@ -301,15 +258,11 @@ class WaveformPainter extends CustomPainter {
         }
       }
     }
-    
     canvas.drawPath(path, paint);
-    
-    // Draw additional animated circles for visual effect
     for (int i = 0; i < 5; i++) {
       final circleX = (i / 4) * size.width;
       final circleY = centerY + math.sin(animationValue + i) * 20;
       final radius = 3 + math.sin(animationValue * 2 + i) * 2;
-      
       canvas.drawCircle(
         Offset(circleX, circleY),
         radius,
@@ -319,7 +272,6 @@ class WaveformPainter extends CustomPainter {
       );
     }
   }
-  
   @override
   bool shouldRepaint(WaveformPainter oldDelegate) {
     return oldDelegate.animationValue != animationValue;

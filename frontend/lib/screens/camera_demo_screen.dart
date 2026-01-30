@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
 import '../widgets/camera_capture_widget.dart';
 import '../models/processed_image.dart';
-
-/// Demo screen showing camera capture functionality
 class CameraDemoScreen extends StatefulWidget {
   const CameraDemoScreen({super.key});
-
   @override
   State<CameraDemoScreen> createState() => _CameraDemoScreenState();
 }
-
 class _CameraDemoScreenState extends State<CameraDemoScreen> {
   ProcessedImage? _capturedImage;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,8 +36,6 @@ class _CameraDemoScreenState extends State<CameraDemoScreen> {
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 32),
-            
-            // Camera capture button
             CameraCaptureWidget(
               title: 'Capture Study Material',
               buttonText: 'Open Camera',
@@ -51,7 +44,6 @@ class _CameraDemoScreenState extends State<CameraDemoScreen> {
                 setState(() {
                   _capturedImage = processedImage;
                 });
-                
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -62,10 +54,7 @@ class _CameraDemoScreenState extends State<CameraDemoScreen> {
                 );
               },
             ),
-            
             const SizedBox(height: 32),
-            
-            // Display captured image info
             if (_capturedImage != null) ...[
               const Text(
                 'Last Captured Image:',
@@ -112,10 +101,7 @@ class _CameraDemoScreenState extends State<CameraDemoScreen> {
                 ),
               ),
             ],
-            
             const Spacer(),
-            
-            // Info section
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -153,7 +139,6 @@ class _CameraDemoScreenState extends State<CameraDemoScreen> {
       ),
     );
   }
-
   void _showImageDetails(ProcessedImage image) {
     showDialog(
       context: context,
@@ -183,7 +168,6 @@ class _CameraDemoScreenState extends State<CameraDemoScreen> {
       ),
     );
   }
-
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -202,7 +186,6 @@ class _CameraDemoScreenState extends State<CameraDemoScreen> {
       ),
     );
   }
-
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
   }

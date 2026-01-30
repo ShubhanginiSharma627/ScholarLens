@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../services/storage_service.dart';
-
-/// A widget to display and manage uploaded files
 class FileManagerWidget extends StatefulWidget {
   final String? folder;
   final Function(StorageFile)? onFileSelected;
   final Function(StorageFile)? onFileDeleted;
   final bool showDeleteButton;
   final bool showDownloadButton;
-
   const FileManagerWidget({
     super.key,
     this.folder,
@@ -18,35 +15,29 @@ class FileManagerWidget extends StatefulWidget {
     this.showDeleteButton = true,
     this.showDownloadButton = true,
   });
-
   @override
   State<FileManagerWidget> createState() => _FileManagerWidgetState();
 }
-
 class _FileManagerWidgetState extends State<FileManagerWidget> {
   final StorageService _storageService = StorageService();
   List<StorageFile> _files = [];
   bool _isLoading = true;
   String? _error;
-
   @override
   void initState() {
     super.initState();
     _loadFiles();
   }
-
   Future<void> _loadFiles() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
-
     try {
       final files = await _storageService.listFiles(
         folder: widget.folder,
         maxResults: 100,
       );
-
       setState(() {
         _files = files;
         _isLoading = false;
@@ -58,7 +49,6 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -66,7 +56,6 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         child: CircularProgressIndicator(),
       );
     }
-
     if (_error != null) {
       return Center(
         child: Column(
@@ -102,7 +91,6 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         ),
       );
     }
-
     if (_files.isEmpty) {
       return Center(
         child: Column(
@@ -133,7 +121,6 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         ),
       );
     }
-
     return RefreshIndicator(
       onRefresh: _loadFiles,
       child: ListView.builder(
@@ -154,7 +141,6 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       ),
     );
   }
-
   Future<void> _deleteFile(StorageFile file) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -174,17 +160,13 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         ],
       ),
     );
-
     if (confirmed == true) {
       try {
         await _storageService.deleteFile(fileName: file.name);
-        
         setState(() {
           _files.removeWhere((f) => f.name == file.name);
         });
-
         widget.onFileDeleted?.call(file);
-
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -205,16 +187,12 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       }
     }
   }
-
   Future<void> _downloadFile(StorageFile file) async {
     try {
       final url = await _storageService.getDownloadUrl(
         fileName: file.name,
         public: file.isPublic,
       );
-
-      // TODO: Implement actual file download
-      // For now, just show the URL
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -235,14 +213,11 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     }
   }
 }
-
-/// Individual file list item widget
 class FileListItem extends StatelessWidget {
   final StorageFile file;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
   final VoidCallback? onDownload;
-
   const FileListItem({
     super.key,
     required this.file,
@@ -250,7 +225,6 @@ class FileListItem extends StatelessWidget {
     this.onDelete,
     this.onDownload,
   });
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -317,7 +291,6 @@ class FileListItem extends StatelessWidget {
       ),
     );
   }
-
   IconData _getFileTypeIcon() {
     if (file.isImage) return Icons.image;
     if (file.isVideo) return Icons.video_file;
@@ -325,7 +298,6 @@ class FileListItem extends StatelessWidget {
     if (file.isDocument) return Icons.description;
     return Icons.insert_drive_file;
   }
-
   Color _getFileTypeColor() {
     if (file.isImage) return Colors.green;
     if (file.isVideo) return Colors.purple;
@@ -333,11 +305,9 @@ class FileListItem extends StatelessWidget {
     if (file.isDocument) return Colors.blue;
     return Colors.grey;
   }
-
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-
     if (difference.inDays > 0) {
       return '${difference.inDays}d ago';
     } else if (difference.inHours > 0) {

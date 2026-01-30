@@ -1,36 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-
 import '../models/models.dart';
 import '../widgets/common/polished_components.dart';
 import 'camera_screen.dart';
 import 'snap_details_screen.dart';
-
-/// Snap & Solve screen that allows users to capture or upload problems
 class SnapAndSolveScreen extends StatefulWidget {
   const SnapAndSolveScreen({super.key});
-
   @override
   State<SnapAndSolveScreen> createState() => _SnapAndSolveScreenState();
 }
-
 class _SnapAndSolveScreenState extends State<SnapAndSolveScreen> {
   List<RecentSnap> recentSnaps = [];
   File? capturedImage;
   bool isAnalyzing = false;
   bool hasAnalyzed = false;
   String? aiSolution;
-
   @override
   void initState() {
     super.initState();
     _loadRecentSnaps();
   }
-
   void _loadRecentSnaps() {
-    // TODO: Load recent snaps from storage/service
-    // For now, using mock data
     setState(() {
       recentSnaps = [
         RecentSnap(
@@ -57,7 +48,6 @@ class _SnapAndSolveScreenState extends State<SnapAndSolveScreen> {
       ];
     });
   }
-
   void _onImageCaptured(File image) {
     setState(() {
       capturedImage = image;
@@ -65,42 +55,27 @@ class _SnapAndSolveScreenState extends State<SnapAndSolveScreen> {
       aiSolution = null;
     });
   }
-
   void _analyzeWithAI() async {
     if (capturedImage == null) return;
-    
     setState(() {
       isAnalyzing = true;
     });
-
-    // Simulate AI analysis
     await Future.delayed(const Duration(seconds: 3));
-
     setState(() {
       isAnalyzing = false;
       hasAnalyzed = true;
       aiSolution = '''Detected Question
-
 Solve the quadratic equation: 2x² + 5x - 3 = 0
-
 Explanation
-
 This is a quadratic equation that can be solved using the quadratic formula or factoring.
-
 Step-by-Step Solution
-
 1. First, let's identify a=2, b=5, c=-3
-
 2. Using the quadratic formula: x = (-b ± √(b²-4ac)) / 2a
-
 3. x = (-5 ± √(25+24)) / 4
-
 4. x = (-5 ± 7) / 4
-
 5. Therefore: x = 0.5 or x = -3''';
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,7 +114,6 @@ Step-by-Step Solution
       ),
     );
   }
-
   void _showImageOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -168,19 +142,16 @@ Step-by-Step Solution
       ),
     );
   }
-
   void _takePhoto(BuildContext context) async {
     final result = await Navigator.of(context).push<ProcessedImage>(
       MaterialPageRoute(
         builder: (context) => const CameraScreen(),
       ),
     );
-    
     if (result != null) {
       _onImageCaptured(result.file);
     }
   }
-
   void _uploadImage(BuildContext context) async {
     final ImagePicker picker = ImagePicker();
     try {
@@ -190,7 +161,6 @@ Step-by-Step Solution
         maxHeight: 1080,
         imageQuality: 85,
       );
-      
       if (image != null && context.mounted) {
         _onImageCaptured(File(image.path));
         ScaffoldMessenger.of(context).showSnackBar(
@@ -212,15 +182,12 @@ Step-by-Step Solution
     }
   }
 }
-
-/// Header section with title and subtitle or captured image interface
 class SnapSolveHeader extends StatelessWidget {
   final File? capturedImage;
   final bool isAnalyzing;
   final bool hasAnalyzed;
   final VoidCallback onChangeImage;
   final VoidCallback onAnalyzeWithAI;
-
   const SnapSolveHeader({
     super.key,
     this.capturedImage,
@@ -229,13 +196,11 @@ class SnapSolveHeader extends StatelessWidget {
     required this.onChangeImage,
     required this.onAnalyzeWithAI,
   });
-
   @override
   Widget build(BuildContext context) {
     if (capturedImage != null) {
       return _buildImageInterface(context);
     }
-    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -269,7 +234,6 @@ class SnapSolveHeader extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildImageInterface(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -284,7 +248,6 @@ class SnapSolveHeader extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Image display area
           Container(
             width: double.infinity,
             height: 300,
@@ -308,7 +271,6 @@ class SnapSolveHeader extends StatelessWidget {
                     capturedImage!,
                     fit: BoxFit.cover,
                   ),
-                  // Overlay for placeholder when no actual image
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -333,8 +295,6 @@ class SnapSolveHeader extends StatelessWidget {
               ),
             ),
           ),
-          
-          // Action buttons
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Row(
@@ -395,16 +355,12 @@ class SnapSolveHeader extends StatelessWidget {
     );
   }
 }
-
-/// Main capture interface with camera icon and action buttons
 class CaptureInterface extends StatelessWidget {
   final Function(File) onImageCaptured;
-
   const CaptureInterface({
     super.key,
     required this.onImageCaptured,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -494,19 +450,16 @@ class CaptureInterface extends StatelessWidget {
       ),
     );
   }
-
   void _takePhoto(BuildContext context) async {
     final result = await Navigator.of(context).push<ProcessedImage>(
       MaterialPageRoute(
         builder: (context) => const CameraScreen(),
       ),
     );
-    
     if (result != null) {
       onImageCaptured(result.file);
     }
   }
-
   void _uploadImage(BuildContext context) async {
     final ImagePicker picker = ImagePicker();
     try {
@@ -516,7 +469,6 @@ class CaptureInterface extends StatelessWidget {
         maxHeight: 1080,
         imageQuality: 85,
       );
-      
       if (image != null && context.mounted) {
         onImageCaptured(File(image.path));
         ScaffoldMessenger.of(context).showSnackBar(
@@ -538,11 +490,8 @@ class CaptureInterface extends StatelessWidget {
     }
   }
 }
-
-/// Gemini promotion card with gradient background
 class GeminiPromotionCard extends StatelessWidget {
   const GeminiPromotionCard({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -605,16 +554,12 @@ class GeminiPromotionCard extends StatelessWidget {
     );
   }
 }
-
-/// Recent snaps section with scrollable list
 class RecentSnapsSection extends StatelessWidget {
   final List<RecentSnap> snaps;
-
   const RecentSnapsSection({
     super.key,
     required this.snaps,
   });
-
   @override
   Widget build(BuildContext context) {
     if (snaps.isEmpty) {
@@ -667,7 +612,6 @@ class RecentSnapsSection extends StatelessWidget {
         ),
       );
     }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -691,16 +635,12 @@ class RecentSnapsSection extends StatelessWidget {
     );
   }
 }
-
-/// Individual recent snap card
 class RecentSnapCard extends StatelessWidget {
   final RecentSnap snap;
-
   const RecentSnapCard({
     super.key,
     required this.snap,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -771,7 +711,6 @@ class RecentSnapCard extends StatelessWidget {
       ),
     );
   }
-
   IconData _getSubjectIcon(String subject) {
     switch (subject.toLowerCase()) {
       case 'algebra':
@@ -795,7 +734,6 @@ class RecentSnapCard extends StatelessWidget {
         return Icons.school;
     }
   }
-
   Color _getSubjectColor(String subject) {
     switch (subject.toLowerCase()) {
       case 'algebra':
@@ -819,11 +757,9 @@ class RecentSnapCard extends StatelessWidget {
         return Colors.grey;
     }
   }
-
   String _formatTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-
     if (difference.inDays > 0) {
       return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
     } else if (difference.inHours > 0) {
@@ -834,7 +770,6 @@ class RecentSnapCard extends StatelessWidget {
       return 'Just now';
     }
   }
-
   void _openSnapDetails(BuildContext context, RecentSnap snap) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -846,16 +781,12 @@ class RecentSnapCard extends StatelessWidget {
     );
   }
 }
-
-/// AI Solution display card
 class AISolutionCard extends StatelessWidget {
   final String solution;
-
   const AISolutionCard({
     super.key,
     required this.solution,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -906,15 +837,12 @@ class AISolutionCard extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildSolutionContent(String solution) {
     final lines = solution.split('\n');
     final widgets = <Widget>[];
-    
     for (int i = 0; i < lines.length; i++) {
       final line = lines[i].trim();
       if (line.isEmpty) continue;
-      
       if (line == 'Detected Question') {
         widgets.add(
           Text(
@@ -941,7 +869,6 @@ class AISolutionCard extends StatelessWidget {
         );
         widgets.add(const SizedBox(height: 8));
       } else if (line.startsWith(RegExp(r'^\d+\.'))) {
-        // Numbered step
         widgets.add(
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -981,7 +908,6 @@ class AISolutionCard extends StatelessWidget {
           ),
         );
       } else {
-        // Regular text
         widgets.add(
           Text(
             line,
@@ -995,7 +921,6 @@ class AISolutionCard extends StatelessWidget {
         widgets.add(const SizedBox(height: 8));
       }
     }
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: widgets,

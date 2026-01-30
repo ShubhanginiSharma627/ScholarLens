@@ -4,43 +4,34 @@ import '../models/lesson_content.dart';
 import '../models/app_state.dart';
 import '../services/audio_service.dart';
 import '../widgets/common/top_navigation_bar.dart';
-
-/// Screen for displaying lesson content with markdown rendering and audio controls
 class LessonContentScreen extends StatefulWidget {
   final LessonContent lessonContent;
-
   const LessonContentScreen({
     super.key,
     required this.lessonContent,
   });
-
   @override
   State<LessonContentScreen> createState() => _LessonContentScreenState();
 }
-
 class _LessonContentScreenState extends State<LessonContentScreen> {
   late AudioService _audioService;
   bool _isInitialized = false;
-
   @override
   void initState() {
     super.initState();
     _initializeAudioService();
   }
-
   void _initializeAudioService() {
     _audioService = FlutterAudioService();
     setState(() {
       _isInitialized = true;
     });
   }
-
   @override
   void dispose() {
     _audioService.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,29 +41,23 @@ class _LessonContentScreenState extends State<LessonContentScreen> {
       body: _isInitialized ? _buildContent() : _buildLoadingIndicator(),
     );
   }
-
   Widget _buildLoadingIndicator() {
     return const Center(
       child: CircularProgressIndicator(),
     );
   }
-
   Widget _buildContent() {
     return Column(
       children: [
-        // Audio controls section
         _buildAudioControls(),
         const Divider(),
-        // Lesson content section
         Expanded(
           child: _buildLessonContent(),
         ),
-        // Quiz navigation button
         _buildQuizNavigationButton(),
       ],
     );
   }
-
   Widget _buildAudioControls() {
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -81,11 +66,9 @@ class _LessonContentScreenState extends State<LessonContentScreen> {
         initialData: _audioService.currentState,
         builder: (context, snapshot) {
           final audioState = snapshot.data ?? AudioState.idle;
-          
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // Play button
               ElevatedButton.icon(
                 onPressed: audioState == AudioState.playing 
                     ? null 
@@ -93,7 +76,6 @@ class _LessonContentScreenState extends State<LessonContentScreen> {
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('Play'),
               ),
-              // Pause button
               ElevatedButton.icon(
                 onPressed: audioState == AudioState.playing 
                     ? () => _pauseAudio() 
@@ -101,7 +83,6 @@ class _LessonContentScreenState extends State<LessonContentScreen> {
                 icon: const Icon(Icons.pause),
                 label: const Text('Pause'),
               ),
-              // Stop button
               ElevatedButton.icon(
                 onPressed: audioState == AudioState.idle 
                     ? null 
@@ -115,14 +96,12 @@ class _LessonContentScreenState extends State<LessonContentScreen> {
       ),
     );
   }
-
   Widget _buildLessonContent() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Lesson title (prominent display)
           Text(
             widget.lessonContent.lessonTitle,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -131,7 +110,6 @@ class _LessonContentScreenState extends State<LessonContentScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          // Markdown content
           MarkdownBody(
             data: widget.lessonContent.summaryMarkdown,
             styleSheet: MarkdownStyleSheet(
@@ -146,12 +124,10 @@ class _LessonContentScreenState extends State<LessonContentScreen> {
       ),
     );
   }
-
   Widget _buildQuizNavigationButton() {
     if (widget.lessonContent.quiz.isEmpty) {
       return const SizedBox.shrink();
     }
-
     return Container(
       padding: const EdgeInsets.all(16.0),
       width: double.infinity,
@@ -166,7 +142,6 @@ class _LessonContentScreenState extends State<LessonContentScreen> {
       ),
     );
   }
-
   Future<void> _playAudio() async {
     try {
       await _audioService.speak(widget.lessonContent.audioTranscript);
@@ -181,7 +156,6 @@ class _LessonContentScreenState extends State<LessonContentScreen> {
       }
     }
   }
-
   Future<void> _pauseAudio() async {
     try {
       await _audioService.pause();
@@ -196,7 +170,6 @@ class _LessonContentScreenState extends State<LessonContentScreen> {
       }
     }
   }
-
   Future<void> _stopAudio() async {
     try {
       await _audioService.stop();
@@ -211,11 +184,8 @@ class _LessonContentScreenState extends State<LessonContentScreen> {
       }
     }
   }
-
   void _navigateToQuiz() {
-    // Stop audio when navigating away (Requirement 3.2)
     _audioService.stop();
-    
     Navigator.of(context).pushNamed(
       '/quiz',
       arguments: widget.lessonContent.quiz,

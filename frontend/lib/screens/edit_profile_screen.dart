@@ -1,35 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../providers/providers.dart';
 import '../services/profile_service.dart';
 import '../widgets/common/top_navigation_bar.dart';
-
-/// Screen for editing user profile information
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
-
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
-
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _schoolController = TextEditingController();
   final _gradeController = TextEditingController();
-  
   final _profileService = ProfileService();
   bool _isLoading = true;
   bool _isSaving = false;
-
   @override
   void initState() {
     super.initState();
     _loadProfile();
   }
-
   @override
   void dispose() {
     _nameController.dispose();
@@ -38,7 +30,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _gradeController.dispose();
     super.dispose();
   }
-
   Future<void> _loadProfile() async {
     try {
       final profile = await _profileService.getUserProfile();
@@ -60,14 +51,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     }
   }
-
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() {
       _isSaving = true;
     });
-
     try {
       final updatedProfile = await _profileService.updateProfile(
         name: _nameController.text.trim(),
@@ -75,11 +63,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         school: _schoolController.text.trim().isEmpty ? null : _schoolController.text.trim(),
         grade: _gradeController.text.trim().isEmpty ? null : _gradeController.text.trim(),
       );
-
-      // Update app state with new name
       if (mounted) {
         await context.read<AppStateProvider>().setUserName(updatedProfile.name);
-        
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully')),
@@ -99,7 +84,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,7 +99,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Save button
                     if (!_isLoading)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -139,10 +122,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                         ],
                       ),
-                    
                     const SizedBox(height: 16),
-                    
-                    // Profile Picture Section
                     Center(
                       child: Column(
                         children: [
@@ -175,7 +155,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       size: 20,
                                     ),
                                     onPressed: () {
-                                      // TODO: Implement image picker
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(
                                           content: Text('Profile picture upload coming soon!'),
@@ -197,20 +176,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ],
                       ),
                     ),
-                    
                     const SizedBox(height: 32),
-                    
-                    // Personal Information Section
                     Text(
                       'Personal Information',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    
                     const SizedBox(height: 16),
-                    
-                    // Name Field
                     TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(
@@ -228,10 +201,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         setState(() {}); // Rebuild to update avatar initials
                       },
                     ),
-                    
                     const SizedBox(height: 16),
-                    
-                    // Email Field
                     TextFormField(
                       controller: _emailController,
                       decoration: const InputDecoration(
@@ -250,20 +220,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         return null;
                       },
                     ),
-                    
                     const SizedBox(height: 24),
-                    
-                    // Academic Information Section
                     Text(
                       'Academic Information',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    
                     const SizedBox(height: 16),
-                    
-                    // School Field
                     TextFormField(
                       controller: _schoolController,
                       decoration: const InputDecoration(
@@ -272,10 +236,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         prefixIcon: Icon(Icons.school),
                       ),
                     ),
-                    
                     const SizedBox(height: 16),
-                    
-                    // Grade Field
                     TextFormField(
                       controller: _gradeController,
                       decoration: const InputDecoration(
@@ -284,20 +245,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         prefixIcon: Icon(Icons.grade),
                       ),
                     ),
-                    
                     const SizedBox(height: 32),
-                    
-                    // Account Actions Section
                     Text(
                       'Account Actions',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    
                     const SizedBox(height: 16),
-                    
-                    // Export Data Button
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
@@ -306,10 +261,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         label: const Text('Export My Data'),
                       ),
                     ),
-                    
                     const SizedBox(height: 12),
-                    
-                    // Delete Account Button
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
@@ -322,7 +274,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                       ),
                     ),
-                    
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -330,20 +281,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
     );
   }
-
   String _getInitials(String name) {
     final words = name.trim().split(' ');
     if (words.isEmpty) return 'S';
     if (words.length == 1) return words[0][0].toUpperCase();
     return '${words[0][0]}${words[1][0]}'.toUpperCase();
   }
-
   Future<void> _exportUserData() async {
     try {
       await _profileService.exportUserData();
-      
-      // In a real app, you would save this to a file or share it
-      // For now, we'll just show a dialog with the data
       if (mounted) {
         showDialog(
           context: context,
@@ -377,7 +323,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     }
   }
-
   void _showDeleteAccountDialog() {
     showDialog(
       context: context,
@@ -401,7 +346,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               try {
                 await _profileService.clearAllUserData();
                 await context.read<AppStateProvider>().clearData();
-                
                 if (mounted) {
                   Navigator.of(context).pop(); // Close dialog
                   Navigator.of(context).pop(); // Close edit screen

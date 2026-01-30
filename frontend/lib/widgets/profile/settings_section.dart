@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../animations/animations.dart';
-
-/// Settings section providing options for notifications, audio preferences, and app behavior
 class SettingsSection extends StatelessWidget {
   final AppSettings settings;
   final Function(AppSettings) onSettingsChanged;
-
   const SettingsSection({
     super.key,
     required this.settings,
     required this.onSettingsChanged,
   });
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -24,13 +20,10 @@ class SettingsSection extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        
         const SizedBox(height: 16),
-        
         Card(
           child: Column(
             children: [
-              // Notifications
               _buildSettingTile(
                 context,
                 title: 'Notifications',
@@ -43,10 +36,7 @@ class SettingsSection extends StatelessWidget {
                   },
                 ),
               ),
-              
               const Divider(height: 1),
-              
-              // Text-to-Speech
               _buildSettingTile(
                 context,
                 title: 'Text-to-Speech',
@@ -59,10 +49,7 @@ class SettingsSection extends StatelessWidget {
                   },
                 ),
               ),
-              
               const Divider(height: 1),
-              
-              // TTS Speed
               _buildSettingTile(
                 context,
                 title: 'Speech Speed',
@@ -85,10 +72,7 @@ class SettingsSection extends StatelessWidget {
                   },
                 ),
               ),
-              
               const Divider(height: 1),
-              
-              // Dark Mode
               _buildSettingTile(
                 context,
                 title: 'Dark Mode',
@@ -101,10 +85,7 @@ class SettingsSection extends StatelessWidget {
                   },
                 ),
               ),
-              
               const Divider(height: 1),
-              
-              // Offline Mode
               _buildSettingTile(
                 context,
                 title: 'Offline Mode',
@@ -117,10 +98,7 @@ class SettingsSection extends StatelessWidget {
                   },
                 ),
               ),
-              
               const Divider(height: 1),
-              
-              // Language
               _buildSettingTile(
                 context,
                 title: 'Language',
@@ -145,10 +123,7 @@ class SettingsSection extends StatelessWidget {
             ],
           ),
         ),
-        
         const SizedBox(height: 16),
-        
-        // Additional Settings
         Card(
           child: Column(
             children: [
@@ -159,9 +134,7 @@ class SettingsSection extends StatelessWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _showHelpDialog(context),
               ),
-              
               const Divider(height: 1),
-              
               ListTile(
                 leading: const Icon(Icons.info_outline),
                 title: const Text('About'),
@@ -169,9 +142,7 @@ class SettingsSection extends StatelessWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _showAboutDialog(context),
               ),
-              
               const Divider(height: 1),
-              
               ListTile(
                 leading: const Icon(Icons.privacy_tip_outlined),
                 title: const Text('Privacy Policy'),
@@ -185,7 +156,6 @@ class SettingsSection extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildSettingTile(
     BuildContext context, {
     required String title,
@@ -201,7 +171,6 @@ class SettingsSection extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }
-
   void _showHelpDialog(BuildContext context) {
     context.showEnhancedSuccess(
       title: 'Help & Support',
@@ -211,7 +180,6 @@ class SettingsSection extends StatelessWidget {
           '• Visit our website for tutorials',
     );
   }
-
   void _showAboutDialog(BuildContext context) {
     showAboutDialog(
       context: context,
@@ -223,7 +191,6 @@ class SettingsSection extends StatelessWidget {
       ],
     );
   }
-
   void _showPrivacyDialog(BuildContext context) {
     ModalAnimations.showEnhancedAlertDialog(
       context: context,

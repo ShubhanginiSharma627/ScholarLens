@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
-
-/// A modern card container for authentication forms
-/// Provides consistent styling with shadow, padding, and rounded corners
 class ModernFormCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
-
   const ModernFormCard({
     super.key,
     required this.child,
     this.padding,
     this.margin,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(

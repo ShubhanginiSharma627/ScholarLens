@@ -1,44 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../providers/authentication_provider.dart';
 import '../theme/app_theme.dart';
-
 class AccountLinkingDialog extends StatefulWidget {
   final String conflictEmail;
   final String conflictProvider;
-
   const AccountLinkingDialog({
     super.key,
     required this.conflictEmail,
     required this.conflictProvider,
   });
-
   @override
   State<AccountLinkingDialog> createState() => _AccountLinkingDialogState();
 }
-
 class _AccountLinkingDialogState extends State<AccountLinkingDialog> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  
   bool _obscurePassword = true;
   bool _rememberMe = false;
-
   @override
   void initState() {
     super.initState();
     _emailController.text = widget.conflictEmail;
   }
-
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthenticationProvider>(
@@ -54,24 +45,17 @@ class _AccountLinkingDialogState extends State<AccountLinkingDialog> {
                   'An account with ${widget.conflictEmail} already exists using ${widget.conflictProvider} sign-in.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
-                
                 const SizedBox(height: AppTheme.spacingL),
-                
                 Text(
                   'To merge your accounts, please enter your ${widget.conflictProvider} password:',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                
                 const SizedBox(height: AppTheme.spacingM),
-                
                 _buildMergeForm(authProvider),
-                
                 const SizedBox(height: AppTheme.spacingM),
-                
                 _buildRememberMe(),
-                
                 if (authProvider.error != null) ...[
                   const SizedBox(height: AppTheme.spacingM),
                   _buildErrorMessage(authProvider.error!),
@@ -108,13 +92,11 @@ class _AccountLinkingDialogState extends State<AccountLinkingDialog> {
       },
     );
   }
-
   Widget _buildMergeForm(AuthenticationProvider authProvider) {
     return Form(
       key: _formKey,
       child: Column(
         children: [
-          // Email Field (read-only)
           TextFormField(
             controller: _emailController,
             enabled: false,
@@ -123,10 +105,7 @@ class _AccountLinkingDialogState extends State<AccountLinkingDialog> {
               prefixIcon: Icon(Icons.email_outlined),
             ),
           ),
-          
           const SizedBox(height: AppTheme.spacingM),
-          
-          // Password Field
           TextFormField(
             controller: _passwordController,
             obscureText: _obscurePassword,
@@ -158,7 +137,6 @@ class _AccountLinkingDialogState extends State<AccountLinkingDialog> {
       ),
     );
   }
-
   Widget _buildRememberMe() {
     return CheckboxListTile(
       value: _rememberMe,
@@ -176,7 +154,6 @@ class _AccountLinkingDialogState extends State<AccountLinkingDialog> {
       dense: true,
     );
   }
-
   Widget _buildErrorMessage(String error) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingS),
@@ -207,25 +184,20 @@ class _AccountLinkingDialogState extends State<AccountLinkingDialog> {
       ),
     );
   }
-
   void _handleMerge(AuthenticationProvider authProvider) async {
     if (_formKey.currentState?.validate() ?? false) {
       authProvider.clearError();
-      
       await authProvider.mergeGoogleAccount(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         rememberMe: _rememberMe,
       );
-
       if (authProvider.isAuthenticated && mounted) {
         Navigator.of(context).pop(true);
       }
     }
   }
 }
-
-/// Show account linking dialog
 Future<bool?> showAccountLinkingDialog(
   BuildContext context, {
   required String conflictEmail,

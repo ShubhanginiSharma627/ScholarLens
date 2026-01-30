@@ -1,27 +1,11 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
-
-/// A purple-tinted section displaying chapter learning objectives with completion tracking
-/// 
-/// This widget displays key points for a chapter with:
-/// - Purple background tinting with star icon header
-/// - List of key points with green checkmark indicators
-/// - Interactive completion toggling for individual key points
-/// - Responsive layout and proper spacing
 class KeyPointsSection extends StatelessWidget {
-  /// List of key learning objectives for the chapter
   final List<String> keyPoints;
-  
-  /// Completion status for each key point (must match keyPoints length)
   final List<bool> completionStatus;
-  
-  /// Callback when a key point completion status is toggled
   final Function(int index, bool isCompleted)? onKeyPointToggled;
-  
-  /// Whether the section should be interactive (allow toggling completion)
   final bool isInteractive;
-
   const KeyPointsSection({
     super.key,
     required this.keyPoints,
@@ -30,20 +14,17 @@ class KeyPointsSection extends StatelessWidget {
     this.isInteractive = true,
   }) : assert(keyPoints.length == completionStatus.length,
               'keyPoints and completionStatus lists must have the same length');
-
   @override
   Widget build(BuildContext context) {
     if (keyPoints.isEmpty) {
       return const SizedBox.shrink();
     }
-
     return Container(
       margin: const EdgeInsets.symmetric(
         horizontal: AppTheme.spacingM,
         vertical: AppTheme.spacingS,
       ),
       decoration: BoxDecoration(
-        // Purple background tinting
         color: AppTheme.primaryColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppTheme.radiusM),
         border: Border.all(
@@ -64,12 +45,9 @@ class KeyPointsSection extends StatelessWidget {
       ),
     );
   }
-
-  /// Builds the header with star icon and title
   Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
-        // Star icon
         Container(
           padding: const EdgeInsets.all(AppTheme.spacingS),
           decoration: BoxDecoration(
@@ -84,7 +62,6 @@ class KeyPointsSection extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppTheme.spacingM),
-        // Title
         Expanded(
           child: Text(
             'Key Learning Objectives',
@@ -94,7 +71,6 @@ class KeyPointsSection extends StatelessWidget {
             ),
           ),
         ),
-        // Completion indicator
         if (_getCompletedCount() > 0)
           Container(
             padding: const EdgeInsets.symmetric(
@@ -116,15 +92,12 @@ class KeyPointsSection extends StatelessWidget {
       ],
     );
   }
-
-  /// Builds the list of key points with completion indicators
   Widget _buildKeyPointsList(BuildContext context) {
     return Column(
       children: keyPoints.asMap().entries.map((entry) {
         final index = entry.key;
         final keyPoint = entry.value;
         final isCompleted = completionStatus[index];
-
         return _buildKeyPointItem(
           context,
           keyPoint,
@@ -134,8 +107,6 @@ class KeyPointsSection extends StatelessWidget {
       }).toList(),
     );
   }
-
-  /// Builds an individual key point item
   Widget _buildKeyPointItem(
     BuildContext context,
     String keyPoint,
@@ -157,7 +128,6 @@ class KeyPointsSection extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Completion indicator
               Container(
                 width: 24,
                 height: 24,
@@ -183,7 +153,6 @@ class KeyPointsSection extends StatelessWidget {
                     : null,
               ),
               const SizedBox(width: AppTheme.spacingM),
-              // Key point text
               Expanded(
                 child: Text(
                   keyPoint,
@@ -204,16 +173,10 @@ class KeyPointsSection extends StatelessWidget {
       ),
     );
   }
-
-  /// Gets the count of completed key points
   int _getCompletedCount() {
     return completionStatus.where((status) => status).length;
   }
-
-  /// Checks if all key points are completed
   bool get isAllCompleted => _getCompletedCount() == keyPoints.length;
-
-  /// Gets the completion percentage (0.0 to 1.0)
   double get completionPercentage {
     if (keyPoints.isEmpty) return 0.0;
     return _getCompletedCount() / keyPoints.length;

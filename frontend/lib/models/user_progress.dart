@@ -1,6 +1,4 @@
 import 'recent_activity.dart';
-
-/// Represents the user's learning progress and statistics
 class UserProgress {
   final int dayStreak;
   final int topicsMastered;
@@ -8,7 +6,6 @@ class UserProgress {
   final double studyHours;
   final Map<String, double> subjectProgress;
   final List<RecentActivity> recentActivities;
-
   const UserProgress({
     required this.dayStreak,
     required this.topicsMastered,
@@ -17,8 +14,6 @@ class UserProgress {
     required this.subjectProgress,
     required this.recentActivities,
   });
-
-  /// Creates a UserProgress from JSON
   factory UserProgress.fromJson(Map<String, dynamic> json) {
     return UserProgress(
       dayStreak: json['day_streak'] as int,
@@ -35,8 +30,6 @@ class UserProgress {
           .toList(),
     );
   }
-
-  /// Converts UserProgress to JSON
   Map<String, dynamic> toJson() {
     return {
       'day_streak': dayStreak,
@@ -47,8 +40,6 @@ class UserProgress {
       'recent_activities': recentActivities.map((activity) => activity.toJson()).toList(),
     };
   }
-
-  /// Creates an empty UserProgress for new users
   factory UserProgress.empty() {
     return const UserProgress(
       dayStreak: 0,
@@ -59,8 +50,6 @@ class UserProgress {
       recentActivities: [],
     );
   }
-
-  /// Gets formatted study hours as "X.Y hours"
   String get formattedStudyHours {
     if (studyHours < 1.0) {
       final minutes = (studyHours * 60).round();
@@ -68,13 +57,9 @@ class UserProgress {
     }
     return '${studyHours.toStringAsFixed(1)}h';
   }
-
-  /// Gets progress for a specific subject (0.0 to 1.0)
   double getSubjectProgress(String subject) {
     return subjectProgress[subject] ?? 0.0;
   }
-
-  /// Creates a copy with updated fields
   UserProgress copyWith({
     int? dayStreak,
     int? topicsMastered,
@@ -92,8 +77,6 @@ class UserProgress {
       recentActivities: recentActivities ?? this.recentActivities,
     );
   }
-
-  /// Updates progress with new learning session data
   UserProgress updateWithSession({
     required int questionsAnswered,
     required Duration sessionDuration,
@@ -103,12 +86,9 @@ class UserProgress {
     final newStudyHours = studyHours + (sessionDuration.inMinutes / 60.0);
     final newQuestionsCount = questionsSolved + questionsAnswered;
     final newTopicsCount = topicMastered ? topicsMastered + 1 : topicsMastered;
-    
-    // Update subject progress (simplified calculation)
     final updatedSubjectProgress = Map<String, double>.from(subjectProgress);
     final currentProgress = updatedSubjectProgress[subject] ?? 0.0;
     updatedSubjectProgress[subject] = (currentProgress + 0.1).clamp(0.0, 1.0);
-
     return copyWith(
       questionsSolved: newQuestionsCount,
       studyHours: newStudyHours,
@@ -116,7 +96,6 @@ class UserProgress {
       subjectProgress: updatedSubjectProgress,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -128,7 +107,6 @@ class UserProgress {
         _mapEquals(other.subjectProgress, subjectProgress) &&
         _listEquals(other.recentActivities, recentActivities);
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -140,13 +118,10 @@ class UserProgress {
       Object.hashAll(recentActivities),
     );
   }
-
   @override
   String toString() {
     return 'UserProgress(dayStreak: $dayStreak, topicsMastered: $topicsMastered, questionsSolved: $questionsSolved, studyHours: $studyHours, subjects: ${subjectProgress.length}, activities: ${recentActivities.length})';
   }
-
-  /// Helper method to compare maps
   bool _mapEquals<K, V>(Map<K, V> a, Map<K, V> b) {
     if (a.length != b.length) return false;
     for (final key in a.keys) {
@@ -154,8 +129,6 @@ class UserProgress {
     }
     return true;
   }
-
-  /// Helper method to compare lists
   bool _listEquals<T>(List<T> a, List<T> b) {
     if (a.length != b.length) return false;
     for (int i = 0; i < a.length; i++) {

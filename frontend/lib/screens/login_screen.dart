@@ -1,41 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../providers/providers.dart';
 import '../services/form_validator.dart';
 import '../theme/app_theme.dart';
-
 import '../widgets/common/modern_form_card.dart';
 import '../widgets/common/form_divider.dart';
 import '../widgets/common/modern_text_field.dart';
 import '../widgets/common/modern_button.dart';
 import 'signup_screen.dart';
 import 'password_reset_screen.dart';
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-
   static const String routeName = '/login';
-
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
-
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  
   bool _obscurePassword = true;
   bool _rememberMe = false;
-
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,63 +40,32 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: AppTheme.spacingL),
-                  
-                  // Header
                   _buildHeader(),
-                  
                   const SizedBox(height: AppTheme.spacingL),
-                  
-                  // Form Card
                   ModernFormCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Sign In Header
                         _buildFormHeader(),
-                        
                         const SizedBox(height: AppTheme.spacingL),
-                        
-                        // Google Sign-In Button
                         _buildGoogleSignInButton(authProvider),
-                        
                         const SizedBox(height: AppTheme.spacingM),
-                        
-                        // Divider
                         const FormDivider(),
-                        
                         const SizedBox(height: AppTheme.spacingM),
-                        
-                        // Login Form
                         _buildLoginForm(authProvider),
-                        
                         const SizedBox(height: AppTheme.spacingS),
-                        
-                        // Forgot Password Link
                         _buildForgotPasswordLink(),
-                        
                         const SizedBox(height: AppTheme.spacingS),
-                        
-                        // Remember Me
                         _buildRememberMe(),
-                        
                         const SizedBox(height: AppTheme.spacingL),
-                        
-                        // Login Button
                         _buildLoginButton(authProvider),
                       ],
                     ),
                   ),
-                  
                   const SizedBox(height: AppTheme.spacingL),
-                  
-                  // Sign Up Link
                   _buildSignUpLink(),
-                  
-                  // Terms Text
                   const SizedBox(height: AppTheme.spacingM),
                   _buildTermsText(),
-                  
-                  // Error Message
                   if (authProvider.error != null) ...[
                     const SizedBox(height: AppTheme.spacingL),
                     _buildErrorMessage(authProvider.error!),
@@ -118,11 +78,9 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
   Widget _buildHeader() {
     return Column(
       children: [
-        // App Logo/Icon
         Container(
           width: 64,
           height: 64,
@@ -136,10 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
             color: AppTheme.primaryColor,
           ),
         ),
-        
         const SizedBox(height: AppTheme.spacingM),
-        
-        // Welcome Text
         Text(
           'Welcome Back',
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
@@ -148,9 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           textAlign: TextAlign.center,
         ),
-        
         const SizedBox(height: AppTheme.spacingXS),
-        
         Text(
           'Sign in to continue your learning journey',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -162,7 +115,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ],
     );
   }
-
   Widget _buildFormHeader() {
     return Column(
       children: [
@@ -175,9 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           textAlign: TextAlign.center,
         ),
-        
         const SizedBox(height: AppTheme.spacingXS),
-        
         Text(
           'Enter your credentials to access your account',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -189,13 +139,11 @@ class _LoginScreenState extends State<LoginScreen> {
       ],
     );
   }
-
   Widget _buildLoginForm(AuthenticationProvider authProvider) {
     return Form(
       key: _formKey,
       child: Column(
         children: [
-          // Email Field
           ModernTextField(
             controller: _emailController,
             labelText: 'Email',
@@ -207,10 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
               authProvider.updateFormField('email', value);
             },
           ),
-          
           const SizedBox(height: AppTheme.spacingM),
-          
-          // Password Field
           ModernTextField(
             controller: _passwordController,
             labelText: 'Password',
@@ -241,7 +186,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
   Widget _buildForgotPasswordLink() {
     return Align(
       alignment: Alignment.centerRight,
@@ -257,7 +201,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
   Widget _buildRememberMe() {
     return Row(
       children: [
@@ -283,7 +226,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ],
     );
   }
-
   Widget _buildLoginButton(AuthenticationProvider authProvider) {
     return ModernButton.primary(
       text: 'Sign In',
@@ -291,7 +233,6 @@ class _LoginScreenState extends State<LoginScreen> {
       onPressed: () => _handleLogin(authProvider),
     );
   }
-
   Widget _buildGoogleSignInButton(AuthenticationProvider authProvider) {
     return ModernButton.secondary(
       text: 'Continue with Google',
@@ -311,7 +252,6 @@ class _LoginScreenState extends State<LoginScreen> {
       onPressed: () => _handleGoogleSignIn(authProvider),
     );
   }
-
   Widget _buildTermsText() {
     return Text(
       'By continuing, you agree to our Terms of Service and Privacy Policy',
@@ -321,7 +261,6 @@ class _LoginScreenState extends State<LoginScreen> {
       textAlign: TextAlign.center,
     );
   }
-
   Widget _buildSignUpLink() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -345,7 +284,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ],
     );
   }
-
   Widget _buildErrorMessage(String error) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -383,7 +321,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
   void _handleLogin(AuthenticationProvider authProvider) async {
     if (_formKey.currentState?.validate() ?? false) {
       await authProvider.signInWithEmail(
@@ -391,24 +328,18 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
         rememberMe: _rememberMe,
       );
-      
-      // No manual navigation needed - AuthWrapper handles this automatically
     }
   }
-
   void _handleGoogleSignIn(AuthenticationProvider authProvider) {
     authProvider.signInWithGoogle(rememberMe: _rememberMe);
   }
-
   void _handleForgotPassword() {
     final email = _emailController.text.trim();
-    
     Navigator.of(context).pushNamed(
       PasswordResetScreen.routeName,
       arguments: email.isNotEmpty ? email : null,
     );
   }
-
   void _navigateToSignUp() {
     Navigator.of(context).pushReplacementNamed(SignupScreen.routeName);
   }

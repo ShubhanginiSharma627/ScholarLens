@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import '../common/loading_animations.dart';
-
-/// Individual statistic card widget for displaying metrics with icons and numbers
 class StatCard extends StatelessWidget {
   final String title;
   final String value;
@@ -11,7 +9,6 @@ class StatCard extends StatelessWidget {
   final Color? color;
   final bool isLoading;
   final VoidCallback? onTap;
-
   const StatCard({
     super.key,
     required this.title,
@@ -21,11 +18,9 @@ class StatCard extends StatelessWidget {
     this.isLoading = false,
     this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
     final cardColor = color ?? AppTheme.primaryColor;
-    
     return LoadingAnimations.fadeIn(
       child: Card(
         elevation: AppTheme.elevationS,

@@ -1,34 +1,20 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-
-/// Utility class for accessibility features in the chapter reading interface
 class AccessibilityUtils {
-  /// Minimum touch target size for accessibility compliance
   static const double minTouchTargetSize = 44.0;
-  
-  /// Minimum contrast ratio for normal text (WCAG AA)
   static const double minContrastRatio = 4.5;
-  
-  /// Minimum contrast ratio for large text (WCAG AA)
   static const double minLargeTextContrastRatio = 3.0;
-
-  /// Creates semantic label for progress indicators
   static String createProgressLabel(double progress, {String? context}) {
     final percentage = (progress * 100).round();
     final baseLabel = '$percentage percent complete';
     return context != null ? '$context: $baseLabel' : baseLabel;
   }
-
-  /// Creates semantic label for section navigation
   static String createSectionLabel(int currentSection, int totalSections) {
     return 'Section $currentSection of $totalSections';
   }
-
-  /// Creates semantic label for reading time
   static String createReadingTimeLabel(Duration readingTime) {
     final minutes = readingTime.inMinutes;
     final seconds = readingTime.inSeconds % 60;
-    
     if (minutes > 0) {
       return seconds > 0 
           ? 'Reading time: $minutes minutes and $seconds seconds'
@@ -37,46 +23,33 @@ class AccessibilityUtils {
       return 'Reading time: $seconds seconds';
     }
   }
-
-  /// Creates semantic label for highlight count
   static String createHighlightCountLabel(int count) {
     if (count == 0) return 'No highlights';
     if (count == 1) return '1 highlight';
     return '$count highlights';
   }
-
-  /// Creates semantic label for bookmark status
   static String createBookmarkLabel(bool isBookmarked) {
     return isBookmarked ? 'Section bookmarked' : 'Bookmark this section';
   }
-
-  /// Creates semantic label for completion status
   static String createCompletionLabel(bool isCompleted) {
     return isCompleted ? 'Section completed' : 'Section in progress';
   }
-
-  /// Creates semantic label for AI tutor availability
   static String createAITutorLabel(bool isAvailable) {
     return isAvailable 
         ? 'Ask AI tutor about this section'
         : 'AI tutor is temporarily unavailable';
   }
-
-  /// Creates semantic label for highlight mode
   static String createHighlightModeLabel(bool isActive) {
     return isActive 
         ? 'Highlight mode active. Select text to highlight.'
         : 'Activate highlight mode to select text';
   }
-
-  /// Ensures minimum touch target size
   static Widget ensureMinTouchTarget({
     required Widget child,
     double? minSize,
     VoidCallback? onTap,
   }) {
     final targetSize = minSize ?? minTouchTargetSize;
-    
     return SizedBox(
       width: targetSize,
       height: targetSize,
@@ -88,8 +61,6 @@ class AccessibilityUtils {
           : child,
     );
   }
-
-  /// Creates accessible button with proper semantics
   static Widget createAccessibleButton({
     required Widget child,
     required VoidCallback? onPressed,
@@ -114,8 +85,6 @@ class AccessibilityUtils {
       ),
     );
   }
-
-  /// Creates accessible progress indicator
   static Widget createAccessibleProgress({
     required double value,
     required String label,
@@ -135,8 +104,6 @@ class AccessibilityUtils {
       ),
     );
   }
-
-  /// Creates accessible text with proper contrast
   static Widget createAccessibleText({
     required String text,
     TextStyle? style,
@@ -156,8 +123,6 @@ class AccessibilityUtils {
       ),
     );
   }
-
-  /// Creates accessible icon with semantic label
   static Widget createAccessibleIcon({
     required IconData icon,
     required String semanticLabel,
@@ -173,8 +138,6 @@ class AccessibilityUtils {
       ),
     );
   }
-
-  /// Creates accessible card with proper focus handling
   static Widget createAccessibleCard({
     required Widget child,
     VoidCallback? onTap,
@@ -204,8 +167,6 @@ class AccessibilityUtils {
       ),
     );
   }
-
-  /// Creates accessible list item
   static Widget createAccessibleListItem({
     required Widget child,
     VoidCallback? onTap,
@@ -227,36 +188,22 @@ class AccessibilityUtils {
       ),
     );
   }
-
-  /// Announces message to screen readers
   static void announceMessage(String message) {
-    // Simple announcement that works across Flutter versions
-    // In a real implementation, you might use a more sophisticated approach
     debugPrint('Accessibility announcement: $message');
   }
-
-  /// Creates focus node with proper disposal
   static FocusNode createManagedFocusNode() {
     return FocusNode();
   }
-
-  /// Checks if high contrast mode is enabled
   static bool isHighContrastMode(BuildContext context) {
     return MediaQuery.of(context).highContrast;
   }
-
-  /// Checks if reduce motion is enabled
   static bool isReduceMotionEnabled(BuildContext context) {
     return MediaQuery.of(context).disableAnimations;
   }
-
-  /// Gets accessible text scale factor
   static double getAccessibleTextScale(BuildContext context) {
     final textScaler = MediaQuery.of(context).textScaler;
     return textScaler.scale(1.0);
   }
-
-  /// Creates accessible scaffold with proper focus management
   static Widget createAccessibleScaffold({
     required Widget body,
     PreferredSizeWidget? appBar,
@@ -278,8 +225,6 @@ class AccessibilityUtils {
       resizeToAvoidBottomInset: resizeToAvoidBottomInset,
     );
   }
-
-  /// Creates accessible navigation with proper semantics
   static Widget createAccessibleNavigation({
     required List<Widget> children,
     String? semanticLabel,
@@ -302,43 +247,30 @@ class AccessibilityUtils {
             ),
     );
   }
-
-  /// Validates color contrast ratio
   static bool hasValidContrast(Color foreground, Color background, {bool isLargeText = false}) {
     final requiredRatio = isLargeText ? minLargeTextContrastRatio : minContrastRatio;
     final actualRatio = _calculateContrastRatio(foreground, background);
     return actualRatio >= requiredRatio;
   }
-
-  /// Calculates contrast ratio between two colors
   static double _calculateContrastRatio(Color color1, Color color2) {
     final luminance1 = _calculateLuminance(color1);
     final luminance2 = _calculateLuminance(color2);
-    
     final lighter = luminance1 > luminance2 ? luminance1 : luminance2;
     final darker = luminance1 > luminance2 ? luminance2 : luminance1;
-    
     return (lighter + 0.05) / (darker + 0.05);
   }
-
-  /// Calculates relative luminance of a color
   static double _calculateLuminance(Color color) {
     final r = _linearizeColorComponent((color.r * 255.0).round().clamp(0, 255) / 255.0);
     final g = _linearizeColorComponent((color.g * 255.0).round().clamp(0, 255) / 255.0);
     final b = _linearizeColorComponent((color.b * 255.0).round().clamp(0, 255) / 255.0);
-    
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   }
-
-  /// Linearizes color component for luminance calculation
   static double _linearizeColorComponent(double component) {
     return component <= 0.03928
         ? component / 12.92
         : math.pow((component + 0.055) / 1.055, 2.4).toDouble();
   }
 }
-
-/// Extension to add pow method to double
 extension DoubleExtension on double {
   double pow(double exponent) {
     return math.pow(this, exponent).toDouble();

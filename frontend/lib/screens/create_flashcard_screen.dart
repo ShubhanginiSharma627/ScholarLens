@@ -2,22 +2,17 @@ import 'package:flutter/material.dart';
 import '../models/flashcard.dart';
 import '../services/flashcard_service.dart';
 import '../widgets/common/top_navigation_bar.dart';
-
-/// Screen for creating new flashcards with rich text input
 class CreateFlashcardScreen extends StatefulWidget {
   final String? initialSubject;
   final String? initialCategory;
-
   const CreateFlashcardScreen({
     super.key,
     this.initialSubject,
     this.initialCategory,
   });
-
   @override
   State<CreateFlashcardScreen> createState() => _CreateFlashcardScreenState();
 }
-
 class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
   final _formKey = GlobalKey<FormState>();
   final _questionController = TextEditingController();
@@ -25,11 +20,9 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
   final _subjectController = TextEditingController();
   final _categoryController = TextEditingController();
   final _flashcardService = FlashcardService();
-  
   List<String> _existingSubjects = [];
   List<String> _existingCategories = [];
   bool _isLoading = false;
-
   @override
   void initState() {
     super.initState();
@@ -37,7 +30,6 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
     _categoryController.text = widget.initialCategory ?? '';
     _loadExistingData();
   }
-
   @override
   void dispose() {
     _questionController.dispose();
@@ -46,24 +38,19 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
     _categoryController.dispose();
     super.dispose();
   }
-
   Future<void> _loadExistingData() async {
     final subjects = await _flashcardService.getSubjects();
     final categories = await _flashcardService.getCategories();
-    
     setState(() {
       _existingSubjects = subjects;
       _existingCategories = categories;
     });
   }
-
   Future<void> _saveFlashcard() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() {
       _isLoading = true;
     });
-
     try {
       final flashcard = Flashcard.create(
         subject: _subjectController.text.trim(),
@@ -73,9 +60,7 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
             ? null 
             : _categoryController.text.trim(),
       );
-
       await _flashcardService.createFlashcard(flashcard);
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -102,14 +87,12 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
       }
     }
   }
-
   void _clearForm() {
     _questionController.clear();
     _answerController.clear();
     _subjectController.clear();
     _categoryController.clear();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,7 +104,6 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Clear form button
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -133,24 +115,14 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            
-            // Subject field with autocomplete
             _buildSubjectField(),
             const SizedBox(height: 16),
-            
-            // Category field with autocomplete
             _buildCategoryField(),
             const SizedBox(height: 24),
-            
-            // Question field
             _buildQuestionField(),
             const SizedBox(height: 16),
-            
-            // Answer field
             _buildAnswerField(),
             const SizedBox(height: 32),
-            
-            // Action buttons
             Row(
               children: [
                 Expanded(
@@ -174,17 +146,13 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
                 ),
               ],
             ),
-            
             const SizedBox(height: 24),
-            
-            // Tips card
             _buildTipsCard(),
           ],
         ),
       ),
     );
   }
-
   Widget _buildSubjectField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,7 +195,6 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
       ],
     );
   }
-
   Widget _buildCategoryField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,7 +231,6 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
       ],
     );
   }
-
   Widget _buildQuestionField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,7 +263,6 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
       ],
     );
   }
-
   Widget _buildAnswerField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,7 +295,6 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
       ],
     );
   }
-
   Widget _buildTipsCard() {
     return Card(
       child: Padding(

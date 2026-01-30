@@ -7,11 +7,8 @@ import '../../screens/flashcard_management_screen.dart';
 import '../../screens/create_flashcard_screen.dart';
 import '../../screens/syllabus_scanner_screen.dart';
 import '../common/top_navigation_bar.dart';
-
-/// Main dashboard widget that displays all home screen components
 class HomeDashboard extends StatelessWidget {
   const HomeDashboard({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,7 +19,6 @@ class HomeDashboard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Greeting section
             const Text(
               'Good morning! 👋',
               style: TextStyle(
@@ -40,24 +36,14 @@ class HomeDashboard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            
-            // Stats grid
             _buildStatsGrid(context),
             const SizedBox(height: 24),
-            
-            // Continue Learning section
             _buildContinueLearningSection(context),
             const SizedBox(height: 24),
-            
-            // Quick Actions
             _buildQuickActionsSection(context),
             const SizedBox(height: 24),
-            
-            // Weak Areas section
             _buildWeakAreasSection(context),
             const SizedBox(height: 24),
-            
-            // Recent Activity section
             _buildRecentActivitySection(context),
             const SizedBox(height: 16),
           ],
@@ -65,7 +51,6 @@ class HomeDashboard extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildStatsGrid(BuildContext context) {
     return Consumer<ProgressProvider>(
       builder: (context, progress, child) {
@@ -110,7 +95,6 @@ class HomeDashboard extends StatelessWidget {
       },
     );
   }
-
   Widget _buildStatCard({
     required IconData icon,
     required String value,
@@ -157,7 +141,6 @@ class HomeDashboard extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildContinueLearningSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,7 +235,6 @@ class HomeDashboard extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildQuickActionsSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,7 +247,6 @@ class HomeDashboard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        // First row
         Row(
           children: [
             Expanded(
@@ -300,7 +281,6 @@ class HomeDashboard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        // Second row
         Row(
           children: [
             Expanded(
@@ -309,7 +289,6 @@ class HomeDashboard extends StatelessWidget {
                 label: 'Practice Quiz',
                 color: Colors.orange,
                 onTap: () {
-                  // Show coming soon message for quiz
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Practice quiz coming soon!'),
@@ -336,7 +315,6 @@ class HomeDashboard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        // Third row
         Row(
           children: [
             Expanded(
@@ -373,7 +351,6 @@ class HomeDashboard extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildQuickActionButton({
     required IconData icon,
     required String label,
@@ -410,7 +387,6 @@ class HomeDashboard extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildWeakAreasSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,7 +437,6 @@ class HomeDashboard extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildSubjectProgress(String subject, double progress, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,7 +482,6 @@ class HomeDashboard extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildRecentActivitySection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -589,7 +563,6 @@ class HomeDashboard extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildActivityItem({
     required IconData icon,
     required Color iconColor,

@@ -1,13 +1,10 @@
 import 'dart:io';
-
-/// Represents an image that has been processed (captured, cropped, compressed)
 class ProcessedImage {
   final File file;
   final int sizeKB;
   final DateTime processedAt;
   final String? originalPath;
   final ImageProcessingMetadata metadata;
-
   const ProcessedImage({
     required this.file,
     required this.sizeKB,
@@ -15,8 +12,6 @@ class ProcessedImage {
     this.originalPath,
     required this.metadata,
   });
-
-  /// Creates a ProcessedImage from JSON
   factory ProcessedImage.fromJson(Map<String, dynamic> json) {
     return ProcessedImage(
       file: File(json['file_path'] as String),
@@ -26,8 +21,6 @@ class ProcessedImage {
       metadata: ImageProcessingMetadata.fromJson(json['metadata'] as Map<String, dynamic>),
     );
   }
-
-  /// Converts ProcessedImage to JSON
   Map<String, dynamic> toJson() {
     return {
       'file_path': file.path,
@@ -37,8 +30,6 @@ class ProcessedImage {
       'metadata': metadata.toJson(),
     };
   }
-
-  /// Creates a ProcessedImage from a file
   factory ProcessedImage.fromFile(
     File file, {
     String? originalPath,
@@ -53,11 +44,7 @@ class ProcessedImage {
       metadata: metadata ?? ImageProcessingMetadata.empty(),
     );
   }
-
-  /// Gets the file size in bytes
   int get sizeBytes => sizeKB * 1024;
-
-  /// Gets formatted file size string
   String get formattedSize {
     if (sizeKB < 1024) {
       return '${sizeKB}KB';
@@ -66,21 +53,13 @@ class ProcessedImage {
       return '${sizeMB.toStringAsFixed(1)}MB';
     }
   }
-
-  /// Checks if the image is under the size limit (1MB)
   bool get isUnderSizeLimit => sizeKB <= 1024;
-
-  /// Gets the file extension
   String get fileExtension {
     final path = file.path;
     final lastDot = path.lastIndexOf('.');
     return lastDot != -1 ? path.substring(lastDot + 1).toLowerCase() : '';
   }
-
-  /// Checks if the file exists
   bool get exists => file.existsSync();
-
-  /// Creates a copy with updated fields
   ProcessedImage copyWith({
     File? file,
     int? sizeKB,
@@ -96,7 +75,6 @@ class ProcessedImage {
       metadata: metadata ?? this.metadata,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -107,7 +85,6 @@ class ProcessedImage {
         other.originalPath == originalPath &&
         other.metadata == metadata;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -118,14 +95,11 @@ class ProcessedImage {
       metadata,
     );
   }
-
   @override
   String toString() {
     return 'ProcessedImage(path: ${file.path}, size: $formattedSize, processed: $processedAt)';
   }
 }
-
-/// Metadata about image processing operations
 class ImageProcessingMetadata {
   final int originalWidth;
   final int originalHeight;
@@ -134,7 +108,6 @@ class ImageProcessingMetadata {
   final bool wasCropped;
   final bool wasCompressed;
   final double compressionRatio;
-
   const ImageProcessingMetadata({
     required this.originalWidth,
     required this.originalHeight,
@@ -144,8 +117,6 @@ class ImageProcessingMetadata {
     required this.wasCompressed,
     required this.compressionRatio,
   });
-
-  /// Creates empty metadata
   factory ImageProcessingMetadata.empty() {
     return const ImageProcessingMetadata(
       originalWidth: 0,
@@ -157,8 +128,6 @@ class ImageProcessingMetadata {
       compressionRatio: 1.0,
     );
   }
-
-  /// Creates metadata from JSON
   factory ImageProcessingMetadata.fromJson(Map<String, dynamic> json) {
     return ImageProcessingMetadata(
       originalWidth: json['original_width'] as int,
@@ -170,8 +139,6 @@ class ImageProcessingMetadata {
       compressionRatio: (json['compression_ratio'] as num).toDouble(),
     );
   }
-
-  /// Converts metadata to JSON
   Map<String, dynamic> toJson() {
     return {
       'original_width': originalWidth,
@@ -183,8 +150,6 @@ class ImageProcessingMetadata {
       'compression_ratio': compressionRatio,
     };
   }
-
-  /// Creates a copy with updated fields
   ImageProcessingMetadata copyWith({
     int? originalWidth,
     int? originalHeight,
@@ -204,13 +169,8 @@ class ImageProcessingMetadata {
       compressionRatio: compressionRatio ?? this.compressionRatio,
     );
   }
-
-  /// Gets the original aspect ratio
   double get originalAspectRatio => originalHeight > 0 ? originalWidth / originalHeight : 1.0;
-
-  /// Gets the processed aspect ratio
   double get processedAspectRatio => processedHeight > 0 ? processedWidth / processedHeight : 1.0;
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -223,7 +183,6 @@ class ImageProcessingMetadata {
         other.wasCompressed == wasCompressed &&
         other.compressionRatio == compressionRatio;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -236,7 +195,6 @@ class ImageProcessingMetadata {
       compressionRatio,
     );
   }
-
   @override
   String toString() {
     return 'ImageProcessingMetadata(${originalWidth}x$originalHeight -> ${processedWidth}x$processedHeight, cropped: $wasCropped, compressed: $wasCompressed)';

@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
-
-/// Profile header widget displaying user avatar and basic information
 class ProfileHeader extends StatelessWidget {
   final String userName;
   final UserProgress userProgress;
   final VoidCallback? onEditPressed;
-
   const ProfileHeader({
     super.key,
     required this.userName,
     required this.userProgress,
     this.onEditPressed,
   });
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -22,7 +18,6 @@ class ProfileHeader extends StatelessWidget {
         padding: const EdgeInsets.all(20.0),
         child: Row(
           children: [
-            // User Avatar
             CircleAvatar(
               radius: 40,
               backgroundColor: Theme.of(context).colorScheme.primary,
@@ -35,10 +30,7 @@ class ProfileHeader extends StatelessWidget {
                 ),
               ),
             ),
-            
             const SizedBox(width: 16),
-            
-            // User Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,9 +41,7 @@ class ProfileHeader extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  
                   const SizedBox(height: 4),
-                  
                   Row(
                     children: [
                       Text(
@@ -81,10 +71,7 @@ class ProfileHeader extends StatelessWidget {
                       ],
                     ],
                   ),
-                  
                   const SizedBox(height: 8),
-                  
-                  // Quick stats
                   Row(
                     children: [
                       _buildQuickStat(
@@ -110,7 +97,6 @@ class ProfileHeader extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildQuickStat(BuildContext context, IconData icon, String value, String label) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -141,16 +127,13 @@ class ProfileHeader extends StatelessWidget {
       ],
     );
   }
-
   String _getInitials(String name) {
     final words = name.trim().split(' ');
     if (words.isEmpty) return 'S';
     if (words.length == 1) return words[0][0].toUpperCase();
     return '${words[0][0]}${words[1][0]}'.toUpperCase();
   }
-
   int _calculateLevel(UserProgress progress) {
-    // Simple level calculation based on topics mastered
     return (progress.topicsMastered / 5).floor() + 1;
   }
 }

@@ -2,20 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'dart:async';
-
-/// Service for handling platform-specific permissions
 class PermissionHandler {
   static PermissionHandler? _instance;
   static PermissionHandler get instance => _instance ??= PermissionHandler._();
-
   PermissionHandler._();
-
-  // Permission status cache
   final Map<PermissionType, PermissionStatus> _permissionCache = {};
   final Map<PermissionType, DateTime> _lastChecked = {};
   final Duration _cacheExpiry = const Duration(minutes: 1);
-
-  /// Requests camera permission
   Future<PermissionResult> requestCameraPermission() async {
     return await _requestPermission(
       PermissionType.camera,
@@ -23,8 +16,6 @@ class PermissionHandler {
       'ScholarLens needs camera permission to help you learn from your study materials.',
     );
   }
-
-  /// Requests microphone permission
   Future<PermissionResult> requestMicrophonePermission() async {
     return await _requestPermission(
       PermissionType.microphone,
@@ -32,8 +23,6 @@ class PermissionHandler {
       'ScholarLens needs microphone permission to understand your spoken questions.',
     );
   }
-
-  /// Requests storage permission (Android only)
   Future<PermissionResult> requestStoragePermission() async {
     if (!Platform.isAndroid) {
       return PermissionResult(
@@ -42,24 +31,19 @@ class PermissionHandler {
         message: 'Storage permission not required on this platform',
       );
     }
-
     return await _requestPermission(
       PermissionType.storage,
       'Storage access is required to save images and data.',
       'ScholarLens needs storage permission to save your learning progress and images.',
     );
   }
-
-  /// Checks current permission status without requesting
   Future<PermissionStatus> checkPermissionStatus(PermissionType type) async {
-    // Check cache first
     final lastCheck = _lastChecked[type];
     if (lastCheck != null && 
         DateTime.now().difference(lastCheck) < _cacheExpiry &&
         _permissionCache.containsKey(type)) {
       return _permissionCache[type]!;
     }
-
     try {
       final status = await _checkPlatformPermission(type);
       _permissionCache[type] = status;
@@ -70,20 +54,14 @@ class PermissionHandler {
       return PermissionStatus.unknown;
     }
   }
-
-  /// Checks if permission is granted
   Future<bool> isPermissionGranted(PermissionType type) async {
     final status = await checkPermissionStatus(type);
     return status == PermissionStatus.granted;
   }
-
-  /// Checks if permission can be requested
   Future<bool> canRequestPermission(PermissionType type) async {
     final status = await checkPermissionStatus(type);
     return status == PermissionStatus.denied || status == PermissionStatus.unknown;
   }
-
-  /// Opens app settings for manual permission grant
   Future<bool> openAppSettings() async {
     try {
       if (Platform.isAndroid) {
@@ -99,15 +77,12 @@ class PermissionHandler {
       return false;
     }
   }
-
-  /// Shows permission rationale dialog
   Future<bool> showPermissionRationale(
     BuildContext context,
     PermissionType type,
     String rationale,
   ) async {
     final completer = Completer<bool>();
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -165,17 +140,13 @@ class PermissionHandler {
         ],
       ),
     );
-
     return completer.future;
   }
-
-  /// Shows permission denied dialog with options
   Future<PermissionAction> showPermissionDeniedDialog(
     BuildContext context,
     PermissionType type,
   ) async {
     final completer = Completer<PermissionAction>();
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -239,18 +210,13 @@ class PermissionHandler {
         ],
       ),
     );
-
     return completer.future;
   }
-
-  /// Handles permission workflow with UI
   Future<PermissionResult> handlePermissionWorkflow(
     BuildContext context,
     PermissionType type,
   ) async {
-    // Check current status
     final currentStatus = await checkPermissionStatus(type);
-    
     if (currentStatus == PermissionStatus.granted) {
       return PermissionResult(
         status: PermissionStatus.granted,
@@ -258,16 +224,13 @@ class PermissionHandler {
         message: 'Permission already granted',
       );
     }
-
     if (currentStatus == PermissionStatus.permanentlyDenied) {
       final action = await showPermissionDeniedDialog(context, type);
-      
       if (!context.mounted) return PermissionResult(
         status: PermissionStatus.permanentlyDenied,
         canRequest: false,
         message: 'Widget disposed during permission request',
       );
-      
       switch (action) {
         case PermissionAction.openSettings:
           final opened = await openAppSettings();
@@ -291,20 +254,16 @@ class PermissionHandler {
           );
       }
     }
-
-    // Show rationale and request permission
     final shouldRequest = await showPermissionRationale(
       context,
       type,
       _getPermissionRationale(type),
     );
-
     if (!context.mounted) return PermissionResult(
       status: currentStatus,
       canRequest: false,
       message: 'Widget disposed during permission request',
     );
-
     if (!shouldRequest) {
       return PermissionResult(
         status: PermissionStatus.denied,
@@ -312,16 +271,12 @@ class PermissionHandler {
         message: 'User declined permission request',
       );
     }
-
-    // Request the permission
     return await _requestPermission(
       type,
       _getPermissionRationale(type),
       _getPermissionExplanation(type),
     );
   }
-
-  /// Invalidates permission cache
   void invalidateCache([PermissionType? type]) {
     if (type != null) {
       _permissionCache.remove(type);
@@ -331,9 +286,6 @@ class PermissionHandler {
       _lastChecked.clear();
     }
   }
-
-  // Private methods
-
   Future<PermissionResult> _requestPermission(
     PermissionType type,
     String rationale,
@@ -341,10 +293,8 @@ class PermissionHandler {
   ) async {
     try {
       final status = await _requestPlatformPermission(type);
-      
       _permissionCache[type] = status;
       _lastChecked[type] = DateTime.now();
-
       return PermissionResult(
         status: status,
         canRequest: status == PermissionStatus.denied,
@@ -359,40 +309,30 @@ class PermissionHandler {
       );
     }
   }
-
   Future<PermissionStatus> _checkPlatformPermission(PermissionType type) async {
-    // This would typically use a permission plugin like permission_handler
-    // For now, we'll simulate the behavior
-    
     try {
       const platform = MethodChannel('permissions');
       final result = await platform.invokeMethod('checkPermission', {
         'permission': _getPermissionString(type),
       });
-      
       return _parsePermissionStatus(result);
     } catch (e) {
-      // Fallback for when permission plugin is not available
       debugPrint('Permission check failed, assuming granted: $e');
       return PermissionStatus.granted;
     }
   }
-
   Future<PermissionStatus> _requestPlatformPermission(PermissionType type) async {
     try {
       const platform = MethodChannel('permissions');
       final result = await platform.invokeMethod('requestPermission', {
         'permission': _getPermissionString(type),
       });
-      
       return _parsePermissionStatus(result);
     } catch (e) {
-      // Fallback for when permission plugin is not available
       debugPrint('Permission request failed, assuming granted: $e');
       return PermissionStatus.granted;
     }
   }
-
   String _getPermissionString(PermissionType type) {
     switch (type) {
       case PermissionType.camera:
@@ -403,10 +343,8 @@ class PermissionHandler {
         return 'storage';
     }
   }
-
   PermissionStatus _parsePermissionStatus(dynamic result) {
     if (result == null) return PermissionStatus.unknown;
-    
     switch (result.toString().toLowerCase()) {
       case 'granted':
         return PermissionStatus.granted;
@@ -419,7 +357,6 @@ class PermissionHandler {
         return PermissionStatus.unknown;
     }
   }
-
   IconData _getPermissionIcon(PermissionType type) {
     switch (type) {
       case PermissionType.camera:
@@ -430,7 +367,6 @@ class PermissionHandler {
         return Icons.storage;
     }
   }
-
   String _getPermissionTitle(PermissionType type) {
     switch (type) {
       case PermissionType.camera:
@@ -441,7 +377,6 @@ class PermissionHandler {
         return 'Storage Permission';
     }
   }
-
   String _getPermissionRationale(PermissionType type) {
     switch (type) {
       case PermissionType.camera:
@@ -452,7 +387,6 @@ class PermissionHandler {
         return 'Storage access is required to save your learning progress, images, and offline content.';
     }
   }
-
   String _getPermissionExplanation(PermissionType type) {
     switch (type) {
       case PermissionType.camera:
@@ -463,7 +397,6 @@ class PermissionHandler {
         return 'Only app-related data is stored. Your personal files remain private and untouched.';
     }
   }
-
   String _getPermissionDeniedMessage(PermissionType type) {
     switch (type) {
       case PermissionType.camera:
@@ -474,7 +407,6 @@ class PermissionHandler {
         return 'Storage permission is required to save your progress. Without it, some data may not persist between app sessions.';
     }
   }
-
   String _getAlternativeActionText(PermissionType type) {
     switch (type) {
       case PermissionType.camera:
@@ -485,7 +417,6 @@ class PermissionHandler {
         return 'Continue';
     }
   }
-
   String _getStatusMessage(PermissionStatus status, PermissionType type) {
     switch (status) {
       case PermissionStatus.granted:
@@ -499,60 +430,45 @@ class PermissionHandler {
     }
   }
 }
-
-/// Types of permissions the app needs
 enum PermissionType {
   camera,
   microphone,
   storage,
 }
-
-/// Permission status
 enum PermissionStatus {
   granted,
   denied,
   permanentlyDenied,
   unknown,
 }
-
-/// Actions user can take when permission is denied
 enum PermissionAction {
   openSettings,
   useAlternative,
   cancel,
 }
-
-/// Result of permission request
 class PermissionResult {
   final PermissionStatus status;
   final bool canRequest;
   final String message;
   final bool useAlternative;
-
   const PermissionResult({
     required this.status,
     required this.canRequest,
     required this.message,
     this.useAlternative = false,
   });
-
   bool get isGranted => status == PermissionStatus.granted;
   bool get isDenied => status == PermissionStatus.denied;
   bool get isPermanentlyDenied => status == PermissionStatus.permanentlyDenied;
-
   @override
   String toString() {
     return 'PermissionResult(status: $status, canRequest: $canRequest, message: $message)';
   }
 }
-
-/// Mixin for widgets that need permission handling
 mixin PermissionHandlerMixin<T extends StatefulWidget> on State<T> {
-  /// Requests permission with UI handling
   Future<bool> requestPermissionWithUI(PermissionType type) async {
     final handler = PermissionHandler.instance;
     final result = await handler.handlePermissionWorkflow(context, type);
-    
     if (result.isGranted) {
       return true;
     } else if (result.useAlternative) {
@@ -563,18 +479,13 @@ mixin PermissionHandlerMixin<T extends StatefulWidget> on State<T> {
       return false;
     }
   }
-
-  /// Handles alternative action when permission is denied
   void _handleAlternativeAction(PermissionType type) {
-    // Override this method in implementing widgets
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Using alternative for ${type.name}'),
       ),
     );
   }
-
-  /// Shows permission error
   void _showPermissionError(PermissionResult result) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

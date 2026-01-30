@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import '../models/flashcard.dart';
-
-/// Widget for rating flashcard difficulty (Easy/Medium/Hard)
 class DifficultyRatingBar extends StatelessWidget {
   final Function(Difficulty) onRatingSelected;
   final Difficulty? selectedRating;
-
   const DifficultyRatingBar({
     super.key,
     required this.onRatingSelected,
     this.selectedRating,
   });
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -60,7 +56,6 @@ class DifficultyRatingBar extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildRatingButton(
     BuildContext context,
     Difficulty difficulty,
@@ -69,7 +64,6 @@ class DifficultyRatingBar extends StatelessWidget {
     Color color,
   ) {
     final isSelected = selectedRating == difficulty;
-    
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -131,7 +125,6 @@ class DifficultyRatingBar extends StatelessWidget {
       ),
     );
   }
-
   String _getNextReviewText(Difficulty difficulty) {
     switch (difficulty) {
       case Difficulty.easy:
@@ -142,12 +135,10 @@ class DifficultyRatingBar extends StatelessWidget {
         return 'Review tomorrow';
     }
   }
-
   String _getDifficultyDescription() {
     if (selectedRating == null) {
       return 'Rate this card to schedule the next review';
     }
-    
     switch (selectedRating!) {
       case Difficulty.easy:
         return 'Great! This card will appear less frequently';

@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../animations/animation_manager.dart';
 import '../../animations/animation_config.dart';
-
-/// Animated breadcrumb navigation for deep navigation
 class AnimatedBreadcrumb extends StatefulWidget {
   final List<BreadcrumbItem> items;
   final Function(int)? onTap;
   final Color? textColor;
   final Color? activeColor;
   final double? fontSize;
-
   const AnimatedBreadcrumb({
     super.key,
     required this.items,
@@ -18,18 +15,15 @@ class AnimatedBreadcrumb extends StatefulWidget {
     this.activeColor,
     this.fontSize,
   });
-
   @override
   State<AnimatedBreadcrumb> createState() => _AnimatedBreadcrumbState();
 }
-
 class _AnimatedBreadcrumbState extends State<AnimatedBreadcrumb>
     with TickerProviderStateMixin {
   late AnimationManager _animationManager;
   final Map<int, String> _slideAnimationIds = {};
   final Map<int, String> _fadeAnimationIds = {};
   List<BreadcrumbItem> _previousItems = [];
-
   @override
   void initState() {
     super.initState();
@@ -37,10 +31,8 @@ class _AnimatedBreadcrumbState extends State<AnimatedBreadcrumb>
     _previousItems = List.from(widget.items);
     _initializeAnimations();
   }
-
   void _initializeAnimations() {
     for (int i = 0; i < widget.items.length; i++) {
-      // Slide animation for new items
       _slideAnimationIds[i] = _animationManager.createSlideAnimation(
         vsync: this,
         duration: Duration(milliseconds: 300 + (i * 50)), // Staggered timing
@@ -49,8 +41,6 @@ class _AnimatedBreadcrumbState extends State<AnimatedBreadcrumb>
         curve: Curves.easeOut,
         category: AnimationCategory.content,
       );
-
-      // Fade animation for items
       _fadeAnimationIds[i] = _animationManager.createFadeAnimation(
         vsync: this,
         duration: Duration(milliseconds: 200 + (i * 30)),
@@ -60,23 +50,18 @@ class _AnimatedBreadcrumbState extends State<AnimatedBreadcrumb>
         category: AnimationCategory.content,
       );
     }
-
-    // Start initial animations
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animateItemsIn();
     });
   }
-
   @override
   void didUpdateWidget(AnimatedBreadcrumb oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
     if (oldWidget.items.length != widget.items.length ||
         !_itemsEqual(oldWidget.items, widget.items)) {
       _handleItemsChange(oldWidget.items, widget.items);
     }
   }
-
   bool _itemsEqual(List<BreadcrumbItem> a, List<BreadcrumbItem> b) {
     if (a.length != b.length) return false;
     for (int i = 0; i < a.length; i++) {
@@ -86,26 +71,19 @@ class _AnimatedBreadcrumbState extends State<AnimatedBreadcrumb>
     }
     return true;
   }
-
   void _handleItemsChange(List<BreadcrumbItem> oldItems, List<BreadcrumbItem> newItems) {
-    // Dispose old animations
     for (final id in _slideAnimationIds.values) {
       _animationManager.disposeController(id);
     }
     for (final id in _fadeAnimationIds.values) {
       _animationManager.disposeController(id);
     }
-    
     _slideAnimationIds.clear();
     _fadeAnimationIds.clear();
-    
-    // Initialize new animations
     _initializeAnimations();
   }
-
   void _animateItemsIn() {
     for (int i = 0; i < widget.items.length; i++) {
-      // Stagger the animations
       Future.delayed(Duration(milliseconds: i * 50), () {
         if (mounted) {
           _animationManager.startAnimation(_slideAnimationIds[i]!);
@@ -114,10 +92,8 @@ class _AnimatedBreadcrumbState extends State<AnimatedBreadcrumb>
       });
     }
   }
-
   @override
   void dispose() {
-    // Dispose all animations
     for (final id in _slideAnimationIds.values) {
       _animationManager.disposeController(id);
     }
@@ -126,14 +102,12 @@ class _AnimatedBreadcrumbState extends State<AnimatedBreadcrumb>
     }
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textColor = widget.textColor ?? theme.textTheme.bodyMedium?.color ?? Colors.black;
     final activeColor = widget.activeColor ?? theme.primaryColor;
     final fontSize = widget.fontSize ?? 14.0;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -150,17 +124,13 @@ class _AnimatedBreadcrumbState extends State<AnimatedBreadcrumb>
       ),
     );
   }
-
   List<Widget> _buildBreadcrumbItems(Color textColor, Color activeColor, double fontSize) {
     final items = <Widget>[];
-    
     for (int i = 0; i < widget.items.length; i++) {
       final item = widget.items[i];
       final isLast = i == widget.items.length - 1;
       final slideAnimationId = _slideAnimationIds[i];
       final fadeAnimationId = _fadeAnimationIds[i];
-
-      // Build animated breadcrumb item
       items.add(
         AnimatedBuilder(
           animation: slideAnimationId != null 
@@ -174,10 +144,8 @@ class _AnimatedBreadcrumbState extends State<AnimatedBreadcrumb>
             final fadeAnimation = fadeAnimationId != null 
                 ? _animationManager.getAnimation(fadeAnimationId)?.animation as Animation<double>?
                 : null;
-            
             final slideOffset = slideAnimation?.value ?? Offset.zero;
             final opacity = fadeAnimation?.value ?? 1.0;
-            
             return Transform.translate(
               offset: slideOffset * 20, // Scale the offset
               child: Opacity(
@@ -195,8 +163,6 @@ class _AnimatedBreadcrumbState extends State<AnimatedBreadcrumb>
           },
         ),
       );
-
-      // Add separator if not last item
       if (!isLast) {
         items.add(
           Padding(
@@ -210,10 +176,8 @@ class _AnimatedBreadcrumbState extends State<AnimatedBreadcrumb>
         );
       }
     }
-
     return items;
   }
-
   Widget _buildBreadcrumbItem({
     required BreadcrumbItem item,
     required int index,
@@ -264,19 +228,15 @@ class _AnimatedBreadcrumbState extends State<AnimatedBreadcrumb>
     );
   }
 }
-
-/// Breadcrumb item configuration
 class BreadcrumbItem {
   final String title;
   final String route;
   final IconData? icon;
-
   const BreadcrumbItem({
     required this.title,
     required this.route,
     this.icon,
   });
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -285,7 +245,6 @@ class BreadcrumbItem {
         other.route == route &&
         other.icon == icon;
   }
-
   @override
   int get hashCode => Object.hash(title, route, icon);
 }

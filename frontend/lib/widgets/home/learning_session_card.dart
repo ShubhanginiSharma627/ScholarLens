@@ -1,22 +1,16 @@
 import 'package:flutter/material.dart';
-
 import '../../models/learning_session.dart';
-
-/// Card widget that displays a learning session with subject icon, title, and progress
 class LearningSessionCard extends StatelessWidget {
   final LearningSession session;
   final VoidCallback onTap;
-
   const LearningSessionCard({
     super.key,
     required this.session,
     required this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
     return SizedBox(
       width: 200,
       child: Card(
@@ -107,8 +101,6 @@ class LearningSessionCard extends StatelessWidget {
       ),
     );
   }
-
-  /// Gets appropriate icon for subject
   IconData _getSubjectIcon(String subject) {
     switch (subject.toLowerCase()) {
       case 'math':
@@ -133,8 +125,6 @@ class LearningSessionCard extends StatelessWidget {
         return Icons.school;
     }
   }
-
-  /// Gets appropriate color for subject
   Color _getSubjectColor(String subject) {
     switch (subject.toLowerCase()) {
       case 'math':

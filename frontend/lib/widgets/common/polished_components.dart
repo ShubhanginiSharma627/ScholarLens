@@ -5,10 +5,7 @@ import '../../theme/app_typography.dart';
 import '../../theme/responsive.dart';
 import 'loading_animations.dart';
 import '../../animations/animated_form_input.dart';
-
-/// Collection of polished UI components with consistent styling and micro-interactions
 class PolishedComponents {
-  /// Enhanced card with hover effects and proper spacing
   static Widget enhancedCard({
     required Widget child,
     EdgeInsets? padding,
@@ -36,8 +33,6 @@ class PolishedComponents {
       ),
     );
   }
-
-  /// Polished button with loading state and animations
   static Widget polishedButton({
     required String text,
     required VoidCallback? onPressed,
@@ -107,8 +102,6 @@ class PolishedComponents {
       ),
     );
   }
-
-  /// Enhanced input field with proper styling and animations
   static Widget enhancedTextField({
     required TextEditingController controller,
     String? labelText,
@@ -167,8 +160,6 @@ class PolishedComponents {
       ],
     );
   }
-
-  /// Status chip with consistent styling
   static Widget statusChip({
     required String label,
     required String status,
@@ -177,7 +168,6 @@ class PolishedComponents {
   }) {
     Color backgroundColor;
     Color textColor;
-    
     switch (status.toLowerCase()) {
       case 'success':
       case 'completed':
@@ -203,7 +193,6 @@ class PolishedComponents {
         backgroundColor = AppTheme.surfaceColor;
         textColor = AppTheme.secondaryTextColor;
     }
-
     return Material(
       color: backgroundColor,
       borderRadius: BorderRadius.circular(AppTheme.radiusXL),
@@ -236,8 +225,6 @@ class PolishedComponents {
       ),
     );
   }
-
-  /// Progress indicator with label and percentage
   static Widget progressIndicator({
     required double progress,
     String? label,
@@ -249,7 +236,6 @@ class PolishedComponents {
     final progressColor = color ?? AppTheme.primaryColor;
     final bgColor = backgroundColor ?? AppTheme.surfaceColor;
     final percentage = (progress * 100).round();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -293,8 +279,6 @@ class PolishedComponents {
       ],
     );
   }
-
-  /// Circular progress indicator with label
   static Widget circularProgress({
     required double progress,
     String? label,
@@ -307,7 +291,6 @@ class PolishedComponents {
     final progressColor = color ?? AppTheme.primaryColor;
     final bgColor = backgroundColor ?? AppTheme.surfaceColor;
     final percentage = (progress * 100).round();
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -316,19 +299,16 @@ class PolishedComponents {
           height: size,
           child: Stack(
             children: [
-              // Background circle
               CircularProgressIndicator(
                 value: 1.0,
                 strokeWidth: strokeWidth,
                 valueColor: AlwaysStoppedAnimation<Color>(bgColor),
               ),
-              // Progress circle
               CircularProgressIndicator(
                 value: progress.clamp(0.0, 1.0),
                 strokeWidth: strokeWidth,
                 valueColor: AlwaysStoppedAnimation<Color>(progressColor),
               ),
-              // Center text
               Center(
                 child: Text(
                   centerText ?? '$percentage%',
@@ -352,8 +332,6 @@ class PolishedComponents {
       ],
     );
   }
-
-  /// Empty state widget with illustration and action
   static Widget emptyState({
     required IconData icon,
     required String title,
@@ -404,8 +382,6 @@ class PolishedComponents {
       ),
     );
   }
-
-  /// Section header with optional action
   static Widget sectionHeader({
     required String title,
     String? subtitle,
@@ -452,18 +428,14 @@ class PolishedComponents {
     );
   }
 }
-
-/// Back navigation bar component with customizable title text
 class BackNavigationBar extends StatelessWidget {
   final String title;
   final VoidCallback onPressed;
-  
   const BackNavigationBar({
     super.key,
     required this.title,
     required this.onPressed,
   });
-  
   @override
   Widget build(BuildContext context) {
     return Container(

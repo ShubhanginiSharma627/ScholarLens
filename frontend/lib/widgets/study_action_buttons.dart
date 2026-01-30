@@ -1,25 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:scholar_lens/theme/app_theme.dart';
-
-/// Action buttons for creating study materials from chapter content
-/// Provides quick access to flashcard creation and quiz generation
 class StudyActionButtons extends StatelessWidget {
-  /// Callback when "Create Flashcards" button is pressed
   final VoidCallback onCreateFlashcards;
-  
-  /// Callback when "Quiz Me" button is pressed
   final VoidCallback onQuizMe;
-  
-  /// Whether the buttons should be disabled (e.g., during loading)
   final bool isEnabled;
-
   const StudyActionButtons({
     super.key,
     required this.onCreateFlashcards,
     required this.onQuizMe,
     this.isEnabled = true,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -34,7 +24,6 @@ class StudyActionButtons extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section header
           Row(
             children: [
               Icon(
@@ -53,11 +42,8 @@ class StudyActionButtons extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppTheme.spacingM),
-          
-          // Action buttons row
           Row(
             children: [
-              // Create Flashcards button with purple background
               Expanded(
                 child: _buildActionButton(
                   context: context,
@@ -69,8 +55,6 @@ class StudyActionButtons extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppTheme.spacingM),
-              
-              // Quiz Me button with default styling
               Expanded(
                 child: _buildActionButton(
                   context: context,
@@ -87,7 +71,6 @@ class StudyActionButtons extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildActionButton({
     required BuildContext context,
     required VoidCallback? onPressed,
@@ -98,7 +81,6 @@ class StudyActionButtons extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
     return Tooltip(
       message: tooltip,
       child: ElevatedButton.icon(

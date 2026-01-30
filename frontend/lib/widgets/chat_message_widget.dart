@@ -3,15 +3,12 @@ import 'package:flutter/services.dart';
 import '../models/chat_message.dart';
 import '../animations/animation_manager.dart';
 import '../animations/animation_config.dart';
-
-/// Widget for displaying individual chat messages with enhanced animations
 class ChatMessageWidget extends StatefulWidget {
   final ChatMessage message;
   final VoidCallback? onRetry;
   final int? messageIndex;
   final bool enableStaggeredAnimation;
   final Duration? staggerDelay;
-
   const ChatMessageWidget({
     super.key,
     required this.message,
@@ -20,14 +17,11 @@ class ChatMessageWidget extends StatefulWidget {
     this.enableStaggeredAnimation = true,
     this.staggerDelay,
   });
-
   @override
   State<ChatMessageWidget> createState() => _ChatMessageWidgetState();
 }
-
 class _ChatMessageWidgetState extends State<ChatMessageWidget>
     with TickerProviderStateMixin {
-  
   late final AnimationManager _animationManager;
   late AnimationController _slideController;
   late AnimationController _fadeController;
@@ -35,41 +29,30 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
   late Animation<double> _fadeAnimation;
   String? _slideAnimationId;
   String? _fadeAnimationId;
-  
   bool _hasAnimated = false;
-
   @override
   void initState() {
     super.initState();
-    
     _animationManager = AnimationManager();
     _initializeAnimations();
-    
-    // Start animation after a brief delay for staggered effect
     final delay = widget.enableStaggeredAnimation && widget.messageIndex != null
         ? Duration(milliseconds: (widget.messageIndex! * 100).clamp(0, 500))
         : (widget.staggerDelay ?? Duration.zero);
-    
     Future.delayed(delay, () {
       if (mounted && !_hasAnimated) {
         _startAnimation();
       }
     });
   }
-
   void _initializeAnimations() {
-    // Initialize animation controllers
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
-    // Register animations with manager if initialized
     if (_animationManager.isInitialized) {
       _registerAnimations();
     } else {
@@ -79,35 +62,26 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
         }
       });
     }
-    
-    // Create local animations as fallback
     _createLocalAnimations();
   }
-
   void _registerAnimations() {
     try {
-      // Choose slide direction based on message sender
       final slideConfig = widget.message.isUser 
           ? AnimationConfigs.messageSlideInUser
           : AnimationConfigs.messageSlideInAI;
-      
       _slideAnimationId = _animationManager.registerController(
         controller: _slideController,
         config: slideConfig,
         category: AnimationCategory.content,
       );
-      
       final fadeConfig = AnimationConfigs.fadeTransition;
       _fadeAnimationId = _animationManager.registerController(
         controller: _fadeController,
         config: fadeConfig,
         category: AnimationCategory.content,
       );
-      
-      // Get managed animations
       final slideAnim = _animationManager.getAnimation(_slideAnimationId!);
       final fadeAnim = _animationManager.getAnimation(_fadeAnimationId!);
-      
       if (slideAnim != null && fadeAnim != null) {
         _slideAnimation = slideAnim.animation as Animation<Offset>;
         _fadeAnimation = fadeAnim.animation as Animation<double>;
@@ -119,13 +93,10 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
       _createLocalAnimations();
     }
   }
-
   void _createLocalAnimations() {
-    // Create directional slide animation based on sender
     final slideStart = widget.message.isUser 
         ? const Offset(0.3, 0.0)  // User messages slide in from right
         : const Offset(-0.3, 0.0); // AI messages slide in from left
-    
     _slideAnimation = Tween<Offset>(
       begin: slideStart,
       end: Offset.zero,
@@ -133,7 +104,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
       parent: _slideController,
       curve: Curves.easeOut,
     ));
-    
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -142,11 +112,9 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
       curve: Curves.easeInOut,
     ));
   }
-
   void _startAnimation() {
     if (_hasAnimated || !mounted) return;
     _hasAnimated = true;
-    
     if (_slideAnimationId != null && _fadeAnimationId != null) {
       _animationManager.startAnimation(_slideAnimationId!);
       _animationManager.startAnimation(_fadeAnimationId!);
@@ -155,7 +123,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
       _fadeController.forward();
     }
   }
-
   @override
   void dispose() {
     if (_slideAnimationId != null) {
@@ -164,12 +131,10 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
     if (_fadeAnimationId != null) {
       _animationManager.disposeController(_fadeAnimationId!);
     }
-    
     _slideController.dispose();
     _fadeController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -185,7 +150,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
       },
     );
   }
-
   Widget _buildMessageContent(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -195,13 +159,10 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
             : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // AI avatar (left side for AI messages)
           if (!widget.message.isUser) ...[
             _buildAvatar(context, false),
             const SizedBox(width: 8),
           ],
-          
-          // Message bubble
           Flexible(
             child: Container(
               constraints: BoxConstraints(
@@ -212,7 +173,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
                     ? CrossAxisAlignment.end 
                     : CrossAxisAlignment.start,
                 children: [
-                  // Message bubble
                   GestureDetector(
                     onLongPress: () => _showMessageOptions(context),
                     child: Container(
@@ -241,7 +201,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Message content
                           Text(
                             widget.message.content,
                             style: TextStyle(
@@ -250,8 +209,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
                               height: 1.4,
                             ),
                           ),
-                          
-                          // Status indicator for user messages
                           if (widget.message.isUser) ...[
                             const SizedBox(height: 4),
                             Row(
@@ -273,8 +230,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
                       ),
                     ),
                   ),
-                  
-                  // Timestamp and retry button for AI messages
                   if (!widget.message.isUser) ...[
                     const SizedBox(height: 4),
                     Row(
@@ -329,8 +284,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
               ),
             ),
           ),
-          
-          // User avatar (right side for user messages)
           if (widget.message.isUser) ...[
             const SizedBox(width: 8),
             _buildAvatar(context, true),
@@ -339,7 +292,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
       ),
     );
   }
-
   Widget _buildAvatar(BuildContext context, bool isUser) {
     return Container(
       width: 32,
@@ -357,7 +309,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
       ),
     );
   }
-
   Color _getMessageColor(BuildContext context) {
     if (widget.message.isUser) {
       return Theme.of(context).primaryColor;
@@ -365,7 +316,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
       return Colors.grey[100]!;
     }
   }
-
   Color _getTextColor(BuildContext context) {
     if (widget.message.isUser) {
       return Colors.white;
@@ -373,7 +323,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
       return Colors.black87;
     }
   }
-
   Widget _buildStatusIcon() {
     switch (widget.message.status) {
       case MessageStatus.sending:
@@ -407,7 +356,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
         );
     }
   }
-
   void _showMessageOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -451,7 +399,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
       ),
     );
   }
-
   void _showMessageInfo(BuildContext context) {
     showDialog(
       context: context,
@@ -477,7 +424,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
       ),
     );
   }
-
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),

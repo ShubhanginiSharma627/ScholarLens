@@ -2,30 +2,22 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
-
-/// Service for managing user profile and account data
 class ProfileService {
   static const String _userProfileKey = 'user_profile';
   static const String _achievementsKey = 'user_achievements';
-
-  /// Get user profile information
   Future<UserProfile> getUserProfile() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final profileJson = prefs.getString(_userProfileKey);
-      
       if (profileJson != null) {
         final profileMap = json.decode(profileJson) as Map<String, dynamic>;
         return UserProfile.fromJson(profileMap);
       }
-      
       return UserProfile.defaultProfile();
     } catch (e) {
       return UserProfile.defaultProfile();
     }
   }
-
-  /// Save user profile information
   Future<void> saveUserProfile(UserProfile profile) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -35,8 +27,6 @@ class ProfileService {
       throw Exception('Failed to save user profile: $e');
     }
   }
-
-  /// Update user profile with new information
   Future<UserProfile> updateProfile({
     String? name,
     String? email,
@@ -46,7 +36,6 @@ class ProfileService {
     String? grade,
   }) async {
     final currentProfile = await getUserProfile();
-    
     final updatedProfile = currentProfile.copyWith(
       name: name,
       email: email,
@@ -56,31 +45,24 @@ class ProfileService {
       grade: grade,
       lastUpdated: DateTime.now(),
     );
-    
     await saveUserProfile(updatedProfile);
     return updatedProfile;
   }
-
-  /// Get user achievements
   Future<List<UserAchievement>> getUserAchievements() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final achievementsJson = prefs.getString(_achievementsKey);
-      
       if (achievementsJson != null) {
         final achievementsList = json.decode(achievementsJson) as List<dynamic>;
         return achievementsList
             .map((json) => UserAchievement.fromJson(json as Map<String, dynamic>))
             .toList();
       }
-      
       return [];
     } catch (e) {
       return [];
     }
   }
-
-  /// Save user achievements
   Future<void> saveUserAchievements(List<UserAchievement> achievements) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -92,28 +74,19 @@ class ProfileService {
       throw Exception('Failed to save achievements: $e');
     }
   }
-
-  /// Unlock an achievement
   Future<bool> unlockAchievement(String achievementId, UserProgress progress) async {
     final achievements = await getUserAchievements();
-    
-    // Check if achievement is already unlocked
     final existingAchievement = achievements.firstWhere(
       (a) => a.id == achievementId,
       orElse: () => UserAchievement.empty(),
     );
-    
     if (existingAchievement.isUnlocked) {
       return false; // Already unlocked
     }
-    
-    // Check if achievement criteria is met
     final achievementDefinition = _getAchievementDefinition(achievementId);
     if (achievementDefinition == null || !_checkAchievementCriteria(achievementDefinition, progress)) {
       return false; // Criteria not met
     }
-    
-    // Unlock the achievement
     final newAchievement = UserAchievement(
       id: achievementId,
       title: achievementDefinition.title,
@@ -123,21 +96,14 @@ class ProfileService {
       isUnlocked: true,
       unlockedAt: DateTime.now(),
     );
-    
-    // Update achievements list
     final updatedAchievements = achievements.where((a) => a.id != achievementId).toList();
     updatedAchievements.add(newAchievement);
-    
     await saveUserAchievements(updatedAchievements);
     return true; // Successfully unlocked
   }
-
-  /// Check for new achievements based on user progress
   Future<List<UserAchievement>> checkForNewAchievements(UserProgress progress) async {
     final newlyUnlocked = <UserAchievement>[];
-    
     final achievementDefinitions = _getAllAchievementDefinitions();
-    
     for (final definition in achievementDefinitions) {
       final wasUnlocked = await unlockAchievement(definition.id, progress);
       if (wasUnlocked) {
@@ -153,11 +119,8 @@ class ProfileService {
         newlyUnlocked.add(achievement);
       }
     }
-    
     return newlyUnlocked;
   }
-
-  /// Clear all user data (for logout)
   Future<void> clearAllUserData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -167,27 +130,21 @@ class ProfileService {
       throw Exception('Failed to clear user data: $e');
     }
   }
-
-  /// Export user data for backup
   Future<Map<String, dynamic>> exportUserData() async {
     final profile = await getUserProfile();
     final achievements = await getUserAchievements();
-    
     return {
       'profile': profile.toJson(),
       'achievements': achievements.map((a) => a.toJson()).toList(),
       'exported_at': DateTime.now().toIso8601String(),
     };
   }
-
-  /// Import user data from backup
   Future<void> importUserData(Map<String, dynamic> data) async {
     try {
       if (data.containsKey('profile')) {
         final profile = UserProfile.fromJson(data['profile'] as Map<String, dynamic>);
         await saveUserProfile(profile);
       }
-      
       if (data.containsKey('achievements')) {
         final achievements = (data['achievements'] as List<dynamic>)
             .map((json) => UserAchievement.fromJson(json as Map<String, dynamic>))
@@ -198,15 +155,12 @@ class ProfileService {
       throw Exception('Failed to import user data: $e');
     }
   }
-
-  // Private helper methods
   AchievementDefinition? _getAchievementDefinition(String id) {
     return _getAllAchievementDefinitions().firstWhere(
       (def) => def.id == id,
       orElse: () => AchievementDefinition.empty(),
     );
   }
-
   bool _checkAchievementCriteria(AchievementDefinition definition, UserProgress progress) {
     switch (definition.id) {
       case 'first_steps':
@@ -229,7 +183,6 @@ class ProfileService {
         return false;
     }
   }
-
   List<AchievementDefinition> _getAllAchievementDefinitions() {
     return [
       AchievementDefinition(
@@ -291,8 +244,6 @@ class ProfileService {
     ];
   }
 }
-
-/// User profile data model
 class UserProfile {
   final String id;
   final String name;
@@ -303,7 +254,6 @@ class UserProfile {
   final String? grade;
   final DateTime createdAt;
   final DateTime lastUpdated;
-
   const UserProfile({
     required this.id,
     required this.name,
@@ -315,7 +265,6 @@ class UserProfile {
     required this.createdAt,
     required this.lastUpdated,
   });
-
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       id: json['id'] as String,
@@ -331,7 +280,6 @@ class UserProfile {
       lastUpdated: DateTime.parse(json['last_updated'] as String),
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -345,7 +293,6 @@ class UserProfile {
       'last_updated': lastUpdated.toIso8601String(),
     };
   }
-
   factory UserProfile.defaultProfile() {
     final now = DateTime.now();
     return UserProfile(
@@ -355,7 +302,6 @@ class UserProfile {
       lastUpdated: now,
     );
   }
-
   UserProfile copyWith({
     String? name,
     String? email,
@@ -377,7 +323,6 @@ class UserProfile {
       lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -392,7 +337,6 @@ class UserProfile {
         other.createdAt == createdAt &&
         other.lastUpdated == lastUpdated;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -408,8 +352,6 @@ class UserProfile {
     );
   }
 }
-
-/// User achievement data model
 class UserAchievement {
   final String id;
   final String title;
@@ -418,7 +360,6 @@ class UserAchievement {
   final int color; // Color.value
   final bool isUnlocked;
   final DateTime? unlockedAt;
-
   const UserAchievement({
     required this.id,
     required this.title,
@@ -428,7 +369,6 @@ class UserAchievement {
     required this.isUnlocked,
     this.unlockedAt,
   });
-
   factory UserAchievement.fromJson(Map<String, dynamic> json) {
     return UserAchievement(
       id: json['id'] as String,
@@ -442,7 +382,6 @@ class UserAchievement {
           : null,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -454,7 +393,6 @@ class UserAchievement {
       'unlocked_at': unlockedAt?.toIso8601String(),
     };
   }
-
   factory UserAchievement.empty() {
     return const UserAchievement(
       id: '',
@@ -465,7 +403,6 @@ class UserAchievement {
       isUnlocked: false,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -478,7 +415,6 @@ class UserAchievement {
         other.isUnlocked == isUnlocked &&
         other.unlockedAt == unlockedAt;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -492,15 +428,12 @@ class UserAchievement {
     );
   }
 }
-
-/// Achievement definition for checking criteria
 class AchievementDefinition {
   final String id;
   final String title;
   final String description;
   final IconData icon;
   final Color color;
-
   const AchievementDefinition({
     required this.id,
     required this.title,
@@ -508,7 +441,6 @@ class AchievementDefinition {
     required this.icon,
     required this.color,
   });
-
   factory AchievementDefinition.empty() {
     return const AchievementDefinition(
       id: '',

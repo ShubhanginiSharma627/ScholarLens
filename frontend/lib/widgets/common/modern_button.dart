@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
-
-/// Modern styled buttons for authentication forms
 class ModernButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -10,7 +8,6 @@ class ModernButton extends StatelessWidget {
   final Widget? icon;
   final double? width;
   final double height;
-
   const ModernButton({
     super.key,
     required this.text,
@@ -21,7 +18,6 @@ class ModernButton extends StatelessWidget {
     this.width,
     this.height = 56,
   });
-
   const ModernButton.primary({
     super.key,
     required this.text,
@@ -31,7 +27,6 @@ class ModernButton extends StatelessWidget {
     this.width,
     this.height = 56,
   }) : isPrimary = true;
-
   const ModernButton.secondary({
     super.key,
     required this.text,
@@ -41,7 +36,6 @@ class ModernButton extends StatelessWidget {
     this.width,
     this.height = 56,
   }) : isPrimary = false;
-
   @override
   Widget build(BuildContext context) {
     if (isPrimary) {

@@ -4,15 +4,12 @@ import '../models/app_state.dart';
 import '../animations/animated_interactive_element.dart';
 import '../animations/animation_manager.dart';
 import '../animations/animation_config.dart';
-
-/// Widget for chat input with text field and microphone button
 class ChatInputBar extends StatefulWidget {
   final TextEditingController controller;
   final ValueChanged<String> onSend;
   final VoidCallback onVoiceInput;
   final bool isLoading;
   final VoiceInputService voiceInputService;
-
   const ChatInputBar({
     super.key,
     required this.controller,
@@ -21,11 +18,9 @@ class ChatInputBar extends StatefulWidget {
     required this.voiceInputService,
     this.isLoading = false,
   });
-
   @override
   State<ChatInputBar> createState() => _ChatInputBarState();
 }
-
 class _ChatInputBarState extends State<ChatInputBar>
     with TickerProviderStateMixin {
   late final AnimationManager _animationManager;
@@ -35,48 +30,33 @@ class _ChatInputBarState extends State<ChatInputBar>
   late Animation<double> _micScaleAnimation;
   late Animation<double> _sendButtonScaleAnimation;
   late Animation<Color?> _statusColorAnimation;
-  
   String? _micAnimationId;
   String? _sendAnimationId;
   String? _statusAnimationId;
-  
   VoiceInputState _voiceState = VoiceInputState.idle;
   bool _hasText = false;
-
   @override
   void initState() {
     super.initState();
-    
     _animationManager = AnimationManager();
-    
-    // Initialize animation controllers
     _micAnimationController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    
     _sendButtonController = AnimationController(
       duration: const Duration(milliseconds: 150),
       vsync: this,
     );
-    
     _statusController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
     _initializeAnimations();
-    
-    // Listen to text changes
     widget.controller.addListener(_onTextChanged);
-    
-    // Listen to voice input state changes
     widget.voiceInputService.voiceStateStream.listen(_onVoiceStateChanged);
     _voiceState = widget.voiceInputService.currentState;
   }
-
   void _initializeAnimations() {
-    // Register animations with manager if initialized
     if (_animationManager.isInitialized) {
       _registerAnimations();
     } else {
@@ -86,50 +66,37 @@ class _ChatInputBarState extends State<ChatInputBar>
         }
       });
     }
-    
-    // Create local animations as fallback
     _createLocalAnimations();
   }
-
   void _registerAnimations() {
     try {
-      // Register microphone animation
       final micConfig = AnimationConfigs.buttonPress.copyWith(
         scaleStart: 1.0,
         scaleEnd: 1.2,
       );
-      
       _micAnimationId = _animationManager.registerController(
         controller: _micAnimationController,
         config: micConfig,
         category: AnimationCategory.microInteraction,
       );
-      
-      // Register send button animation
       final sendConfig = AnimationConfigs.buttonPress;
       _sendAnimationId = _animationManager.registerController(
         controller: _sendButtonController,
         config: sendConfig,
         category: AnimationCategory.microInteraction,
       );
-      
-      // Register status animation
       final statusConfig = AnimationConfigs.focusTransition;
       _statusAnimationId = _animationManager.registerController(
         controller: _statusController,
         config: statusConfig,
         category: AnimationCategory.feedback,
       );
-      
-      // Get managed animations
       final micAnim = _animationManager.getAnimation(_micAnimationId!);
       final sendAnim = _animationManager.getAnimation(_sendAnimationId!);
       final statusAnim = _animationManager.getAnimation(_statusAnimationId!);
-      
       if (micAnim != null && sendAnim != null && statusAnim != null) {
         _micScaleAnimation = micAnim.animation as Animation<double>;
         _sendButtonScaleAnimation = sendAnim.animation as Animation<double>;
-        // Status animation will be created locally as it needs color interpolation
         _createStatusAnimation();
       } else {
         _createLocalAnimations();
@@ -139,7 +106,6 @@ class _ChatInputBarState extends State<ChatInputBar>
       _createLocalAnimations();
     }
   }
-
   void _createLocalAnimations() {
     _micScaleAnimation = Tween<double>(
       begin: 1.0,
@@ -148,7 +114,6 @@ class _ChatInputBarState extends State<ChatInputBar>
       parent: _micAnimationController,
       curve: Curves.easeInOut,
     ));
-    
     _sendButtonScaleAnimation = Tween<double>(
       begin: 1.0,
       end: 0.95,
@@ -156,10 +121,8 @@ class _ChatInputBarState extends State<ChatInputBar>
       parent: _sendButtonController,
       curve: Curves.easeInOut,
     ));
-    
     _createStatusAnimation();
   }
-
   void _createStatusAnimation() {
     _statusColorAnimation = ColorTween(
       begin: Colors.grey[400],
@@ -169,10 +132,8 @@ class _ChatInputBarState extends State<ChatInputBar>
       curve: Curves.easeInOut,
     ));
   }
-
   @override
   void dispose() {
-    // Dispose animations through manager
     if (_micAnimationId != null) {
       _animationManager.disposeController(_micAnimationId!);
     }
@@ -182,24 +143,18 @@ class _ChatInputBarState extends State<ChatInputBar>
     if (_statusAnimationId != null) {
       _animationManager.disposeController(_statusAnimationId!);
     }
-    
-    // Dispose controllers
     _micAnimationController.dispose();
     _sendButtonController.dispose();
     _statusController.dispose();
-    
     widget.controller.removeListener(_onTextChanged);
     super.dispose();
   }
-
   void _onTextChanged() {
     final hasText = widget.controller.text.trim().isNotEmpty;
     if (hasText != _hasText) {
       setState(() {
         _hasText = hasText;
       });
-      
-      // Animate send button state change
       if (hasText) {
         if (_statusAnimationId != null) {
           _animationManager.startAnimation(_statusAnimationId!);
@@ -211,12 +166,10 @@ class _ChatInputBarState extends State<ChatInputBar>
       }
     }
   }
-
   void _onVoiceStateChanged(VoiceInputState state) {
     setState(() {
       _voiceState = state;
     });
-    
     if (state == VoiceInputState.listening) {
       if (_micAnimationId != null) {
         _animationManager.startAnimation(_micAnimationId!);
@@ -227,11 +180,9 @@ class _ChatInputBarState extends State<ChatInputBar>
       _micAnimationController.reset();
     }
   }
-
   void _handleSend() {
     final text = widget.controller.text.trim();
     if (text.isNotEmpty && !widget.isLoading) {
-      // Animate send button press
       if (_sendAnimationId != null) {
         _animationManager.startAnimation(_sendAnimationId!);
       } else {
@@ -239,11 +190,9 @@ class _ChatInputBarState extends State<ChatInputBar>
           _sendButtonController.reverse();
         });
       }
-      
       widget.onSend(text);
     }
   }
-
   void _handleVoiceInput() {
     if (_voiceState == VoiceInputState.listening) {
       widget.voiceInputService.stopListening();
@@ -251,7 +200,6 @@ class _ChatInputBarState extends State<ChatInputBar>
       widget.onVoiceInput();
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -269,7 +217,6 @@ class _ChatInputBarState extends State<ChatInputBar>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Voice input status indicator
             if (_voiceState == VoiceInputState.listening)
               Container(
                 width: double.infinity,
@@ -305,11 +252,8 @@ class _ChatInputBarState extends State<ChatInputBar>
                   ],
                 ),
               ),
-            
-            // Input row
             Row(
               children: [
-                // Text input field
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
@@ -340,10 +284,7 @@ class _ChatInputBarState extends State<ChatInputBar>
                     ),
                   ),
                 ),
-                
                 const SizedBox(width: 8),
-                
-                // Microphone button
                 AnimatedBuilder(
                   animation: _micScaleAnimation,
                   builder: (context, child) {
@@ -377,10 +318,7 @@ class _ChatInputBarState extends State<ChatInputBar>
                     );
                   },
                 ),
-                
                 const SizedBox(width: 8),
-                
-                // Send button
                 AnimatedBuilder(
                   animation: Listenable.merge([_sendButtonScaleAnimation, _statusColorAnimation]),
                   builder: (context, child) {
@@ -421,7 +359,6 @@ class _ChatInputBarState extends State<ChatInputBar>
       ),
     );
   }
-
   Color _getMicrophoneColor() {
     switch (_voiceState) {
       case VoiceInputState.idle:
@@ -434,7 +371,6 @@ class _ChatInputBarState extends State<ChatInputBar>
         return Colors.grey;
     }
   }
-
   IconData _getMicrophoneIcon() {
     switch (_voiceState) {
       case VoiceInputState.idle:

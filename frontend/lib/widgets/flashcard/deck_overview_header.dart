@@ -4,16 +4,12 @@ import '../../theme/app_typography.dart';
 import '../../theme/responsive.dart';
 import '../../services/flashcard_service.dart';
 import 'modern_progress_tracker.dart';
-
-/// Modern header component for deck overview with subject info, progress, and study options
-/// Validates: Requirements 1.1, 1.4, 5.4, 5.5
 class DeckOverviewHeader extends StatelessWidget {
   final String subjectName;
   final FlashcardStats stats;
   final VoidCallback onStudyAll;
   final VoidCallback onShuffle;
   final bool isLoading;
-
   const DeckOverviewHeader({
     super.key,
     required this.subjectName,
@@ -22,7 +18,6 @@ class DeckOverviewHeader extends StatelessWidget {
     required this.onShuffle,
     this.isLoading = false,
   });
-
   @override
   Widget build(BuildContext context) {
     return ResponsiveBuilder(
@@ -55,17 +50,10 @@ class DeckOverviewHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Subject name and badge
               _buildSubjectHeader(context, isMobile),
-              
               SizedBox(height: AppTheme.spacingL),
-              
-              // Progress tracker
               _buildProgressSection(context),
-              
               SizedBox(height: AppTheme.spacingL),
-              
-              // Study action buttons
               _buildActionButtons(context, isMobile, isTablet),
             ],
           ),
@@ -73,11 +61,9 @@ class DeckOverviewHeader extends StatelessWidget {
       },
     );
   }
-
   Widget _buildSubjectHeader(BuildContext context, bool isMobile) {
     return Row(
       children: [
-        // Subject icon
         Container(
           padding: const EdgeInsets.all(AppTheme.spacingS),
           decoration: BoxDecoration(
@@ -90,10 +76,7 @@ class DeckOverviewHeader extends StatelessWidget {
             size: isMobile ? 24 : 28,
           ),
         ),
-        
         SizedBox(width: AppTheme.spacingM),
-        
-        // Subject name and info
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,10 +95,7 @@ class DeckOverviewHeader extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              
               SizedBox(height: AppTheme.spacingXS),
-              
-              // Subject badge with card count
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppTheme.spacingS,
@@ -140,8 +120,6 @@ class DeckOverviewHeader extends StatelessWidget {
             ],
           ),
         ),
-        
-        // Due cards indicator (if any)
         if (stats.dueCards > 0) ...[
           SizedBox(width: AppTheme.spacingS),
           Container(
@@ -180,7 +158,6 @@ class DeckOverviewHeader extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildProgressSection(BuildContext context) {
     return ModernProgressTracker(
       totalCards: stats.totalCards,
@@ -190,10 +167,8 @@ class DeckOverviewHeader extends StatelessWidget {
       showCounters: false,
     );
   }
-
   Widget _buildActionButtons(BuildContext context, bool isMobile, bool isTablet) {
     if (isMobile) {
-      // Stack buttons vertically on mobile
       return Column(
         children: [
           _buildStudyAllButton(context, isMobile),
@@ -202,7 +177,6 @@ class DeckOverviewHeader extends StatelessWidget {
         ],
       );
     } else {
-      // Place buttons side by side on tablet/desktop
       return Row(
         children: [
           Expanded(
@@ -217,10 +191,8 @@ class DeckOverviewHeader extends StatelessWidget {
       );
     }
   }
-
   Widget _buildStudyAllButton(BuildContext context, bool isMobile) {
     final hasCards = stats.totalCards > 0;
-    
     return SizedBox(
       width: double.infinity,
       height: isMobile ? 48 : 52,
@@ -263,10 +235,8 @@ class DeckOverviewHeader extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildShuffleButton(BuildContext context, bool isMobile) {
     final hasCards = stats.totalCards > 0;
-    
     return SizedBox(
       width: double.infinity,
       height: isMobile ? 48 : 52,
@@ -301,10 +271,8 @@ class DeckOverviewHeader extends StatelessWidget {
       ),
     );
   }
-
   IconData _getSubjectIcon(String subject) {
     final subjectLower = subject.toLowerCase();
-    
     if (subjectLower.contains('math') || subjectLower.contains('calculus') || 
         subjectLower.contains('algebra') || subjectLower.contains('geometry')) {
       return Icons.calculate;

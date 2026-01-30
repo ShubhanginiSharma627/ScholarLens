@@ -3,14 +3,11 @@ import 'dart:math' as math;
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import '../common/loading_animations.dart';
-
-/// Card widget that displays subject performance with circular progress indicator
 class CircularProgressCard extends StatelessWidget {
   final String subject;
   final double progress;
   final VoidCallback onTap;
   final bool isLoading;
-
   const CircularProgressCard({
     super.key,
     required this.subject,
@@ -18,12 +15,10 @@ class CircularProgressCard extends StatelessWidget {
     required this.onTap,
     this.isLoading = false,
   });
-
   @override
   Widget build(BuildContext context) {
     final percentage = (progress * 100).round();
     final subjectColor = _getSubjectColor(subject);
-    
     return LoadingAnimations.scaleIn(
       child: SizedBox(
         width: 110,
@@ -52,7 +47,6 @@ class CircularProgressCard extends StatelessWidget {
                       height: 60,
                       child: Stack(
                         children: [
-                          // Background circle
                           Container(
                             width: 60,
                             height: 60,
@@ -61,7 +55,6 @@ class CircularProgressCard extends StatelessWidget {
                               color: subjectColor.withValues(alpha: 0.1),
                             ),
                           ),
-                          // Progress circle
                           CustomPaint(
                             size: const Size(60, 60),
                             painter: CircularProgressPainter(
@@ -70,7 +63,6 @@ class CircularProgressCard extends StatelessWidget {
                               strokeWidth: 5,
                             ),
                           ),
-                          // Percentage text
                           Center(
                             child: Text(
                               '$percentage%',
@@ -101,8 +93,6 @@ class CircularProgressCard extends StatelessWidget {
       ),
     );
   }
-
-  /// Gets appropriate color for subject
   Color _getSubjectColor(String subject) {
     switch (subject.toLowerCase()) {
       case 'math':
@@ -127,14 +117,10 @@ class CircularProgressCard extends StatelessWidget {
         return AppTheme.secondaryColor;
     }
   }
-
-  /// Gets display name for subject (capitalize and truncate if needed)
   String _getDisplayName(String subject) {
     if (subject.length <= 10) {
       return subject[0].toUpperCase() + subject.substring(1).toLowerCase();
     }
-    
-    // Abbreviate long subject names
     switch (subject.toLowerCase()) {
       case 'mathematics':
         return 'Math';
@@ -149,42 +135,31 @@ class CircularProgressCard extends StatelessWidget {
     }
   }
 }
-
-/// Custom painter for circular progress indicator
 class CircularProgressPainter extends CustomPainter {
   final double progress;
   final Color color;
   final double strokeWidth;
-
   CircularProgressPainter({
     required this.progress,
     required this.color,
     required this.strokeWidth,
   });
-
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
-    
-    // Background circle
     final backgroundPaint = Paint()
       ..color = color.withValues(alpha: 0.1)
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
-    
     canvas.drawCircle(center, radius, backgroundPaint);
-    
-    // Progress arc
     final progressPaint = Paint()
       ..color = color
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
-
     const startAngle = -math.pi / 2; // Start from top
     final sweepAngle = 2 * math.pi * progress.clamp(0.0, 1.0);
-    
     if (sweepAngle > 0) {
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
@@ -195,7 +170,6 @@ class CircularProgressPainter extends CustomPainter {
       );
     }
   }
-
   @override
   bool shouldRepaint(CircularProgressPainter oldDelegate) {
     return oldDelegate.progress != progress ||

@@ -3,50 +3,35 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
-
 class ApiService {
   static const String _baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'https://scholarlens-afvx.onrender.com/api',
   );
-  
   static const int _timeoutSeconds = 15; // Reduced from 30 to 15 seconds
-  
   String? _accessToken;
   String? _refreshToken;
-  
-  // Singleton pattern
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal();
-  
-  // Headers
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
   };
-  
   Map<String, String> get _multipartHeaders => {
     'Accept': 'application/json',
     if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
   };
-  
-  // Token management
   void setTokens(String accessToken, String refreshToken) {
     _accessToken = accessToken;
     _refreshToken = refreshToken;
   }
-  
   void clearTokens() {
     _accessToken = null;
     _refreshToken = null;
   }
-  
-  // HTTP client with timeout
   http.Client get _client => http.Client();
-  
-  // Generic request handler
   Future<Map<String, dynamic>> _makeRequest(
     String method,
     String endpoint, {
@@ -56,14 +41,11 @@ class ApiService {
   }) async {
     final uri = Uri.parse('$_baseUrl$endpoint');
     final headers = customHeaders ?? _headers;
-    
     if (requiresAuth && _accessToken == null) {
       throw ApiException('Authentication required', 401);
     }
-    
     try {
       http.Response response;
-      
       switch (method.toUpperCase()) {
         case 'GET':
           response = await _client.get(uri, headers: headers)
@@ -90,7 +72,6 @@ class ApiService {
         default:
           throw ApiException('Unsupported HTTP method: $method', 400);
       }
-      
       return _handleResponse(response);
     } on SocketException {
       throw ApiException('No internet connection', 0);
@@ -103,37 +84,27 @@ class ApiService {
       throw ApiException('Request failed: $e', 0);
     }
   }
-  
-  // Handle HTTP response
   Map<String, dynamic> _handleResponse(http.Response response) {
     final Map<String, dynamic> data;
-    
     try {
       data = jsonDecode(response.body);
     } catch (e) {
       throw ApiException('Invalid JSON response', response.statusCode);
     }
-    
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return data;
     }
-    
-    // Handle token refresh for 401 errors
     if (response.statusCode == 401 && _refreshToken != null) {
-      // Token refresh will be handled by the calling code
       throw TokenExpiredException(
         data['error']?['message'] ?? 'Authentication failed',
         response.statusCode,
       );
     }
-    
     throw ApiException(
       data['error']?['message'] ?? 'Request failed',
       response.statusCode,
     );
   }
-  
-  // Multipart request for file uploads
   Future<Map<String, dynamic>> _makeMultipartRequest(
     String endpoint,
     Map<String, String> fields, {
@@ -141,23 +112,18 @@ class ApiService {
     bool requiresAuth = false,
   }) async {
     final uri = Uri.parse('$_baseUrl$endpoint');
-    
     if (requiresAuth && _accessToken == null) {
       throw ApiException('Authentication required', 401);
     }
-    
     try {
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_multipartHeaders);
       request.fields.addAll(fields);
-      
       if (files != null) {
         request.files.addAll(files);
       }
-      
       final streamedResponse = await request.send()
           .timeout(const Duration(seconds: _timeoutSeconds * 2));
-      
       final response = await http.Response.fromStream(streamedResponse);
       return _handleResponse(response);
     } catch (e) {
@@ -165,8 +131,6 @@ class ApiService {
       throw ApiException('Upload failed: $e', 0);
     }
   }
-  
-  // Authentication endpoints
   Future<AuthResponse> register({
     required String email,
     required String password,
@@ -177,12 +141,10 @@ class ApiService {
       'password': password,
       'name': name,
     });
-    
     final authData = AuthResponse.fromJson(response['data']);
     setTokens(authData.tokens.accessToken, authData.tokens.refreshToken);
     return authData;
   }
-  
   Future<AuthResponse> login({
     required String email,
     required String password,
@@ -191,12 +153,10 @@ class ApiService {
       'email': email,
       'password': password,
     });
-    
     final authData = AuthResponse.fromJson(response['data']);
     setTokens(authData.tokens.accessToken, authData.tokens.refreshToken);
     return authData;
   }
-  
   Future<AuthResponse> googleSignIn({
     required String idToken,
     String clientType = 'android', // 'web', 'android', or 'ios'
@@ -205,32 +165,25 @@ class ApiService {
       'idToken': idToken,
       'clientType': clientType,
     });
-    
     final authData = AuthResponse.fromJson(response['data']);
     setTokens(authData.tokens.accessToken, authData.tokens.refreshToken);
     return authData;
   }
-  
   Future<void> logout() async {
     await _makeRequest('POST', '/auth/logout', requiresAuth: true);
     clearTokens();
   }
-  
   Future<AuthTokens> refreshTokens() async {
     if (_refreshToken == null) {
       throw ApiException('No refresh token available', 401);
     }
-    
     final response = await _makeRequest('POST', '/auth/refresh', body: {
       'refreshToken': _refreshToken,
     });
-    
     final tokens = AuthTokens.fromJson(response['data']['tokens']);
     setTokens(tokens.accessToken, tokens.refreshToken);
     return tokens;
   }
-  
-  // Flashcard endpoints
   Future<List<Flashcard>> getFlashcards({
     String? setId,
     String? tags,
@@ -245,19 +198,14 @@ class ApiService {
       if (tags != null) 'tags': tags,
       if (difficulty != null) 'difficulty': difficulty,
     };
-    
     final uri = Uri.parse('$_baseUrl/flashcards')
         .replace(queryParameters: queryParams);
-    
     final response = await _client.get(uri, headers: _headers)
         .timeout(const Duration(seconds: _timeoutSeconds));
-    
     final data = _handleResponse(response);
     final flashcardsJson = data['data']['flashcards'] as List;
-    
     return flashcardsJson.map((json) => Flashcard.fromJson(json)).toList();
   }
-  
   Future<Flashcard> createFlashcard({
     required String question,
     required String answer,
@@ -275,10 +223,8 @@ class ApiService {
         if (setId != null) 'setId': setId,
       },
     );
-    
     return Flashcard.fromJson(response['data']['flashcard']);
   }
-  
   Future<List<Flashcard>> generateFlashcards({
     required String topic,
     int count = 5,
@@ -294,11 +240,9 @@ class ApiService {
         if (setId != null) 'setId': setId,
       },
     );
-    
     final flashcardsJson = response['data']['flashcards'] as List;
     return flashcardsJson.map((json) => Flashcard.fromJson(json)).toList();
   }
-  
   Future<void> studyFlashcard({
     required String flashcardId,
     required bool correct,
@@ -313,8 +257,6 @@ class ApiService {
       },
     );
   }
-  
-  // Vision/Image analysis
   Future<String> analyzeImage({
     required String imageBase64,
     String? prompt,
@@ -325,11 +267,8 @@ class ApiService {
       'prompt': prompt ?? 'Analyze this image and explain any diagrams, math, or text.',
       'mimeType': mimeType,
     });
-    
     return response['analysis'] as String;
   }
-  
-  // Study plan generation
   Future<String> generateStudyPlan({
     required String topic,
     String audience = 'general',
@@ -342,11 +281,8 @@ class ApiService {
       'length': length,
       'constraints': constraints,
     });
-    
     return response['data'] as String;
   }
-  
-  // Topic explanation
   Future<String> explainTopic({
     required String topic,
     String audience = 'student',
@@ -357,11 +293,8 @@ class ApiService {
       'audience': audience,
       'type': type,
     });
-    
     return response['data'] as String;
   }
-  
-  // Enhanced AI Services
   Future<Map<String, dynamic>> explainTopicEnhanced({
     required String topic,
     String audience = 'student',
@@ -379,10 +312,8 @@ class ApiService {
         if (variation != null) 'variation': variation,
       },
     );
-    
     return response['data'];
   }
-  
   Future<Map<String, dynamic>> generateStudyPlanEnhanced({
     required List<String> subjects,
     Map<String, String>? examDates,
@@ -404,10 +335,8 @@ class ApiService {
         if (constraints != null) 'constraints': constraints,
       },
     );
-    
     return response['data'];
   }
-  
   Future<Map<String, dynamic>> generateRevisionPlan({
     required String topic,
     String audience = 'student',
@@ -423,10 +352,8 @@ class ApiService {
         if (constraints != null) 'constraints': constraints,
       },
     );
-    
     return response['data'];
   }
-  
   Future<Map<String, dynamic>> chatWithTutor({
     required String message,
     String? subject,
@@ -446,10 +373,8 @@ class ApiService {
         'sessionType': sessionType,
       },
     );
-    
     return response['data'];
   }
-  
   Future<Map<String, dynamic>> analyzeSyllabus({
     required String syllabusContent,
     String? courseLevel,
@@ -467,10 +392,8 @@ class ApiService {
         if (semesterLength != null) 'semesterLength': semesterLength,
       },
     );
-    
     return response['data'];
   }
-  
   Future<Map<String, dynamic>> analyzeEducationalImage({
     required String imageData,
     String analysisType = 'general',
@@ -488,10 +411,8 @@ class ApiService {
         if (difficulty != null) 'difficulty': difficulty,
       },
     );
-    
     return response['data'];
   }
-  
   Future<Map<String, dynamic>> generateQuizQuestions({
     required String topic,
     int count = 5,
@@ -509,27 +430,20 @@ class ApiService {
         if (difficulty != null) 'difficulty': difficulty,
       },
     );
-    
     return response['data'];
   }
-  
   Future<Map<String, dynamic>> getAIStatus() async {
     final response = await _makeRequest('GET', '/ai/status');
     return response['data'];
   }
-  
-  // User stats
   Future<UserStats> getUserStats() async {
     final response = await _makeRequest('GET', '/stats', requiresAuth: true);
     return UserStats.fromJson(response);
   }
-  
-  // Storage endpoints
   Future<Map<String, dynamic>> getStorageStatus() async {
     final response = await _makeRequest('GET', '/storage/status');
     return response['data'];
   }
-  
   Future<StorageUploadResponse> uploadFile({
     required File file,
     String? folder,
@@ -540,22 +454,18 @@ class ApiService {
       file.path,
       filename: file.path.split('/').last,
     );
-    
     final fields = <String, String>{
       if (folder != null) 'folder': folder,
       'makePublic': makePublic.toString(),
     };
-    
     final response = await _makeMultipartRequest(
       '/storage/upload',
       fields,
       files: [multipartFile],
       requiresAuth: true,
     );
-    
     return StorageUploadResponse.fromJson(response['data']);
   }
-  
   Future<String> getFileDownloadUrl({
     required String fileName,
     DateTime? expires,
@@ -565,21 +475,16 @@ class ApiService {
       if (expires != null) 'expires': expires.toIso8601String(),
       'public': public.toString(),
     };
-    
     final uri = Uri.parse('$_baseUrl/storage/download/$fileName')
         .replace(queryParameters: queryParams);
-    
     final response = await _client.get(uri, headers: _headers)
         .timeout(const Duration(seconds: _timeoutSeconds));
-    
     final data = _handleResponse(response);
     return data['data']['downloadUrl'] as String;
   }
-  
   Future<void> deleteFile({required String fileName}) async {
     await _makeRequest('DELETE', '/storage/files/$fileName', requiresAuth: true);
   }
-  
   Future<List<StorageFile>> listFiles({
     String? folder,
     int maxResults = 100,
@@ -588,20 +493,14 @@ class ApiService {
       if (folder != null) 'folder': folder,
       'maxResults': maxResults.toString(),
     };
-    
     final uri = Uri.parse('$_baseUrl/storage/files')
         .replace(queryParameters: queryParams);
-    
     final response = await _client.get(uri, headers: _headers)
         .timeout(const Duration(seconds: _timeoutSeconds));
-    
     final data = _handleResponse(response);
     final filesJson = data['data']['files'] as List;
-    
     return filesJson.map((json) => StorageFile.fromJson(json)).toList();
   }
-  
-  // Syllabus scanning with file upload
   Future<Map<String, dynamic>> scanSyllabus({
     required File file,
     String? prompt,
@@ -611,50 +510,36 @@ class ApiService {
       file.path,
       filename: file.path.split('/').last,
     );
-    
     final fields = <String, String>{
       if (prompt != null) 'prompt': prompt,
     };
-    
     final response = await _makeMultipartRequest(
       '/syllabus/scan',
       fields,
       files: [multipartFile],
       requiresAuth: true,
     );
-    
     return response;
   }
-  
-  // Dispose
   void dispose() {
     _client.close();
   }
 }
-
-// Custom exceptions
 class ApiException implements Exception {
   final String message;
   final int statusCode;
-  
   ApiException(this.message, this.statusCode);
-  
   @override
   String toString() => 'ApiException: $message (Status: $statusCode)';
 }
-
 class TokenExpiredException extends ApiException {
   TokenExpiredException(String message, int statusCode) 
       : super(message, statusCode);
 }
-
-// Response models
 class AuthResponse {
   final User user;
   final AuthTokens tokens;
-  
   AuthResponse({required this.user, required this.tokens});
-  
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
       user: User.fromJson(json['user']),
@@ -662,13 +547,10 @@ class AuthResponse {
     );
   }
 }
-
 class AuthTokens {
   final String accessToken;
   final String refreshToken;
-  
   AuthTokens({required this.accessToken, required this.refreshToken});
-  
   factory AuthTokens.fromJson(Map<String, dynamic> json) {
     return AuthTokens(
       accessToken: json['accessToken'],
@@ -676,7 +558,6 @@ class AuthTokens {
     );
   }
 }
-
 class User {
   final String id;
   final String email;
@@ -684,7 +565,6 @@ class User {
   final DateTime createdAt;
   final Map<String, dynamic> preferences;
   final Map<String, dynamic> profile;
-  
   User({
     required this.id,
     required this.email,
@@ -693,7 +573,6 @@ class User {
     required this.preferences,
     required this.profile,
   });
-  
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'],
@@ -705,14 +584,12 @@ class User {
     );
   }
 }
-
 class UserStats {
   final int totalInteractions;
   final Map<String, int> topics;
   final List<double> quizScores;
   final int streak;
   final List<WeakTopic> weakestTopics;
-  
   UserStats({
     required this.totalInteractions,
     required this.topics,
@@ -720,7 +597,6 @@ class UserStats {
     required this.streak,
     required this.weakestTopics,
   });
-  
   factory UserStats.fromJson(Map<String, dynamic> json) {
     return UserStats(
       totalInteractions: json['totalInteractions'] ?? 0,
@@ -733,13 +609,10 @@ class UserStats {
     );
   }
 }
-
 class WeakTopic {
   final String topic;
   final int count;
-  
   WeakTopic({required this.topic, required this.count});
-  
   factory WeakTopic.fromJson(Map<String, dynamic> json) {
     return WeakTopic(
       topic: json['topic'],

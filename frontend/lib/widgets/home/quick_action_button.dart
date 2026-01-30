@@ -2,15 +2,12 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import '../common/loading_animations.dart';
-
-/// Individual quick action button widget with loading state support
 class QuickActionButton extends StatefulWidget {
   final String title;
   final String subtitle;
   final IconData icon;
   final Color? color;
   final VoidCallback onTap;
-
   const QuickActionButton({
     super.key,
     required this.title,
@@ -19,18 +16,14 @@ class QuickActionButton extends StatefulWidget {
     this.color,
     required this.onTap,
   });
-
   @override
   State<QuickActionButton> createState() => _QuickActionButtonState();
 }
-
 class _QuickActionButtonState extends State<QuickActionButton> {
   bool _isLoading = false;
-
   @override
   Widget build(BuildContext context) {
     final buttonColor = widget.color ?? AppTheme.primaryColor;
-    
     return LoadingAnimations.scaleIn(
       delay: const Duration(milliseconds: 100),
       child: Card(
@@ -103,17 +96,13 @@ class _QuickActionButtonState extends State<QuickActionButton> {
       ),
     );
   }
-
   void _handleTap() async {
     if (_isLoading) return;
-    
     setState(() {
       _isLoading = true;
     });
-
     try {
       widget.onTap();
-      // Add a small delay to show the loading state
       await Future.delayed(const Duration(milliseconds: 300));
     } finally {
       if (mounted) {

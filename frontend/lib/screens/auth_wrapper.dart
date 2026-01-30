@@ -1,42 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../models/models.dart';
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
 import 'main_navigation_screen.dart';
-
-/// Authentication wrapper that determines whether to show auth screens or main app
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
-
   @override
   State<AuthWrapper> createState() => _AuthWrapperState();
 }
-
 class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
-    // Check authentication status when the app starts
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthenticationProvider>().checkAuthenticationStatus();
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthenticationProvider>(
       builder: (context, authProvider, child) {
-        // Show loading screen while checking authentication status
         if (authProvider.isLoading && authProvider.state == AuthenticationState.unauthenticated) {
           return _LoadingScreen(
             isOfflineMode: authProvider.isOfflineMode,
           );
         }
-
-        // Show error screen if there's a critical authentication error
         if (authProvider.state == AuthenticationState.error && 
             authProvider.lastErrorInfo?.requiresReauthentication == true) {
           return _ErrorScreen(
@@ -45,36 +35,26 @@ class _AuthWrapperState extends State<AuthWrapper> {
             onSignIn: () => Navigator.of(context).pushReplacementNamed(LoginScreen.routeName),
           );
         }
-
-        // Show main app if authenticated
         if (authProvider.isAuthenticated) {
           return _AuthenticatedApp(
             isOfflineMode: authProvider.isOfflineMode,
           );
         }
-
-        // Show login screen if not authenticated
         return const LoginScreen();
       },
     );
   }
 }
-
-/// Authenticated app wrapper with offline mode indicator
 class _AuthenticatedApp extends StatelessWidget {
   final bool isOfflineMode;
-
   const _AuthenticatedApp({
     required this.isOfflineMode,
   });
-
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         const MainNavigationScreen(),
-        
-        // Offline mode indicator
         if (isOfflineMode)
           Positioned(
             top: MediaQuery.of(context).padding.top,
@@ -86,8 +66,6 @@ class _AuthenticatedApp extends StatelessWidget {
     );
   }
 }
-
-/// Offline mode indicator banner
 class _OfflineModeIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -130,15 +108,11 @@ class _OfflineModeIndicator extends StatelessWidget {
     );
   }
 }
-
-/// Loading screen shown while checking authentication status
 class _LoadingScreen extends StatelessWidget {
   final bool isOfflineMode;
-
   const _LoadingScreen({
     this.isOfflineMode = false,
   });
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,16 +131,10 @@ class _LoadingScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // App Logo
               const _AppLogo(),
-              
               const SizedBox(height: 32),
-              
-              // Loading Indicator
               const CircularProgressIndicator(),
-              
               const SizedBox(height: 16),
-              
               Text(
                 isOfflineMode ? 'Loading offline data...' : 'Loading Scholar Lens...',
                 style: const TextStyle(
@@ -174,7 +142,6 @@ class _LoadingScreen extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              
               if (isOfflineMode) ...[
                 const SizedBox(height: 8),
                 Text(
@@ -192,19 +159,15 @@ class _LoadingScreen extends StatelessWidget {
     );
   }
 }
-
-/// Error screen for critical authentication errors
 class _ErrorScreen extends StatelessWidget {
   final AuthErrorInfo errorInfo;
   final VoidCallback onRetry;
   final VoidCallback onSignIn;
-
   const _ErrorScreen({
     required this.errorInfo,
     required this.onRetry,
     required this.onSignIn,
   });
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -225,16 +188,12 @@ class _ErrorScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Error Icon
                 Icon(
                   Icons.error_outline,
                   size: 80,
                   color: Theme.of(context).colorScheme.error,
                 ),
-                
                 const SizedBox(height: 24),
-                
-                // Error Title
                 Text(
                   'Authentication Error',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -242,19 +201,13 @@ class _ErrorScreen extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
                 const SizedBox(height: 16),
-                
-                // Error Message
                 Text(
                   errorInfo.message,
                   style: Theme.of(context).textTheme.bodyLarge,
                   textAlign: TextAlign.center,
                 ),
-                
                 const SizedBox(height: 32),
-                
-                // Action Buttons
                 Column(
                   children: [
                     SizedBox(
@@ -275,9 +228,7 @@ class _ErrorScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    
                     const SizedBox(height: 12),
-                    
                     if (errorInfo.isRetryable)
                       SizedBox(
                         width: double.infinity,
@@ -297,20 +248,15 @@ class _ErrorScreen extends StatelessWidget {
                       ),
                   ],
                 ),
-                
-                // Recovery Suggestions
                 if (errorInfo.recoverySuggestions.isNotEmpty) ...[
                   const SizedBox(height: 32),
-                  
                   Text(
                     'Suggestions:',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  
                   const SizedBox(height: 8),
-                  
                   ...errorInfo.recoverySuggestions.take(3).map(
                     (suggestion) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -343,11 +289,8 @@ class _ErrorScreen extends StatelessWidget {
     );
   }
 }
-
-/// App logo widget
 class _AppLogo extends StatelessWidget {
   const _AppLogo();
-
   @override
   Widget build(BuildContext context) {
     return Container(

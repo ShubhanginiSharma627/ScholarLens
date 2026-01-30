@@ -1,4 +1,3 @@
-/// Response model for file upload operations
 class StorageUploadResponse {
   final String fileName;
   final String originalName;
@@ -8,7 +7,6 @@ class StorageUploadResponse {
   final DateTime uploadedAt;
   final String? folder;
   final bool isPublic;
-
   const StorageUploadResponse({
     required this.fileName,
     required this.originalName,
@@ -19,8 +17,6 @@ class StorageUploadResponse {
     this.folder,
     required this.isPublic,
   });
-
-  /// Creates a StorageUploadResponse from JSON
   factory StorageUploadResponse.fromJson(Map<String, dynamic> json) {
     return StorageUploadResponse(
       fileName: json['fileName'] as String,
@@ -33,8 +29,6 @@ class StorageUploadResponse {
       isPublic: json['isPublic'] as bool? ?? false,
     );
   }
-
-  /// Converts StorageUploadResponse to JSON
   Map<String, dynamic> toJson() {
     return {
       'fileName': fileName,
@@ -47,14 +41,10 @@ class StorageUploadResponse {
       'isPublic': isPublic,
     };
   }
-
-  /// Gets the file extension
   String get extension {
     final parts = originalName.split('.');
     return parts.length > 1 ? parts.last.toLowerCase() : '';
   }
-
-  /// Gets the file size in a human-readable format
   String get formattedSize {
     if (size < 1024) return '$size B';
     if (size < 1024 * 1024) return '${(size / 1024).toStringAsFixed(1)} KB';
@@ -63,30 +53,20 @@ class StorageUploadResponse {
     }
     return '${(size / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
-
-  /// Checks if the file is an image
   bool get isImage {
     return contentType.startsWith('image/');
   }
-
-  /// Checks if the file is a document
   bool get isDocument {
     return contentType.startsWith('application/') ||
         contentType.startsWith('text/') ||
         ['pdf', 'doc', 'docx', 'txt', 'rtf'].contains(extension);
   }
-
-  /// Checks if the file is a video
   bool get isVideo {
     return contentType.startsWith('video/');
   }
-
-  /// Checks if the file is an audio file
   bool get isAudio {
     return contentType.startsWith('audio/');
   }
-
-  /// Creates a copy with updated fields
   StorageUploadResponse copyWith({
     String? fileName,
     String? originalName,
@@ -108,7 +88,6 @@ class StorageUploadResponse {
       isPublic: isPublic ?? this.isPublic,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -122,7 +101,6 @@ class StorageUploadResponse {
         other.folder == folder &&
         other.isPublic == isPublic;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -136,7 +114,6 @@ class StorageUploadResponse {
       isPublic,
     );
   }
-
   @override
   String toString() {
     return 'StorageUploadResponse(fileName: $fileName, originalName: $originalName, size: $formattedSize)';

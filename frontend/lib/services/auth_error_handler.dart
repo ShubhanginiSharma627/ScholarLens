@@ -1,27 +1,17 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-
 import '../models/models.dart';
 import 'network_service.dart';
-
 class AuthErrorHandler {
   static AuthErrorHandler? _instance;
   static AuthErrorHandler get instance => _instance ??= AuthErrorHandler._();
-
   AuthErrorHandler._();
-
   final NetworkService _networkService = NetworkService.instance;
-
-  // Error tracking
   final Map<AuthErrorType, int> _errorCounts = {};
   final Map<AuthErrorType, DateTime> _lastErrorTimes = {};
-  
-  // Retry configuration
   static const int _maxRetryAttempts = 3;
   static const Duration _retryDelay = Duration(seconds: 2);
   static const Duration _errorCooldownPeriod = Duration(minutes: 5);
-
-  /// Handle authentication error with user-friendly messaging and recovery options
   AuthErrorInfo handleAuthError(
     dynamic error, {
     AuthErrorType? errorType,
@@ -29,33 +19,20 @@ class AuthErrorHandler {
     Map<String, dynamic>? metadata,
   }) {
     debugPrint('Handling auth error: $error (type: $errorType, context: $context)');
-
-    // Determine error type if not provided
     final resolvedErrorType = errorType ?? _determineErrorType(error);
-    
-    // Track error occurrence
     _trackError(resolvedErrorType);
-
-    // Get user-friendly error information
     final errorInfo = _getErrorInfo(resolvedErrorType, error, context, metadata);
-
-    // Log error for debugging (without sensitive information)
     _logError(errorInfo, error, metadata);
-
     return errorInfo;
   }
-
-  /// Handle network-specific authentication errors
   AuthErrorInfo handleNetworkError(
     dynamic error, {
     String? context,
     Map<String, dynamic>? metadata,
   }) {
     debugPrint('Handling network error: $error (context: $context)');
-
     final networkError = _networkService.detectNetworkError(error);
     AuthErrorType errorType;
-
     switch (networkError.type) {
       case NetworkErrorType.timeout:
         errorType = AuthErrorType.networkError;
@@ -70,7 +47,6 @@ class AuthErrorHandler {
         errorType = AuthErrorType.unknown;
         break;
     }
-
     return handleAuthError(
       error,
       errorType: errorType,
@@ -82,8 +58,6 @@ class AuthErrorHandler {
       },
     );
   }
-
-  /// Get retry configuration for an error type
   RetryConfig getRetryConfig(AuthErrorType errorType) {
     switch (errorType) {
       case AuthErrorType.networkError:
@@ -111,76 +85,54 @@ class AuthErrorHandler {
         );
     }
   }
-
-  /// Execute operation with retry logic
   Future<T> executeWithRetry<T>(
     Future<T> Function() operation,
     AuthErrorType errorType, {
     String? context,
   }) async {
     final retryConfig = getRetryConfig(errorType);
-    
     if (retryConfig.maxAttempts == 0) {
       return await operation();
     }
-
     int attempts = 0;
     Duration currentDelay = retryConfig.delay;
-
     while (attempts < retryConfig.maxAttempts) {
       try {
         attempts++;
         debugPrint('Executing operation (attempt $attempts/${retryConfig.maxAttempts})');
-        
         return await operation();
       } catch (error) {
         debugPrint('Operation failed (attempt $attempts): $error');
-        
         if (attempts >= retryConfig.maxAttempts) {
           debugPrint('Max retry attempts reached, throwing error');
           rethrow;
         }
-
-        // Check if error is retryable
         final errorInfo = handleAuthError(error, context: context);
         if (!errorInfo.isRetryable) {
           debugPrint('Error is not retryable, throwing error');
           rethrow;
         }
-
-        // Wait before retry
         debugPrint('Waiting ${currentDelay.inMilliseconds}ms before retry');
         await Future.delayed(currentDelay);
-        
-        // Increase delay for next attempt (exponential backoff)
         currentDelay = Duration(
           milliseconds: (currentDelay.inMilliseconds * retryConfig.backoffMultiplier).round(),
         );
-        
         if (currentDelay > retryConfig.maxDelay) {
           currentDelay = retryConfig.maxDelay;
         }
       }
     }
-
     throw StateError('Retry logic error - should not reach here');
   }
-
-  /// Check if error should be shown to user (avoid spam)
   bool shouldShowError(AuthErrorType errorType) {
-    // Never show error for user cancellation - it's intentional
     if (errorType == AuthErrorType.userCancelled) {
       return false;
     }
-    
     final lastErrorTime = _lastErrorTimes[errorType];
     if (lastErrorTime == null) return true;
-
     final timeSinceLastError = DateTime.now().difference(lastErrorTime);
     return timeSinceLastError > _errorCooldownPeriod;
   }
-
-  /// Get error statistics for debugging
   Map<String, dynamic> getErrorStatistics() {
     return {
       'errorCounts': Map.from(_errorCounts),
@@ -189,29 +141,20 @@ class AuthErrorHandler {
       ),
     };
   }
-
-  /// Clear error statistics
   void clearErrorStatistics() {
     _errorCounts.clear();
     _lastErrorTimes.clear();
     debugPrint('Error statistics cleared');
   }
-
-  /// Determine error type from exception
   AuthErrorType _determineErrorType(dynamic error) {
     if (error == null) return AuthErrorType.unknown;
-
     final errorString = error.toString().toLowerCase();
-
-    // Network errors
     if (errorString.contains('socketexception') ||
         errorString.contains('timeout') ||
         errorString.contains('connection') ||
         errorString.contains('network')) {
       return AuthErrorType.networkError;
     }
-
-    // HTTP errors
     if (errorString.contains('http')) {
       if (errorString.contains('401') || errorString.contains('unauthorized')) {
         return AuthErrorType.invalidCredentials;
@@ -223,8 +166,6 @@ class AuthErrorHandler {
         return AuthErrorType.serverError;
       }
     }
-
-    // Google Sign-In errors
     if (errorString.contains('google') || errorString.contains('sign_in')) {
       if (errorString.contains('cancelled')) {
         return AuthErrorType.userCancelled;
@@ -232,8 +173,6 @@ class AuthErrorHandler {
         return AuthErrorType.googleSignInFailed;
       }
     }
-
-    // Token errors
     if (errorString.contains('token') || errorString.contains('jwt')) {
       if (errorString.contains('expired')) {
         return AuthErrorType.tokenExpired;
@@ -241,16 +180,11 @@ class AuthErrorHandler {
         return AuthErrorType.tokenInvalid;
       }
     }
-
-    // Validation errors
     if (errorString.contains('validation') || errorString.contains('invalid')) {
       return AuthErrorType.validationError;
     }
-
     return AuthErrorType.unknown;
   }
-
-  /// Get comprehensive error information
   AuthErrorInfo _getErrorInfo(
     AuthErrorType errorType,
     dynamic originalError,
@@ -260,19 +194,12 @@ class AuthErrorHandler {
     final baseMessage = errorType.message;
     final isRetryable = errorType.isRetryable;
     final requiresReauth = errorType.requiresReauthentication;
-
-    // Get context-specific message
     String contextualMessage = baseMessage;
     if (context != null) {
       contextualMessage = _getContextualMessage(errorType, context, baseMessage);
     }
-
-    // Get recovery suggestions
     final recoverySuggestions = _getRecoverySuggestions(errorType, context);
-
-    // Get user actions
     final userActions = _getUserActions(errorType, context);
-
     return AuthErrorInfo(
       type: errorType,
       message: contextualMessage,
@@ -287,8 +214,6 @@ class AuthErrorHandler {
       lastOccurrence: _lastErrorTimes[errorType],
     );
   }
-
-  /// Get contextual error message
   String _getContextualMessage(AuthErrorType errorType, String context, String baseMessage) {
     switch (context.toLowerCase()) {
       case 'login':
@@ -330,8 +255,6 @@ class AuthErrorHandler {
         return baseMessage;
     }
   }
-
-  /// Get recovery suggestions for error type
   List<String> _getRecoverySuggestions(AuthErrorType errorType, String? context) {
     switch (errorType) {
       case AuthErrorType.networkError:
@@ -379,8 +302,6 @@ class AuthErrorHandler {
         ];
     }
   }
-
-  /// Get user actions for error type
   List<UserAction> _getUserActions(AuthErrorType errorType, String? context) {
     switch (errorType) {
       case AuthErrorType.networkError:
@@ -455,14 +376,10 @@ class AuthErrorHandler {
         ];
     }
   }
-
-  /// Track error occurrence
   void _trackError(AuthErrorType errorType) {
     _errorCounts[errorType] = (_errorCounts[errorType] ?? 0) + 1;
     _lastErrorTimes[errorType] = DateTime.now();
   }
-
-  /// Log error for debugging (without sensitive information)
   void _logError(
     AuthErrorInfo errorInfo,
     dynamic originalError,
@@ -482,8 +399,6 @@ class AuthErrorHandler {
     }
   }
 }
-
-/// Comprehensive error information
 class AuthErrorInfo {
   final AuthErrorType type;
   final String message;
@@ -496,7 +411,6 @@ class AuthErrorInfo {
   final List<UserAction> userActions;
   final int errorCount;
   final DateTime? lastOccurrence;
-
   const AuthErrorInfo({
     required this.type,
     required this.message,
@@ -510,34 +424,27 @@ class AuthErrorInfo {
     required this.errorCount,
     this.lastOccurrence,
   });
-
   @override
   String toString() {
     return 'AuthErrorInfo(type: $type, message: $message, context: $context)';
   }
 }
-
-/// User action configuration
 class UserAction {
   final String label;
   final UserActionType action;
   final bool isPrimary;
   final Map<String, dynamic>? data;
-
   const UserAction({
     required this.label,
     required this.action,
     required this.isPrimary,
     this.data,
   });
-
   @override
   String toString() {
     return 'UserAction(label: $label, action: $action, isPrimary: $isPrimary)';
   }
 }
-
-/// User action types
 enum UserActionType {
   retry,
   cancel,
@@ -549,21 +456,17 @@ enum UserActionType {
   contactSupport,
   checkSettings,
 }
-
-/// Retry configuration
 class RetryConfig {
   final int maxAttempts;
   final Duration delay;
   final double backoffMultiplier;
   final Duration maxDelay;
-
   const RetryConfig({
     required this.maxAttempts,
     required this.delay,
     required this.backoffMultiplier,
     required this.maxDelay,
   });
-
   @override
   String toString() {
     return 'RetryConfig(maxAttempts: $maxAttempts, delay: $delay, backoffMultiplier: $backoffMultiplier)';

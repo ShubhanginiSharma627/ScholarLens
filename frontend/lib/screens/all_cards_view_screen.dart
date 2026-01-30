@@ -6,39 +6,25 @@ import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import 'flashcard_screen.dart';
 import 'create_flashcard_screen.dart';
-
-/// Screen displaying all cards in a deck with search, filtering, and navigation capabilities
-/// 
-/// Features:
-/// - Display list of all cards using CardListItem widgets
-/// - Add "Generate More Cards" button with modern styling
-/// - Implement navigation to specific cards in study mode
-/// - Include search and filtering capabilities
-/// - Requirements: 4.4, 4.5
 class AllCardsViewScreen extends StatefulWidget {
   final String subject;
   final List<Flashcard>? initialCards;
-
   const AllCardsViewScreen({
     super.key,
     required this.subject,
     this.initialCards,
   });
-
   @override
   State<AllCardsViewScreen> createState() => _AllCardsViewScreenState();
 }
-
 class _AllCardsViewScreenState extends State<AllCardsViewScreen>
     with SingleTickerProviderStateMixin {
   final FlashcardService _flashcardService = FlashcardService();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  
   List<Flashcard> _allCards = [];
   List<Flashcard> _filteredCards = [];
   List<String> _categories = [];
@@ -48,17 +34,13 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
   bool _showDueOnly = false;
   bool _isLoading = true;
   String _searchQuery = '';
-
   @override
   void initState() {
     super.initState();
-    
-    // Initialize animations
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -66,7 +48,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
       parent: _animationController,
       curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
     ));
-    
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
@@ -74,11 +55,9 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
       parent: _animationController,
       curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
     ));
-    
     _loadCards();
     _searchController.addListener(_onSearchChanged);
   }
-
   @override
   void dispose() {
     _animationController.dispose();
@@ -86,12 +65,10 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
     _scrollController.dispose();
     super.dispose();
   }
-
   Future<void> _loadCards() async {
     setState(() {
       _isLoading = true;
     });
-
     try {
       List<Flashcard> cards;
       if (widget.initialCards != null) {
@@ -99,23 +76,18 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
       } else {
         cards = await _flashcardService.getFlashcardsBySubject(widget.subject);
       }
-      
       final categories = await _flashcardService.getCategories();
-      
       setState(() {
         _allCards = cards;
         _filteredCards = cards;
         _categories = categories;
         _isLoading = false;
       });
-      
-      // Start entrance animation
       _animationController.forward();
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
-      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -126,18 +98,15 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
       }
     }
   }
-
   void _onSearchChanged() {
     setState(() {
       _searchQuery = _searchController.text;
     });
     _applyFilters();
   }
-
   void _applyFilters() {
     setState(() {
       _filteredCards = _allCards.where((card) {
-        // Search filter
         if (_searchQuery.isNotEmpty) {
           final query = _searchQuery.toLowerCase();
           final matchesSearch = card.question.toLowerCase().contains(query) ||
@@ -146,41 +115,29 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
               (card.category?.toLowerCase().contains(query) ?? false);
           if (!matchesSearch) return false;
         }
-        
-        // Category filter
         if (_selectedCategory != null && card.category != _selectedCategory) {
           return false;
         }
-        
-        // Difficulty filter
         if (_selectedDifficulty != null && card.difficulty != _selectedDifficulty) {
           return false;
         }
-        
-        // Mastery filter
         if (_showMasteredOnly) {
           final isMastered = card.reviewCount >= 3 && card.difficulty == Difficulty.easy;
           if (!isMastered) return false;
         }
-        
-        // Due filter
         if (_showDueOnly && !card.isDue) {
           return false;
         }
-        
         return true;
       }).toList();
     });
   }
-
   void _navigateToStudyMode(int startIndex) {
-    // Create a list of cards starting from the selected index
     final studyCards = [
       _filteredCards[startIndex],
       ..._filteredCards.sublist(0, startIndex),
       ..._filteredCards.sublist(startIndex + 1),
     ];
-    
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => FlashcardScreen(
@@ -190,19 +147,16 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
       ),
     );
   }
-
   void _navigateToGenerateCards() async {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => const CreateFlashcardScreen(),
       ),
     );
-    
     if (result == true) {
       await _loadCards();
     }
   }
-
   void _showFilterBottomSheet() {
     showModalBottomSheet(
       context: context,
@@ -211,7 +165,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
       builder: (context) => _buildFilterBottomSheet(),
     );
   }
-
   Widget _buildFilterBottomSheet() {
     return Container(
       decoration: const BoxDecoration(
@@ -228,7 +181,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle bar
           Center(
             child: Container(
               width: 40,
@@ -240,8 +192,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
             ),
           ),
           const SizedBox(height: AppTheme.spacingL),
-          
-          // Title
           Text(
             'Filter Cards',
             style: AppTypography.getTextStyle(context, 'headlineMedium').copyWith(
@@ -249,8 +199,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
             ),
           ),
           const SizedBox(height: AppTheme.spacingL),
-          
-          // Category filter
           if (_categories.isNotEmpty) ...[
             Text(
               'Category',
@@ -288,8 +236,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
             ),
             const SizedBox(height: AppTheme.spacingL),
           ],
-          
-          // Difficulty filter
           Text(
             'Difficulty',
             style: AppTypography.getTextStyle(context, 'titleMedium').copyWith(
@@ -325,8 +271,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
             ],
           ),
           const SizedBox(height: AppTheme.spacingL),
-          
-          // Status filters
           Text(
             'Status',
             style: AppTypography.getTextStyle(context, 'titleMedium').copyWith(
@@ -334,7 +278,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
             ),
           ),
           const SizedBox(height: AppTheme.spacingS),
-          
           SwitchListTile(
             title: const Text('Show mastered cards only'),
             value: _showMasteredOnly,
@@ -347,7 +290,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
             },
             contentPadding: EdgeInsets.zero,
           ),
-          
           SwitchListTile(
             title: const Text('Show due cards only'),
             value: _showDueOnly,
@@ -360,10 +302,7 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
             },
             contentPadding: EdgeInsets.zero,
           ),
-          
           const SizedBox(height: AppTheme.spacingL),
-          
-          // Clear filters button
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
@@ -384,12 +323,10 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackgroundColor : AppTheme.backgroundColor,
       appBar: AppBar(
@@ -416,10 +353,7 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
             )
           : Column(
               children: [
-                // Search and stats header
                 _buildSearchHeader(isDark),
-                
-                // Cards list
                 Expanded(
                   child: _filteredCards.isEmpty
                       ? _buildEmptyState(isDark)
@@ -449,7 +383,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
       ),
     );
   }
-
   Widget _buildSearchHeader(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingL),
@@ -465,7 +398,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
       ),
       child: Column(
         children: [
-          // Search bar
           Container(
             decoration: BoxDecoration(
               color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
@@ -507,13 +439,9 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
               style: AppTypography.getTextStyle(context, 'bodyLarge'),
             ),
           ),
-          
           const SizedBox(height: AppTheme.spacingM),
-          
-          // Stats and filter indicators
           Row(
             children: [
-              // Card count
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppTheme.spacingM,
@@ -546,10 +474,7 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
                   ],
                 ),
               ),
-              
               const SizedBox(width: AppTheme.spacingM),
-              
-              // Active filters indicator
               if (_hasActiveFilters()) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -584,10 +509,7 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
                   ),
                 ),
               ],
-              
               const Spacer(),
-              
-              // Study all button
               if (_filteredCards.isNotEmpty)
                 TextButton.icon(
                   onPressed: () => _navigateToStudyMode(0),
@@ -607,7 +529,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
       ),
     );
   }
-
   Widget _buildCardsList(bool isDark) {
     return AnimatedBuilder(
       animation: _slideAnimation,
@@ -626,7 +547,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
               itemBuilder: (context, index) {
                 final card = _filteredCards[index];
                 final isMastered = card.reviewCount >= 3 && card.difficulty == Difficulty.easy;
-                
                 return CardListItem(
                   flashcard: card,
                   isMastered: isMastered,
@@ -640,7 +560,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
       },
     );
   }
-
   Widget _buildEmptyState(bool isDark) {
     return Center(
       child: FadeTransition(
@@ -665,7 +584,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
               ),
             ),
             const SizedBox(height: AppTheme.spacingL),
-            
             Text(
               _searchQuery.isNotEmpty || _hasActiveFilters()
                   ? 'No cards match your search'
@@ -678,7 +596,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
               ),
             ),
             const SizedBox(height: AppTheme.spacingM),
-            
             Text(
               _searchQuery.isNotEmpty || _hasActiveFilters()
                   ? 'Try adjusting your search or filters'
@@ -691,7 +608,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppTheme.spacingXL),
-            
             if (_searchQuery.isNotEmpty || _hasActiveFilters())
               OutlinedButton.icon(
                 onPressed: () {
@@ -726,7 +642,6 @@ class _AllCardsViewScreenState extends State<AllCardsViewScreen>
       ),
     );
   }
-
   bool _hasActiveFilters() {
     return _selectedCategory != null ||
         _selectedDifficulty != null ||

@@ -2,22 +2,12 @@ import 'package:flutter/material.dart';
 import '../../models/flashcard.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
-
-/// A widget that displays individual flashcards in the All Cards view
-/// 
-/// Features:
-/// - Question preview with answer snippet for quick reference
-/// - Visual mastery indicators (checkmarks, progress numbers)
-/// - Smooth tap animations and interaction feedback
-/// - Consistent styling with app theme
-/// - Responsive design for different screen sizes
 class CardListItem extends StatefulWidget {
   final Flashcard flashcard;
   final bool isMastered;
   final VoidCallback onTap;
   final int? cardNumber;
   final bool showMasteryIndicator;
-
   const CardListItem({
     super.key,
     required this.flashcard,
@@ -26,18 +16,15 @@ class CardListItem extends StatefulWidget {
     this.cardNumber,
     this.showMasteryIndicator = true,
   });
-
   @override
   State<CardListItem> createState() => _CardListItemState();
 }
-
 class _CardListItemState extends State<CardListItem>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _elevationAnimation;
   bool _isPressed = false;
-
   @override
   void initState() {
     super.initState();
@@ -45,7 +32,6 @@ class _CardListItemState extends State<CardListItem>
       duration: const Duration(milliseconds: 150),
       vsync: this,
     );
-
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 0.98,
@@ -53,7 +39,6 @@ class _CardListItemState extends State<CardListItem>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
-
     _elevationAnimation = Tween<double>(
       begin: AppTheme.elevationS,
       end: AppTheme.elevationM,
@@ -62,20 +47,17 @@ class _CardListItemState extends State<CardListItem>
       curve: Curves.easeInOut,
     ));
   }
-
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
-
   void _handleTapDown(TapDownDetails details) {
     setState(() {
       _isPressed = true;
     });
     _animationController.forward();
   }
-
   void _handleTapUp(TapUpDetails details) {
     setState(() {
       _isPressed = false;
@@ -83,19 +65,16 @@ class _CardListItemState extends State<CardListItem>
     _animationController.reverse();
     widget.onTap();
   }
-
   void _handleTapCancel() {
     setState(() {
       _isPressed = false;
     });
     _animationController.reverse();
   }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
     return Semantics(
       label: 'Flashcard ${widget.cardNumber != null ? '${widget.cardNumber}: ' : ''}'
              '${widget.flashcard.question}. '
@@ -150,16 +129,11 @@ class _CardListItemState extends State<CardListItem>
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Card number and mastery indicator
                         if (widget.showMasteryIndicator)
                           _buildMasteryIndicator(context, isDark),
-                        
-                        // Card content
                         Expanded(
                           child: _buildCardContent(context, isDark),
                         ),
-                        
-                        // Difficulty and navigation indicator
                         _buildTrailingIndicators(context, isDark),
                       ],
                     ),
@@ -172,14 +146,11 @@ class _CardListItemState extends State<CardListItem>
       ),
     );
   }
-
   Widget _buildMasteryIndicator(BuildContext context, bool isDark) {
-    
     return Container(
       margin: const EdgeInsets.only(right: AppTheme.spacingL),
       child: Column(
         children: [
-          // Mastery status indicator
           Container(
             width: 48,
             height: 48,
@@ -242,8 +213,6 @@ class _CardListItemState extends State<CardListItem>
                         size: 24,
                       ),
           ),
-          
-          // Card number label (if not shown in circle)
           if (widget.cardNumber != null && widget.isMastered)
             Padding(
               padding: const EdgeInsets.only(top: AppTheme.spacingS),
@@ -261,16 +230,12 @@ class _CardListItemState extends State<CardListItem>
       ),
     );
   }
-
   Widget _buildCardContent(BuildContext context, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Subject badge
         _buildSubjectBadge(context, isDark),
         const SizedBox(height: AppTheme.spacingM),
-        
-        // Question preview
         Text(
           widget.flashcard.question,
           style: AppTypography.getTextStyle(context, 'titleLarge').copyWith(
@@ -284,8 +249,6 @@ class _CardListItemState extends State<CardListItem>
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: AppTheme.spacingM),
-        
-        // Answer snippet
         Container(
           padding: const EdgeInsets.all(AppTheme.spacingM),
           decoration: BoxDecoration(
@@ -323,13 +286,10 @@ class _CardListItemState extends State<CardListItem>
           ),
         ),
         const SizedBox(height: AppTheme.spacingM),
-        
-        // Card statistics
         _buildCardStatistics(context, isDark),
       ],
     );
   }
-
   Widget _buildSubjectBadge(BuildContext context, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -379,11 +339,9 @@ class _CardListItemState extends State<CardListItem>
       ),
     );
   }
-
   Widget _buildCardStatistics(BuildContext context, bool isDark) {
     return Row(
       children: [
-        // Review count
         _buildStatChip(
           context,
           Icons.repeat_rounded,
@@ -392,8 +350,6 @@ class _CardListItemState extends State<CardListItem>
           isDark,
         ),
         const SizedBox(width: AppTheme.spacingM),
-        
-        // Difficulty indicator
         _buildStatChip(
           context,
           _getDifficultyIcon(widget.flashcard.difficulty),
@@ -401,10 +357,7 @@ class _CardListItemState extends State<CardListItem>
           _getDifficultyColor(widget.flashcard.difficulty),
           isDark,
         ),
-        
         const Spacer(),
-        
-        // Due status
         if (widget.flashcard.isDue)
           _buildStatChip(
             context,
@@ -424,7 +377,6 @@ class _CardListItemState extends State<CardListItem>
       ],
     );
   }
-
   Widget _buildStatChip(
     BuildContext context,
     IconData icon,
@@ -465,11 +417,9 @@ class _CardListItemState extends State<CardListItem>
       ),
     );
   }
-
   Widget _buildTrailingIndicators(BuildContext context, bool isDark) {
     return Column(
       children: [
-        // Difficulty color indicator
         Container(
           width: 4,
           height: 60,
@@ -486,8 +436,6 @@ class _CardListItemState extends State<CardListItem>
           ),
         ),
         const SizedBox(height: AppTheme.spacingM),
-        
-        // Navigation arrow
         Container(
           padding: const EdgeInsets.all(AppTheme.spacingS),
           decoration: BoxDecoration(
@@ -511,7 +459,6 @@ class _CardListItemState extends State<CardListItem>
       ],
     );
   }
-
   IconData _getDifficultyIcon(Difficulty difficulty) {
     switch (difficulty) {
       case Difficulty.easy:
@@ -522,7 +469,6 @@ class _CardListItemState extends State<CardListItem>
         return Icons.trending_up_rounded;
     }
   }
-
   Color _getDifficultyColor(Difficulty difficulty) {
     switch (difficulty) {
       case Difficulty.easy:

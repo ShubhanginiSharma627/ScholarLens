@@ -3,13 +3,7 @@ import 'dart:math' as math;
 import '../../theme/app_theme.dart';
 import '../../animations/animation_manager.dart';
 import '../../animations/animation_config.dart';
-
-/// Enhanced collection of loading animations and micro-interactions for ScholarLens
-/// 
-/// Provides contextual loading animations for different operation types with improved
-/// visual appeal, realistic timing, and integration with the animation system.
 class LoadingAnimations {
-  /// Enhanced circular loading indicator with better visual appeal
   static Widget circularLoader({
     double size = 24.0,
     Color? color,
@@ -20,7 +14,6 @@ class LoadingAnimations {
   }) {
     final effectiveColor = color ?? _getContextColor(context);
     final effectiveStrokeWidth = strokeWidth * (size / 24.0); // Scale stroke with size
-    
     Widget loader = SizedBox(
       width: size,
       height: size,
@@ -30,7 +23,6 @@ class LoadingAnimations {
         valueColor: AlwaysStoppedAnimation<Color>(effectiveColor),
       ),
     );
-    
     if (showLabel && label != null) {
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -47,11 +39,8 @@ class LoadingAnimations {
         ],
       );
     }
-    
     return loader;
   }
-
-  /// Enhanced pulsing dots animation with improved timing
   static Widget pulsingDots({
     Color? color,
     double size = 8.0,
@@ -60,7 +49,6 @@ class LoadingAnimations {
     Duration pulseDuration = const Duration(milliseconds: 800),
   }) {
     final effectiveColor = color ?? _getContextColor(context);
-    
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(dotCount, (index) {
@@ -76,8 +64,6 @@ class LoadingAnimations {
       }),
     );
   }
-
-  /// Enhanced shimmer loading effect with more realistic timing
   static Widget shimmerCard({
     double height = 120.0,
     double width = double.infinity,
@@ -96,8 +82,6 @@ class LoadingAnimations {
       ),
     );
   }
-
-  /// Enhanced shimmer loading for text lines with better proportions
   static Widget shimmerText({
     double height = 16.0,
     double width = double.infinity,
@@ -106,7 +90,6 @@ class LoadingAnimations {
     double? widthFactor, // For varied line lengths
   }) {
     final effectiveWidth = widthFactor != null ? width * widthFactor : width;
-    
     return _EnhancedShimmerWidget(
       context: context,
       child: Container(
@@ -119,8 +102,6 @@ class LoadingAnimations {
       ),
     );
   }
-
-  /// Contextual loading spinner for different operation types
   static Widget contextualLoader({
     required LoadingContext context,
     double size = 32.0,
@@ -129,7 +110,6 @@ class LoadingAnimations {
     double? progress, // 0.0 to 1.0
   }) {
     Widget loader;
-    
     switch (context) {
       case LoadingContext.network:
         loader = _NetworkLoadingIndicator(size: size, progress: progress);
@@ -152,7 +132,6 @@ class LoadingAnimations {
       default:
         loader = circularLoader(size: size, context: context);
     }
-    
     if (message != null) {
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -170,11 +149,8 @@ class LoadingAnimations {
         ],
       );
     }
-    
     return loader;
   }
-
-  /// Skeleton loading for complex layouts
   static Widget skeletonLoader({
     required Widget child,
     bool isLoading = true,
@@ -182,15 +158,12 @@ class LoadingAnimations {
     Duration animationDuration = const Duration(milliseconds: 1200),
   }) {
     if (!isLoading) return child;
-    
     return _SkeletonLoader(
       context: context,
       animationDuration: animationDuration,
       child: child,
     );
   }
-
-  /// Staggered loading animation for lists
   static Widget staggeredLoader({
     required List<Widget> items,
     Duration itemDelay = const Duration(milliseconds: 100),
@@ -208,8 +181,6 @@ class LoadingAnimations {
       }),
     );
   }
-
-  /// Loading overlay for full-screen loading states
   static Widget loadingOverlay({
     required Widget child,
     bool isLoading = false,
@@ -235,8 +206,6 @@ class LoadingAnimations {
       ],
     );
   }
-
-  /// Smooth animated progress bar with easing
   static Widget animatedProgressBar({
     required double progress, // 0.0 to 1.0
     double height = 8.0,
@@ -252,7 +221,6 @@ class LoadingAnimations {
     final effectiveProgressColor = progressColor ?? _getContextColor(context);
     final effectiveBackgroundColor = backgroundColor ?? Colors.grey[300]!;
     final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(height / 2);
-    
     Widget progressBar = _AnimatedProgressBar(
       progress: progress.clamp(0.0, 1.0),
       height: height,
@@ -262,7 +230,6 @@ class LoadingAnimations {
       animationDuration: animationDuration,
       animationCurve: animationCurve,
     );
-    
     if (showPercentage) {
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -281,11 +248,8 @@ class LoadingAnimations {
         ],
       );
     }
-    
     return progressBar;
   }
-
-  /// Animated circular progress indicator with smooth transitions
   static Widget animatedCircularProgress({
     required double progress, // 0.0 to 1.0
     double size = 48.0,
@@ -301,7 +265,6 @@ class LoadingAnimations {
   }) {
     final effectiveProgressColor = progressColor ?? _getContextColor(context);
     final effectiveBackgroundColor = backgroundColor ?? Colors.grey[300]!;
-    
     return _AnimatedCircularProgress(
       progress: progress.clamp(0.0, 1.0),
       size: size,
@@ -315,8 +278,6 @@ class LoadingAnimations {
       centerWidget: centerWidget,
     );
   }
-
-  /// Skeleton loading for network requests with realistic timing
   static Widget networkSkeletonLoader({
     required List<Widget> skeletonItems,
     bool isLoading = true,
@@ -326,7 +287,6 @@ class LoadingAnimations {
     if (!isLoading) {
       return Column(children: skeletonItems);
     }
-    
     return Column(
       children: List.generate(skeletonItems.length, (index) {
         return _NetworkSkeletonItem(
@@ -337,8 +297,6 @@ class LoadingAnimations {
       }),
     );
   }
-
-  /// Multi-step progress indicator with labels
   static Widget stepProgressIndicator({
     required List<String> steps,
     required int currentStep, // 0-based index
@@ -354,7 +312,6 @@ class LoadingAnimations {
     final effectiveActiveColor = activeColor ?? _getContextColor(context);
     final effectiveCompletedColor = completedColor ?? Colors.green;
     final effectiveInactiveColor = inactiveColor ?? Colors.grey[300]!;
-    
     return _StepProgressIndicator(
       steps: steps,
       currentStep: currentStep.clamp(0, steps.length - 1),
@@ -367,8 +324,6 @@ class LoadingAnimations {
       animationDuration: animationDuration,
     );
   }
-
-  /// Wave progress indicator for audio/voice processing
   static Widget waveProgressIndicator({
     required double progress, // 0.0 to 1.0
     double width = 200.0,
@@ -379,7 +334,6 @@ class LoadingAnimations {
     LoadingContext context = LoadingContext.processing,
   }) {
     final effectiveWaveColor = waveColor ?? _getContextColor(context);
-    
     return _WaveProgressIndicator(
       progress: progress.clamp(0.0, 1.0),
       width: width,
@@ -389,8 +343,6 @@ class LoadingAnimations {
       animationDuration: animationDuration,
     );
   }
-
-  /// Smooth transition from loading state to content
   static Widget loadingToContentTransition({
     required Widget loadingWidget,
     required Widget contentWidget,
@@ -410,8 +362,6 @@ class LoadingAnimations {
       contentDelay: contentDelay,
     );
   }
-
-  /// Fade-in animation for content appearance
   static Widget fadeInContent({
     required Widget child,
     required bool show,
@@ -429,8 +379,6 @@ class LoadingAnimations {
       child: child,
     );
   }
-
-  /// Slide-in content animation
   static Widget slideInContent({
     required Widget child,
     required bool show,
@@ -450,8 +398,6 @@ class LoadingAnimations {
       child: child,
     );
   }
-
-  /// Scale-in content animation
   static Widget scaleInContent({
     required Widget child,
     required bool show,
@@ -471,8 +417,6 @@ class LoadingAnimations {
       child: child,
     );
   }
-
-  /// Staggered content reveal animation
   static Widget staggeredContentReveal({
     required List<Widget> children,
     required bool show,
@@ -494,8 +438,6 @@ class LoadingAnimations {
       onComplete: onComplete,
     );
   }
-
-  /// Content placeholder that morphs into actual content
   static Widget morphingContent({
     required Widget placeholderWidget,
     required Widget contentWidget,
@@ -513,8 +455,6 @@ class LoadingAnimations {
       onMorphComplete: onMorphComplete,
     );
   }
-
-  /// Helper method to get context-appropriate colors
   static Color _getContextColor(LoadingContext context) {
     switch (context) {
       case LoadingContext.success:
@@ -539,8 +479,6 @@ class LoadingAnimations {
         return AppTheme.primaryColor;
     }
   }
-
-  /// Helper method to get shimmer base colors
   static Color _getShimmerBaseColor(LoadingContext context) {
     switch (context) {
       case LoadingContext.content:
@@ -553,8 +491,6 @@ class LoadingAnimations {
         return Colors.grey[300]!;
     }
   }
-
-  /// Bouncing button animation
   static Widget bouncingButton({
     required Widget child,
     required VoidCallback onPressed,
@@ -566,8 +502,6 @@ class LoadingAnimations {
       child: child,
     );
   }
-
-  /// Fade in animation
   static Widget fadeIn({
     required Widget child,
     Duration duration = const Duration(milliseconds: 300),
@@ -579,8 +513,6 @@ class LoadingAnimations {
       child: child,
     );
   }
-
-  /// Slide in animation
   static Widget slideIn({
     required Widget child,
     Duration duration = const Duration(milliseconds: 300),
@@ -594,8 +526,6 @@ class LoadingAnimations {
       child: child,
     );
   }
-
-  /// Scale in animation
   static Widget scaleIn({
     required Widget child,
     Duration duration = const Duration(milliseconds: 300),
@@ -607,15 +537,10 @@ class LoadingAnimations {
       child: child,
     );
   }
-
   static Animation<double> _createPulseAnimation(int index) {
-    // This is a simplified version - in a real implementation,
-    // you'd want to use an AnimationController
     return AlwaysStoppedAnimation(1.0);
   }
 }
-
-/// Loading context enumeration for contextual animations
 enum LoadingContext {
   general,     // General purpose loading
   network,     // Network requests
@@ -631,8 +556,6 @@ enum LoadingContext {
   error,       // Error states
   warning,     // Warning states
 }
-
-/// Loading transition type enumeration
 enum LoadingTransitionType {
   fade,        // Simple fade transition
   fadeScale,   // Fade with scale effect
@@ -643,8 +566,6 @@ enum LoadingTransitionType {
   morph,       // Morphing transition
   reveal,      // Reveal transition
 }
-
-/// Stagger direction enumeration
 enum StaggerDirection {
   topToBottom,
   bottomToTop,
@@ -652,25 +573,20 @@ enum StaggerDirection {
   rightToLeft,
   center,
 }
-
-/// Enhanced pulsing dot widget with better animation control
 class _EnhancedPulsingDot extends StatefulWidget {
   final double size;
   final Color color;
   final Duration delay;
   final Duration pulseDuration;
-
   const _EnhancedPulsingDot({
     required this.size,
     required this.color,
     required this.delay,
     required this.pulseDuration,
   });
-
   @override
   State<_EnhancedPulsingDot> createState() => _EnhancedPulsingDotState();
 }
-
 class _EnhancedPulsingDotState extends State<_EnhancedPulsingDot>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
@@ -678,18 +594,14 @@ class _EnhancedPulsingDotState extends State<_EnhancedPulsingDot>
   late Animation<double> _opacityAnimation;
   final AnimationManager _animationManager = AnimationManager();
   String? _animationId;
-
   @override
   void initState() {
     super.initState();
-    
     _animationManager.initialize();
-    
     _controller = AnimationController(
       duration: widget.pulseDuration,
       vsync: this,
     );
-    
     _scaleAnimation = Tween<double>(
       begin: 0.6,
       end: 1.0,
@@ -697,7 +609,6 @@ class _EnhancedPulsingDotState extends State<_EnhancedPulsingDot>
       parent: _controller,
       curve: Curves.easeInOut,
     ));
-    
     _opacityAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -705,8 +616,6 @@ class _EnhancedPulsingDotState extends State<_EnhancedPulsingDot>
       parent: _controller,
       curve: Curves.easeInOut,
     ));
-    
-    // Register with animation manager
     if (_animationManager.isInitialized) {
       _animationId = _animationManager.registerController(
         controller: _controller,
@@ -716,15 +625,12 @@ class _EnhancedPulsingDotState extends State<_EnhancedPulsingDot>
         category: AnimationCategory.feedback,
       );
     }
-    
-    // Start animation with delay
     Future.delayed(widget.delay, () {
       if (mounted) {
         _controller.repeat(reverse: true);
       }
     });
   }
-
   @override
   void dispose() {
     if (_animationId != null) {
@@ -733,7 +639,6 @@ class _EnhancedPulsingDotState extends State<_EnhancedPulsingDot>
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -754,39 +659,30 @@ class _EnhancedPulsingDotState extends State<_EnhancedPulsingDot>
     );
   }
 }
-
-/// Enhanced shimmer effect widget with improved animation
 class _EnhancedShimmerWidget extends StatefulWidget {
   final Widget child;
   final LoadingContext context;
-
   const _EnhancedShimmerWidget({
     required this.child,
     required this.context,
   });
-
   @override
   State<_EnhancedShimmerWidget> createState() => _EnhancedShimmerWidgetState();
 }
-
 class _EnhancedShimmerWidgetState extends State<_EnhancedShimmerWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   final AnimationManager _animationManager = AnimationManager();
   String? _animationId;
-
   @override
   void initState() {
     super.initState();
-    
     _animationManager.initialize();
-    
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1200), // More realistic timing
       vsync: this,
     );
-    
     _animation = Tween<double>(
       begin: -2.0,
       end: 2.0,
@@ -794,8 +690,6 @@ class _EnhancedShimmerWidgetState extends State<_EnhancedShimmerWidget>
       parent: _controller,
       curve: Curves.easeInOut,
     ));
-    
-    // Register with animation manager
     if (_animationManager.isInitialized) {
       _animationId = _animationManager.registerController(
         controller: _controller,
@@ -803,10 +697,8 @@ class _EnhancedShimmerWidgetState extends State<_EnhancedShimmerWidget>
         category: AnimationCategory.feedback,
       );
     }
-    
     _controller.repeat();
   }
-
   @override
   void dispose() {
     if (_animationId != null) {
@@ -815,7 +707,6 @@ class _EnhancedShimmerWidgetState extends State<_EnhancedShimmerWidget>
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -848,49 +739,38 @@ class _EnhancedShimmerWidgetState extends State<_EnhancedShimmerWidget>
     );
   }
 }
-
-/// Network loading indicator with connection animation
 class _NetworkLoadingIndicator extends StatefulWidget {
   final double size;
   final double? progress;
-
   const _NetworkLoadingIndicator({
     required this.size,
     this.progress,
   });
-
   @override
   State<_NetworkLoadingIndicator> createState() => _NetworkLoadingIndicatorState();
 }
-
 class _NetworkLoadingIndicatorState extends State<_NetworkLoadingIndicator>
     with TickerProviderStateMixin {
   late AnimationController _waveController;
   late Animation<double> _waveAnimation;
-
   @override
   void initState() {
     super.initState();
-    
     _waveController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
-    
     _waveAnimation = Tween<double>(
       begin: 0.0,
       end: 2 * math.pi,
     ).animate(_waveController);
-    
     _waveController.repeat();
   }
-
   @override
   void dispose() {
     _waveController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -910,45 +790,34 @@ class _NetworkLoadingIndicatorState extends State<_NetworkLoadingIndicator>
     );
   }
 }
-
-/// Processing loading indicator with gear animation
 class _ProcessingLoadingIndicator extends StatefulWidget {
   final double size;
-
   const _ProcessingLoadingIndicator({required this.size});
-
   @override
   State<_ProcessingLoadingIndicator> createState() => _ProcessingLoadingIndicatorState();
 }
-
 class _ProcessingLoadingIndicatorState extends State<_ProcessingLoadingIndicator>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _rotationAnimation;
-
   @override
   void initState() {
     super.initState();
-    
     _controller = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
-    
     _rotationAnimation = Tween<double>(
       begin: 0.0,
       end: 2 * math.pi,
     ).animate(_controller);
-    
     _controller.repeat();
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -970,35 +839,27 @@ class _ProcessingLoadingIndicatorState extends State<_ProcessingLoadingIndicator
     );
   }
 }
-
-/// Upload loading indicator with progress
 class _UploadLoadingIndicator extends StatefulWidget {
   final double size;
   final double? progress;
-
   const _UploadLoadingIndicator({
     required this.size,
     this.progress,
   });
-
   @override
   State<_UploadLoadingIndicator> createState() => _UploadLoadingIndicatorState();
 }
-
 class _UploadLoadingIndicatorState extends State<_UploadLoadingIndicator>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _bounceAnimation;
-
   @override
   void initState() {
     super.initState();
-    
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
     _bounceAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -1006,16 +867,13 @@ class _UploadLoadingIndicatorState extends State<_UploadLoadingIndicator>
       parent: _controller,
       curve: Curves.elasticInOut,
     ));
-    
     _controller.repeat(reverse: true);
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -1050,35 +908,27 @@ class _UploadLoadingIndicatorState extends State<_UploadLoadingIndicator>
     );
   }
 }
-
-/// Download loading indicator with progress
 class _DownloadLoadingIndicator extends StatefulWidget {
   final double size;
   final double? progress;
-
   const _DownloadLoadingIndicator({
     required this.size,
     this.progress,
   });
-
   @override
   State<_DownloadLoadingIndicator> createState() => _DownloadLoadingIndicatorState();
 }
-
 class _DownloadLoadingIndicatorState extends State<_DownloadLoadingIndicator>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _bounceAnimation;
-
   @override
   void initState() {
     super.initState();
-    
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
     _bounceAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -1086,16 +936,13 @@ class _DownloadLoadingIndicatorState extends State<_DownloadLoadingIndicator>
       parent: _controller,
       curve: Curves.elasticInOut,
     ));
-    
     _controller.repeat(reverse: true);
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -1130,31 +977,23 @@ class _DownloadLoadingIndicatorState extends State<_DownloadLoadingIndicator>
     );
   }
 }
-
-/// Camera loading indicator with focus animation
 class _CameraLoadingIndicator extends StatefulWidget {
   final double size;
-
   const _CameraLoadingIndicator({required this.size});
-
   @override
   State<_CameraLoadingIndicator> createState() => _CameraLoadingIndicatorState();
 }
-
 class _CameraLoadingIndicatorState extends State<_CameraLoadingIndicator>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-
   @override
   void initState() {
     super.initState();
-    
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
     _scaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.2,
@@ -1162,16 +1001,13 @@ class _CameraLoadingIndicatorState extends State<_CameraLoadingIndicator>
       parent: _controller,
       curve: Curves.easeInOut,
     ));
-    
     _controller.repeat(reverse: true);
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -1202,43 +1038,33 @@ class _CameraLoadingIndicatorState extends State<_CameraLoadingIndicator>
     );
   }
 }
-
-/// AI loading indicator with brain wave animation
 class _AILoadingIndicator extends StatefulWidget {
   final double size;
-
   const _AILoadingIndicator({required this.size});
-
   @override
   State<_AILoadingIndicator> createState() => _AILoadingIndicatorState();
 }
-
 class _AILoadingIndicatorState extends State<_AILoadingIndicator>
     with TickerProviderStateMixin {
   late AnimationController _waveController;
   late AnimationController _pulseController;
   late Animation<double> _waveAnimation;
   late Animation<double> _pulseAnimation;
-
   @override
   void initState() {
     super.initState();
-    
     _waveController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
-    
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
     _waveAnimation = Tween<double>(
       begin: 0.0,
       end: 2 * math.pi,
     ).animate(_waveController);
-    
     _pulseAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
@@ -1246,18 +1072,15 @@ class _AILoadingIndicatorState extends State<_AILoadingIndicator>
       parent: _pulseController,
       curve: Curves.easeInOut,
     ));
-    
     _waveController.repeat();
     _pulseController.repeat(reverse: true);
   }
-
   @override
   void dispose() {
     _waveController.dispose();
     _pulseController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -1280,37 +1103,29 @@ class _AILoadingIndicatorState extends State<_AILoadingIndicator>
     );
   }
 }
-
-/// Skeleton loader for complex layouts
 class _SkeletonLoader extends StatefulWidget {
   final Widget child;
   final LoadingContext context;
   final Duration animationDuration;
-
   const _SkeletonLoader({
     required this.child,
     required this.context,
     required this.animationDuration,
   });
-
   @override
   State<_SkeletonLoader> createState() => _SkeletonLoaderState();
 }
-
 class _SkeletonLoaderState extends State<_SkeletonLoader>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
   @override
   void initState() {
     super.initState();
-    
     _controller = AnimationController(
       duration: widget.animationDuration,
       vsync: this,
     );
-    
     _animation = Tween<double>(
       begin: -1.0,
       end: 2.0,
@@ -1318,16 +1133,13 @@ class _SkeletonLoaderState extends State<_SkeletonLoader>
       parent: _controller,
       curve: Curves.easeInOut,
     ));
-    
     _controller.repeat();
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -1356,40 +1168,32 @@ class _SkeletonLoaderState extends State<_SkeletonLoader>
     );
   }
 }
-
-/// Staggered loading item
 class _StaggeredLoadingItem extends StatefulWidget {
   final Widget child;
   final Duration delay;
   final Duration duration;
   final LoadingContext context;
-
   const _StaggeredLoadingItem({
     required this.child,
     required this.delay,
     required this.duration,
     required this.context,
   });
-
   @override
   State<_StaggeredLoadingItem> createState() => _StaggeredLoadingItemState();
 }
-
 class _StaggeredLoadingItemState extends State<_StaggeredLoadingItem>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-
   @override
   void initState() {
     super.initState();
-    
     _controller = AnimationController(
       duration: widget.duration,
       vsync: this,
     );
-    
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -1397,7 +1201,6 @@ class _StaggeredLoadingItemState extends State<_StaggeredLoadingItem>
       parent: _controller,
       curve: Curves.easeOut,
     ));
-    
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0.0, 0.3),
       end: Offset.zero,
@@ -1405,20 +1208,17 @@ class _StaggeredLoadingItemState extends State<_StaggeredLoadingItem>
       parent: _controller,
       curve: Curves.easeOut,
     ));
-    
     Future.delayed(widget.delay, () {
       if (mounted) {
         _controller.forward();
       }
     });
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -1435,93 +1235,68 @@ class _StaggeredLoadingItemState extends State<_StaggeredLoadingItem>
     );
   }
 }
-
-/// Custom painter for network loading animation
 class _NetworkLoadingPainter extends CustomPainter {
   final double progress;
   final Color color;
-
   _NetworkLoadingPainter({
     required this.progress,
     required this.color,
   });
-
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
-
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 3;
-
-    // Draw concentric circles with wave effect
     for (int i = 0; i < 3; i++) {
       final currentRadius = radius + (i * 8);
       final opacity = (math.sin(progress + i * 0.5) + 1) / 2;
-      
       paint.color = color.withValues(alpha: opacity * 0.7);
       canvas.drawCircle(center, currentRadius, paint);
     }
-
-    // Draw center dot
     paint.style = PaintingStyle.fill;
     paint.color = color;
     canvas.drawCircle(center, 4, paint);
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
-
-/// Custom painter for AI loading animation
 class _AILoadingPainter extends CustomPainter {
   final double progress;
   final Color color;
-
   _AILoadingPainter({
     required this.progress,
     required this.color,
   });
-
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
-
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 4;
-
-    // Draw brain wave pattern
     final path = Path();
     for (double i = 0; i < size.width; i += 2) {
       final x = i;
       final y = center.dy + 
           math.sin((i / size.width) * 4 * math.pi + progress) * radius * 0.3 +
           math.sin((i / size.width) * 8 * math.pi + progress * 2) * radius * 0.1;
-      
       if (i == 0) {
         path.moveTo(x, y);
       } else {
         path.lineTo(x, y);
       }
     }
-
     canvas.drawPath(path, paint);
-
-    // Draw center circle
     paint.style = PaintingStyle.fill;
     canvas.drawCircle(center, 3, paint);
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
-
-/// Animated progress bar widget
 class _AnimatedProgressBar extends StatefulWidget {
   final double progress;
   final double height;
@@ -1530,7 +1305,6 @@ class _AnimatedProgressBar extends StatefulWidget {
   final BorderRadius borderRadius;
   final Duration animationDuration;
   final Curve animationCurve;
-
   const _AnimatedProgressBar({
     required this.progress,
     required this.height,
@@ -1540,11 +1314,9 @@ class _AnimatedProgressBar extends StatefulWidget {
     required this.animationDuration,
     required this.animationCurve,
   });
-
   @override
   State<_AnimatedProgressBar> createState() => _AnimatedProgressBarState();
 }
-
 class _AnimatedProgressBarState extends State<_AnimatedProgressBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
@@ -1552,18 +1324,14 @@ class _AnimatedProgressBarState extends State<_AnimatedProgressBar>
   final AnimationManager _animationManager = AnimationManager();
   String? _animationId;
   double _currentProgress = 0.0;
-
   @override
   void initState() {
     super.initState();
-    
     _animationManager.initialize();
-    
     _controller = AnimationController(
       duration: widget.animationDuration,
       vsync: this,
     );
-    
     _progressAnimation = Tween<double>(
       begin: 0.0,
       end: widget.progress,
@@ -1571,8 +1339,6 @@ class _AnimatedProgressBarState extends State<_AnimatedProgressBar>
       parent: _controller,
       curve: widget.animationCurve,
     ));
-    
-    // Register with animation manager
     if (_animationManager.isInitialized) {
       _animationId = _animationManager.registerController(
         controller: _controller,
@@ -1583,15 +1349,12 @@ class _AnimatedProgressBarState extends State<_AnimatedProgressBar>
         category: AnimationCategory.feedback,
       );
     }
-    
     _currentProgress = widget.progress;
     _controller.forward();
   }
-
   @override
   void didUpdateWidget(_AnimatedProgressBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
     if (widget.progress != oldWidget.progress) {
       _progressAnimation = Tween<double>(
         begin: _currentProgress,
@@ -1600,13 +1363,11 @@ class _AnimatedProgressBarState extends State<_AnimatedProgressBar>
         parent: _controller,
         curve: widget.animationCurve,
       ));
-      
       _currentProgress = widget.progress;
       _controller.reset();
       _controller.forward();
     }
   }
-
   @override
   void dispose() {
     if (_animationId != null) {
@@ -1615,7 +1376,6 @@ class _AnimatedProgressBarState extends State<_AnimatedProgressBar>
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1642,8 +1402,6 @@ class _AnimatedProgressBarState extends State<_AnimatedProgressBar>
     );
   }
 }
-
-/// Animated circular progress widget
 class _AnimatedCircularProgress extends StatefulWidget {
   final double progress;
   final double size;
@@ -1655,7 +1413,6 @@ class _AnimatedCircularProgress extends StatefulWidget {
   final bool showPercentage;
   final TextStyle? percentageStyle;
   final Widget? centerWidget;
-
   const _AnimatedCircularProgress({
     required this.progress,
     required this.size,
@@ -1668,11 +1425,9 @@ class _AnimatedCircularProgress extends StatefulWidget {
     this.percentageStyle,
     this.centerWidget,
   });
-
   @override
   State<_AnimatedCircularProgress> createState() => _AnimatedCircularProgressState();
 }
-
 class _AnimatedCircularProgressState extends State<_AnimatedCircularProgress>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
@@ -1680,18 +1435,14 @@ class _AnimatedCircularProgressState extends State<_AnimatedCircularProgress>
   final AnimationManager _animationManager = AnimationManager();
   String? _animationId;
   double _currentProgress = 0.0;
-
   @override
   void initState() {
     super.initState();
-    
     _animationManager.initialize();
-    
     _controller = AnimationController(
       duration: widget.animationDuration,
       vsync: this,
     );
-    
     _progressAnimation = Tween<double>(
       begin: 0.0,
       end: widget.progress,
@@ -1699,8 +1450,6 @@ class _AnimatedCircularProgressState extends State<_AnimatedCircularProgress>
       parent: _controller,
       curve: widget.animationCurve,
     ));
-    
-    // Register with animation manager
     if (_animationManager.isInitialized) {
       _animationId = _animationManager.registerController(
         controller: _controller,
@@ -1711,15 +1460,12 @@ class _AnimatedCircularProgressState extends State<_AnimatedCircularProgress>
         category: AnimationCategory.feedback,
       );
     }
-    
     _currentProgress = widget.progress;
     _controller.forward();
   }
-
   @override
   void didUpdateWidget(_AnimatedCircularProgress oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
     if (widget.progress != oldWidget.progress) {
       _progressAnimation = Tween<double>(
         begin: _currentProgress,
@@ -1728,13 +1474,11 @@ class _AnimatedCircularProgressState extends State<_AnimatedCircularProgress>
         parent: _controller,
         curve: widget.animationCurve,
       ));
-      
       _currentProgress = widget.progress;
       _controller.reset();
       _controller.forward();
     }
   }
-
   @override
   void dispose() {
     if (_animationId != null) {
@@ -1743,7 +1487,6 @@ class _AnimatedCircularProgressState extends State<_AnimatedCircularProgress>
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -1752,13 +1495,11 @@ class _AnimatedCircularProgressState extends State<_AnimatedCircularProgress>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Background circle
           CircularProgressIndicator(
             value: 1.0,
             strokeWidth: widget.strokeWidth,
             valueColor: AlwaysStoppedAnimation(widget.backgroundColor),
           ),
-          // Progress circle
           AnimatedBuilder(
             animation: _progressAnimation,
             builder: (context, child) {
@@ -1770,7 +1511,6 @@ class _AnimatedCircularProgressState extends State<_AnimatedCircularProgress>
               );
             },
           ),
-          // Center content
           if (widget.centerWidget != null)
             widget.centerWidget!
           else if (widget.showPercentage)
@@ -1792,38 +1532,30 @@ class _AnimatedCircularProgressState extends State<_AnimatedCircularProgress>
     );
   }
 }
-
-/// Network skeleton item with staggered loading
 class _NetworkSkeletonItem extends StatefulWidget {
   final Widget child;
   final Duration delay;
   final Duration shimmerDuration;
-
   const _NetworkSkeletonItem({
     required this.child,
     required this.delay,
     required this.shimmerDuration,
   });
-
   @override
   State<_NetworkSkeletonItem> createState() => _NetworkSkeletonItemState();
 }
-
 class _NetworkSkeletonItemState extends State<_NetworkSkeletonItem>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isVisible = false;
-
   @override
   void initState() {
     super.initState();
-    
     _controller = AnimationController(
       duration: widget.shimmerDuration,
       vsync: this,
     );
-    
     _animation = Tween<double>(
       begin: -1.0,
       end: 2.0,
@@ -1831,8 +1563,6 @@ class _NetworkSkeletonItemState extends State<_NetworkSkeletonItem>
       parent: _controller,
       curve: Curves.easeInOut,
     ));
-    
-    // Start animation after delay
     Future.delayed(widget.delay, () {
       if (mounted) {
         setState(() {
@@ -1842,19 +1572,16 @@ class _NetworkSkeletonItemState extends State<_NetworkSkeletonItem>
       }
     });
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     if (!_isVisible) {
       return const SizedBox.shrink();
     }
-    
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
@@ -1881,8 +1608,6 @@ class _NetworkSkeletonItemState extends State<_NetworkSkeletonItem>
     );
   }
 }
-
-/// Step progress indicator widget
 class _StepProgressIndicator extends StatefulWidget {
   final List<String> steps;
   final int currentStep;
@@ -1893,7 +1618,6 @@ class _StepProgressIndicator extends StatefulWidget {
   final double lineHeight;
   final TextStyle? labelStyle;
   final Duration animationDuration;
-
   const _StepProgressIndicator({
     required this.steps,
     required this.currentStep,
@@ -1905,32 +1629,25 @@ class _StepProgressIndicator extends StatefulWidget {
     this.labelStyle,
     required this.animationDuration,
   });
-
   @override
   State<_StepProgressIndicator> createState() => _StepProgressIndicatorState();
 }
-
 class _StepProgressIndicatorState extends State<_StepProgressIndicator>
     with TickerProviderStateMixin {
   late List<AnimationController> _stepControllers;
   late List<Animation<double>> _stepAnimations;
   final AnimationManager _animationManager = AnimationManager();
   final List<String> _animationIds = [];
-
   @override
   void initState() {
     super.initState();
-    
     _animationManager.initialize();
-    
-    // Create controllers for each step
     _stepControllers = List.generate(widget.steps.length, (index) {
       return AnimationController(
         duration: widget.animationDuration,
         vsync: this,
       );
     });
-    
     _stepAnimations = _stepControllers.map((controller) {
       return Tween<double>(
         begin: 0.0,
@@ -1940,8 +1657,6 @@ class _StepProgressIndicatorState extends State<_StepProgressIndicator>
         curve: Curves.elasticOut,
       ));
     }).toList();
-    
-    // Register controllers
     for (int i = 0; i < _stepControllers.length; i++) {
       if (_animationManager.isInitialized) {
         final animationId = _animationManager.registerController(
@@ -1955,19 +1670,15 @@ class _StepProgressIndicatorState extends State<_StepProgressIndicator>
         _animationIds.add(animationId);
       }
     }
-    
     _updateStepAnimations();
   }
-
   @override
   void didUpdateWidget(_StepProgressIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
     if (widget.currentStep != oldWidget.currentStep) {
       _updateStepAnimations();
     }
   }
-
   void _updateStepAnimations() {
     for (int i = 0; i < _stepControllers.length; i++) {
       if (i <= widget.currentStep) {
@@ -1977,7 +1688,6 @@ class _StepProgressIndicatorState extends State<_StepProgressIndicator>
       }
     }
   }
-
   @override
   void dispose() {
     for (final animationId in _animationIds) {
@@ -1988,16 +1698,13 @@ class _StepProgressIndicatorState extends State<_StepProgressIndicator>
     }
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Step indicators
         Row(
           children: List.generate(widget.steps.length * 2 - 1, (index) {
             if (index.isEven) {
-              // Step circle
               final stepIndex = index ~/ 2;
               return AnimatedBuilder(
                 animation: _stepAnimations[stepIndex],
@@ -2010,7 +1717,6 @@ class _StepProgressIndicatorState extends State<_StepProgressIndicator>
                   } else {
                     stepColor = widget.inactiveColor;
                   }
-                  
                   return Transform.scale(
                     scale: 0.8 + (0.2 * _stepAnimations[stepIndex].value),
                     child: Container(
@@ -2041,7 +1747,6 @@ class _StepProgressIndicatorState extends State<_StepProgressIndicator>
                 },
               );
             } else {
-              // Connecting line
               final lineIndex = index ~/ 2;
               return Expanded(
                 child: Container(
@@ -2054,10 +1759,7 @@ class _StepProgressIndicatorState extends State<_StepProgressIndicator>
             }
           }),
         ),
-        
         const SizedBox(height: 8),
-        
-        // Step labels
         Row(
           children: List.generate(widget.steps.length, (index) {
             return Expanded(
@@ -2078,8 +1780,6 @@ class _StepProgressIndicatorState extends State<_StepProgressIndicator>
     );
   }
 }
-
-/// Wave progress indicator widget
 class _WaveProgressIndicator extends StatefulWidget {
   final double progress;
   final double width;
@@ -2087,7 +1787,6 @@ class _WaveProgressIndicator extends StatefulWidget {
   final Color waveColor;
   final int waveCount;
   final Duration animationDuration;
-
   const _WaveProgressIndicator({
     required this.progress,
     required this.width,
@@ -2096,26 +1795,21 @@ class _WaveProgressIndicator extends StatefulWidget {
     required this.waveCount,
     required this.animationDuration,
   });
-
   @override
   State<_WaveProgressIndicator> createState() => _WaveProgressIndicatorState();
 }
-
 class _WaveProgressIndicatorState extends State<_WaveProgressIndicator>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _progressAnimation;
   double _currentProgress = 0.0;
-
   @override
   void initState() {
     super.initState();
-    
     _controller = AnimationController(
       duration: widget.animationDuration,
       vsync: this,
     );
-    
     _progressAnimation = Tween<double>(
       begin: 0.0,
       end: widget.progress,
@@ -2123,15 +1817,12 @@ class _WaveProgressIndicatorState extends State<_WaveProgressIndicator>
       parent: _controller,
       curve: Curves.easeInOut,
     ));
-    
     _currentProgress = widget.progress;
     _controller.forward();
   }
-
   @override
   void didUpdateWidget(_WaveProgressIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
     if (widget.progress != oldWidget.progress) {
       _progressAnimation = Tween<double>(
         begin: _currentProgress,
@@ -2140,19 +1831,16 @@ class _WaveProgressIndicatorState extends State<_WaveProgressIndicator>
         parent: _controller,
         curve: Curves.easeInOut,
       ));
-      
       _currentProgress = widget.progress;
       _controller.reset();
       _controller.forward();
     }
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -2173,33 +1861,26 @@ class _WaveProgressIndicatorState extends State<_WaveProgressIndicator>
     );
   }
 }
-
-/// Custom painter for wave progress indicator
 class _WaveProgressPainter extends CustomPainter {
   final double progress;
   final Color waveColor;
   final int waveCount;
-
   _WaveProgressPainter({
     required this.progress,
     required this.waveColor,
     required this.waveCount,
   });
-
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = waveColor
       ..style = PaintingStyle.fill;
-
     final waveWidth = size.width / waveCount;
     final activeWaves = (waveCount * progress).floor();
     final partialWave = (waveCount * progress) - activeWaves;
-
     for (int i = 0; i < waveCount; i++) {
       final x = i * waveWidth;
       double waveHeight;
-      
       if (i < activeWaves) {
         waveHeight = size.height;
       } else if (i == activeWaves) {
@@ -2207,31 +1888,24 @@ class _WaveProgressPainter extends CustomPainter {
       } else {
         waveHeight = size.height * 0.1; // Minimum height for inactive waves
       }
-      
       final opacity = i < activeWaves ? 1.0 : 
                      i == activeWaves ? partialWave : 0.3;
-      
       paint.color = waveColor.withValues(alpha: opacity);
-      
       final rect = Rect.fromLTWH(
         x + waveWidth * 0.1,
         size.height - waveHeight,
         waveWidth * 0.8,
         waveHeight,
       );
-      
       canvas.drawRRect(
         RRect.fromRectAndRadius(rect, Radius.circular(waveWidth * 0.1)),
         paint,
       );
     }
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
-
-/// Loading to content transition widget
 class _LoadingToContentTransition extends StatefulWidget {
   final Widget loadingWidget;
   final Widget contentWidget;
@@ -2240,7 +1914,6 @@ class _LoadingToContentTransition extends StatefulWidget {
   final Curve transitionCurve;
   final LoadingTransitionType transitionType;
   final Duration contentDelay;
-
   const _LoadingToContentTransition({
     required this.loadingWidget,
     required this.contentWidget,
@@ -2250,11 +1923,9 @@ class _LoadingToContentTransition extends StatefulWidget {
     required this.transitionType,
     required this.contentDelay,
   });
-
   @override
   State<_LoadingToContentTransition> createState() => _LoadingToContentTransitionState();
 }
-
 class _LoadingToContentTransitionState extends State<_LoadingToContentTransition>
     with TickerProviderStateMixin {
   late AnimationController _loadingController;
@@ -2263,31 +1934,23 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
   late Animation<double> _contentFadeAnimation;
   late Animation<double> _contentScaleAnimation;
   late Animation<Offset> _contentSlideAnimation;
-  
   final AnimationManager _animationManager = AnimationManager();
   String? _loadingAnimationId;
   String? _contentAnimationId;
-
   @override
   void initState() {
     super.initState();
-    
     _animationManager.initialize();
-    
     _loadingController = AnimationController(
       duration: widget.transitionDuration,
       vsync: this,
     );
-    
     _contentController = AnimationController(
       duration: widget.transitionDuration,
       vsync: this,
     );
-    
     _setupAnimations();
     _registerAnimations();
-    
-    // Set initial state
     if (widget.isLoading) {
       _loadingController.value = 1.0;
       _contentController.value = 0.0;
@@ -2296,7 +1959,6 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
       _contentController.value = 1.0;
     }
   }
-
   void _setupAnimations() {
     _loadingFadeAnimation = Tween<double>(
       begin: 1.0,
@@ -2305,7 +1967,6 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
       parent: _loadingController,
       curve: widget.transitionCurve,
     ));
-    
     _contentFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -2313,7 +1974,6 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
       parent: _contentController,
       curve: widget.transitionCurve,
     ));
-    
     _contentScaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
@@ -2321,8 +1981,6 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
       parent: _contentController,
       curve: widget.transitionCurve,
     ));
-    
-    // Setup slide animation based on transition type
     Offset slideOffset;
     switch (widget.transitionType) {
       case LoadingTransitionType.slideUp:
@@ -2340,7 +1998,6 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
       default:
         slideOffset = const Offset(0.0, 0.1);
     }
-    
     _contentSlideAnimation = Tween<Offset>(
       begin: slideOffset,
       end: Offset.zero,
@@ -2349,7 +2006,6 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
       curve: widget.transitionCurve,
     ));
   }
-
   void _registerAnimations() {
     if (_animationManager.isInitialized) {
       _loadingAnimationId = _animationManager.registerController(
@@ -2360,7 +2016,6 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
         ),
         category: AnimationCategory.content,
       );
-      
       _contentAnimationId = _animationManager.registerController(
         controller: _contentController,
         config: AnimationConfigs.fadeTransition.copyWith(
@@ -2371,11 +2026,9 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
       );
     }
   }
-
   @override
   void didUpdateWidget(_LoadingToContentTransition oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
     if (widget.isLoading != oldWidget.isLoading) {
       if (widget.isLoading) {
         _contentController.reverse();
@@ -2390,7 +2043,6 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
       }
     }
   }
-
   @override
   void dispose() {
     if (_loadingAnimationId != null) {
@@ -2403,12 +2055,10 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
     _contentController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Content widget
         AnimatedBuilder(
           animation: Listenable.merge([
             _contentFadeAnimation,
@@ -2419,10 +2069,7 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
             if (_contentFadeAnimation.value == 0.0) {
               return const SizedBox.shrink();
             }
-            
             Widget content = widget.contentWidget;
-            
-            // Apply transformations based on transition type
             switch (widget.transitionType) {
               case LoadingTransitionType.fadeScale:
                 content = Transform.scale(
@@ -2442,22 +2089,18 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
               default:
                 break;
             }
-            
             return Opacity(
               opacity: _contentFadeAnimation.value,
               child: content,
             );
           },
         ),
-        
-        // Loading widget
         AnimatedBuilder(
           animation: _loadingFadeAnimation,
           builder: (context, child) {
             if (_loadingFadeAnimation.value == 0.0) {
               return const SizedBox.shrink();
             }
-            
             return Opacity(
               opacity: _loadingFadeAnimation.value,
               child: widget.loadingWidget,
@@ -2468,28 +2111,22 @@ class _LoadingToContentTransitionState extends State<_LoadingToContentTransition
     );
   }
 }
-
-/// Legacy pulsing dot widget (kept for backward compatibility)
 class _PulsingDot extends StatefulWidget {
   final double size;
   final Color color;
   final Animation<double> animation;
-
   const _PulsingDot({
     required this.size,
     required this.color,
     required this.animation,
   });
-
   @override
   State<_PulsingDot> createState() => _PulsingDotState();
 }
-
 class _PulsingDotState extends State<_PulsingDot>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
   @override
   void initState() {
     super.initState();
@@ -2502,13 +2139,11 @@ class _PulsingDotState extends State<_PulsingDot>
     );
     _controller.repeat(reverse: true);
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -2526,22 +2161,16 @@ class _PulsingDotState extends State<_PulsingDot>
     );
   }
 }
-
-/// Legacy shimmer effect widget (kept for backward compatibility)
 class _ShimmerWidget extends StatefulWidget {
   final Widget child;
-
   const _ShimmerWidget({required this.child});
-
   @override
   State<_ShimmerWidget> createState() => _ShimmerWidgetState();
 }
-
 class _ShimmerWidgetState extends State<_ShimmerWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
   @override
   void initState() {
     super.initState();
@@ -2554,13 +2183,11 @@ class _ShimmerWidgetState extends State<_ShimmerWidget>
     );
     _controller.repeat();
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -2589,28 +2216,22 @@ class _ShimmerWidgetState extends State<_ShimmerWidget>
     );
   }
 }
-
-/// Bouncing button widget
 class _BouncingButton extends StatefulWidget {
   final Widget child;
   final VoidCallback onPressed;
   final Duration duration;
-
   const _BouncingButton({
     required this.child,
     required this.onPressed,
     required this.duration,
   });
-
   @override
   State<_BouncingButton> createState() => _BouncingButtonState();
 }
-
 class _BouncingButtonState extends State<_BouncingButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
   @override
   void initState() {
     super.initState();
@@ -2622,26 +2243,21 @@ class _BouncingButtonState extends State<_BouncingButton>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   void _onTapDown(TapDownDetails details) {
     _controller.forward();
   }
-
   void _onTapUp(TapUpDetails details) {
     _controller.reverse();
     widget.onPressed();
   }
-
   void _onTapCancel() {
     _controller.reverse();
   }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -2660,28 +2276,22 @@ class _BouncingButtonState extends State<_BouncingButton>
     );
   }
 }
-
-/// Fade in animation widget
 class _FadeInWidget extends StatefulWidget {
   final Widget child;
   final Duration duration;
   final Duration delay;
-
   const _FadeInWidget({
     required this.child,
     required this.duration,
     required this.delay,
   });
-
   @override
   State<_FadeInWidget> createState() => _FadeInWidgetState();
 }
-
 class _FadeInWidgetState extends State<_FadeInWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
   @override
   void initState() {
     super.initState();
@@ -2692,20 +2302,17 @@ class _FadeInWidgetState extends State<_FadeInWidget>
     _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
-
     Future.delayed(widget.delay, () {
       if (mounted) {
         _controller.forward();
       }
     });
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -2719,30 +2326,24 @@ class _FadeInWidgetState extends State<_FadeInWidget>
     );
   }
 }
-
-/// Slide in animation widget
 class _SlideInWidget extends StatefulWidget {
   final Widget child;
   final Duration duration;
   final Duration delay;
   final Offset begin;
-
   const _SlideInWidget({
     required this.child,
     required this.duration,
     required this.delay,
     required this.begin,
   });
-
   @override
   State<_SlideInWidget> createState() => _SlideInWidgetState();
 }
-
 class _SlideInWidgetState extends State<_SlideInWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Offset> _animation;
-
   @override
   void initState() {
     super.initState();
@@ -2754,20 +2355,17 @@ class _SlideInWidgetState extends State<_SlideInWidget>
       begin: widget.begin,
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
     Future.delayed(widget.delay, () {
       if (mounted) {
         _controller.forward();
       }
     });
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -2781,28 +2379,22 @@ class _SlideInWidgetState extends State<_SlideInWidget>
     );
   }
 }
-
-/// Scale in animation widget
 class _ScaleInWidget extends StatefulWidget {
   final Widget child;
   final Duration duration;
   final Duration delay;
-
   const _ScaleInWidget({
     required this.child,
     required this.duration,
     required this.delay,
   });
-
   @override
   State<_ScaleInWidget> createState() => _ScaleInWidgetState();
 }
-
 class _ScaleInWidgetState extends State<_ScaleInWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
   @override
   void initState() {
     super.initState();
@@ -2813,20 +2405,17 @@ class _ScaleInWidgetState extends State<_ScaleInWidget>
     _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
     );
-
     Future.delayed(widget.delay, () {
       if (mounted) {
         _controller.forward();
       }
     });
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -2840,8 +2429,6 @@ class _ScaleInWidgetState extends State<_ScaleInWidget>
     );
   }
 }
-
-/// Fade-in content widget
 class _FadeInContent extends StatefulWidget {
   final Widget child;
   final bool show;
@@ -2849,7 +2436,6 @@ class _FadeInContent extends StatefulWidget {
   final Duration delay;
   final Curve curve;
   final VoidCallback? onComplete;
-
   const _FadeInContent({
     required this.child,
     required this.show,
@@ -2858,25 +2444,20 @@ class _FadeInContent extends StatefulWidget {
     required this.curve,
     this.onComplete,
   });
-
   @override
   State<_FadeInContent> createState() => _FadeInContentState();
 }
-
 class _FadeInContentState extends State<_FadeInContent>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
   @override
   void initState() {
     super.initState();
-    
     _controller = AnimationController(
       duration: widget.duration,
       vsync: this,
     );
-    
     _animation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -2884,13 +2465,11 @@ class _FadeInContentState extends State<_FadeInContent>
       parent: _controller,
       curve: widget.curve,
     ));
-    
     _animation.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         widget.onComplete?.call();
       }
     });
-    
     if (widget.show) {
       Future.delayed(widget.delay, () {
         if (mounted) {
@@ -2899,11 +2478,9 @@ class _FadeInContentState extends State<_FadeInContent>
       });
     }
   }
-
   @override
   void didUpdateWidget(_FadeInContent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
     if (widget.show != oldWidget.show) {
       if (widget.show) {
         Future.delayed(widget.delay, () {
@@ -2916,13 +2493,11 @@ class _FadeInContentState extends State<_FadeInContent>
       }
     }
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -2936,8 +2511,6 @@ class _FadeInContentState extends State<_FadeInContent>
     );
   }
 }
-
-/// Slide-in content widget
 class _SlideInContent extends StatefulWidget {
   final Widget child;
   final bool show;
@@ -2946,7 +2519,6 @@ class _SlideInContent extends StatefulWidget {
   final Curve curve;
   final Offset slideDirection;
   final VoidCallback? onComplete;
-
   const _SlideInContent({
     required this.child,
     required this.show,
@@ -2956,26 +2528,21 @@ class _SlideInContent extends StatefulWidget {
     required this.slideDirection,
     this.onComplete,
   });
-
   @override
   State<_SlideInContent> createState() => _SlideInContentState();
 }
-
 class _SlideInContentState extends State<_SlideInContent>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
-
   @override
   void initState() {
     super.initState();
-    
     _controller = AnimationController(
       duration: widget.duration,
       vsync: this,
     );
-    
     _slideAnimation = Tween<Offset>(
       begin: widget.slideDirection,
       end: Offset.zero,
@@ -2983,7 +2550,6 @@ class _SlideInContentState extends State<_SlideInContent>
       parent: _controller,
       curve: widget.curve,
     ));
-    
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -2991,13 +2557,11 @@ class _SlideInContentState extends State<_SlideInContent>
       parent: _controller,
       curve: widget.curve,
     ));
-    
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         widget.onComplete?.call();
       }
     });
-    
     if (widget.show) {
       Future.delayed(widget.delay, () {
         if (mounted) {
@@ -3006,11 +2570,9 @@ class _SlideInContentState extends State<_SlideInContent>
       });
     }
   }
-
   @override
   void didUpdateWidget(_SlideInContent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
     if (widget.show != oldWidget.show) {
       if (widget.show) {
         Future.delayed(widget.delay, () {
@@ -3023,13 +2585,11 @@ class _SlideInContentState extends State<_SlideInContent>
       }
     }
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -3046,8 +2606,6 @@ class _SlideInContentState extends State<_SlideInContent>
     );
   }
 }
-
-/// Scale-in content widget
 class _ScaleInContent extends StatefulWidget {
   final Widget child;
   final bool show;
@@ -3056,7 +2614,6 @@ class _ScaleInContent extends StatefulWidget {
   final Curve curve;
   final double scaleStart;
   final VoidCallback? onComplete;
-
   const _ScaleInContent({
     required this.child,
     required this.show,
@@ -3066,26 +2623,21 @@ class _ScaleInContent extends StatefulWidget {
     required this.scaleStart,
     this.onComplete,
   });
-
   @override
   State<_ScaleInContent> createState() => _ScaleInContentState();
 }
-
 class _ScaleInContentState extends State<_ScaleInContent>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
-
   @override
   void initState() {
     super.initState();
-    
     _controller = AnimationController(
       duration: widget.duration,
       vsync: this,
     );
-    
     _scaleAnimation = Tween<double>(
       begin: widget.scaleStart,
       end: 1.0,
@@ -3093,7 +2645,6 @@ class _ScaleInContentState extends State<_ScaleInContent>
       parent: _controller,
       curve: widget.curve,
     ));
-    
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -3101,13 +2652,11 @@ class _ScaleInContentState extends State<_ScaleInContent>
       parent: _controller,
       curve: widget.curve,
     ));
-    
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         widget.onComplete?.call();
       }
     });
-    
     if (widget.show) {
       Future.delayed(widget.delay, () {
         if (mounted) {
@@ -3116,11 +2665,9 @@ class _ScaleInContentState extends State<_ScaleInContent>
       });
     }
   }
-
   @override
   void didUpdateWidget(_ScaleInContent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
     if (widget.show != oldWidget.show) {
       if (widget.show) {
         Future.delayed(widget.delay, () {
@@ -3133,13 +2680,11 @@ class _ScaleInContentState extends State<_ScaleInContent>
       }
     }
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -3156,8 +2701,6 @@ class _ScaleInContentState extends State<_ScaleInContent>
     );
   }
 }
-
-/// Staggered content reveal widget
 class _StaggeredContentReveal extends StatefulWidget {
   final List<Widget> children;
   final bool show;
@@ -3167,7 +2710,6 @@ class _StaggeredContentReveal extends StatefulWidget {
   final Curve curve;
   final StaggerDirection direction;
   final VoidCallback? onComplete;
-
   const _StaggeredContentReveal({
     required this.children,
     required this.show,
@@ -3178,29 +2720,24 @@ class _StaggeredContentReveal extends StatefulWidget {
     required this.direction,
     this.onComplete,
   });
-
   @override
   State<_StaggeredContentReveal> createState() => _StaggeredContentRevealState();
 }
-
 class _StaggeredContentRevealState extends State<_StaggeredContentReveal>
     with TickerProviderStateMixin {
   late List<AnimationController> _controllers;
   late List<Animation<double>> _fadeAnimations;
   late List<Animation<Offset>> _slideAnimations;
   int _completedAnimations = 0;
-
   @override
   void initState() {
     super.initState();
-    
     _controllers = List.generate(widget.children.length, (index) {
       return AnimationController(
         duration: widget.itemDuration,
         vsync: this,
       );
     });
-    
     _fadeAnimations = _controllers.map((controller) {
       return Tween<double>(
         begin: 0.0,
@@ -3210,7 +2747,6 @@ class _StaggeredContentRevealState extends State<_StaggeredContentReveal>
         curve: widget.curve,
       ));
     }).toList();
-    
     _slideAnimations = _controllers.map((controller) {
       return Tween<Offset>(
         begin: _getSlideOffset(),
@@ -3220,8 +2756,6 @@ class _StaggeredContentRevealState extends State<_StaggeredContentReveal>
         curve: widget.curve,
       ));
     }).toList();
-    
-    // Add completion listeners
     for (final controller in _controllers) {
       controller.addStatusListener((status) {
         if (status == AnimationStatus.completed) {
@@ -3232,12 +2766,10 @@ class _StaggeredContentRevealState extends State<_StaggeredContentReveal>
         }
       });
     }
-    
     if (widget.show) {
       _startStaggeredAnimation();
     }
   }
-
   Offset _getSlideOffset() {
     switch (widget.direction) {
       case StaggerDirection.topToBottom:
@@ -3252,13 +2784,10 @@ class _StaggeredContentRevealState extends State<_StaggeredContentReveal>
         return const Offset(0.0, 0.0);
     }
   }
-
   void _startStaggeredAnimation() {
     _completedAnimations = 0;
-    
     for (int i = 0; i < _controllers.length; i++) {
       final delay = widget.initialDelay + (widget.itemDelay * i);
-      
       Future.delayed(delay, () {
         if (mounted) {
           _controllers[i].forward();
@@ -3266,11 +2795,9 @@ class _StaggeredContentRevealState extends State<_StaggeredContentReveal>
       });
     }
   }
-
   @override
   void didUpdateWidget(_StaggeredContentReveal oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
     if (widget.show != oldWidget.show) {
       if (widget.show) {
         _startStaggeredAnimation();
@@ -3281,7 +2808,6 @@ class _StaggeredContentRevealState extends State<_StaggeredContentReveal>
       }
     }
   }
-
   @override
   void dispose() {
     for (final controller in _controllers) {
@@ -3289,7 +2815,6 @@ class _StaggeredContentRevealState extends State<_StaggeredContentReveal>
     }
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -3313,8 +2838,6 @@ class _StaggeredContentRevealState extends State<_StaggeredContentReveal>
     );
   }
 }
-
-/// Morphing content widget
 class _MorphingContent extends StatefulWidget {
   final Widget placeholderWidget;
   final Widget contentWidget;
@@ -3322,7 +2845,6 @@ class _MorphingContent extends StatefulWidget {
   final Duration morphDuration;
   final Curve morphCurve;
   final VoidCallback? onMorphComplete;
-
   const _MorphingContent({
     required this.placeholderWidget,
     required this.contentWidget,
@@ -3331,25 +2853,20 @@ class _MorphingContent extends StatefulWidget {
     required this.morphCurve,
     this.onMorphComplete,
   });
-
   @override
   State<_MorphingContent> createState() => _MorphingContentState();
 }
-
 class _MorphingContentState extends State<_MorphingContent>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _morphAnimation;
-
   @override
   void initState() {
     super.initState();
-    
     _controller = AnimationController(
       duration: widget.morphDuration,
       vsync: this,
     );
-    
     _morphAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -3357,22 +2874,18 @@ class _MorphingContentState extends State<_MorphingContent>
       parent: _controller,
       curve: widget.morphCurve,
     ));
-    
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         widget.onMorphComplete?.call();
       }
     });
-    
     if (widget.showContent) {
       _controller.forward();
     }
   }
-
   @override
   void didUpdateWidget(_MorphingContent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
     if (widget.showContent != oldWidget.showContent) {
       if (widget.showContent) {
         _controller.forward();
@@ -3381,13 +2894,11 @@ class _MorphingContentState extends State<_MorphingContent>
       }
     }
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -3395,7 +2906,6 @@ class _MorphingContentState extends State<_MorphingContent>
       builder: (context, child) {
         return Stack(
           children: [
-            // Placeholder widget
             Opacity(
               opacity: 1.0 - _morphAnimation.value,
               child: Transform.scale(
@@ -3403,8 +2913,6 @@ class _MorphingContentState extends State<_MorphingContent>
                 child: widget.placeholderWidget,
               ),
             ),
-            
-            // Content widget
             Opacity(
               opacity: _morphAnimation.value,
               child: Transform.scale(

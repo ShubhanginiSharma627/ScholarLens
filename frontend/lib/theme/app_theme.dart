@@ -1,60 +1,39 @@
 import 'package:flutter/material.dart';
-
-/// ScholarLens app theme configuration with consistent color palette,
-/// card-based layouts, and responsive design support
 class AppTheme {
-  // Color palette
   static const Color primaryColor = Color(0xFF6366F1); // Indigo
   static const Color secondaryColor = Color(0xFF10B981); // Emerald
   static const Color accentColor = Color(0xFFF59E0B); // Amber
   static const Color errorColor = Color(0xFFEF4444); // Red
   static const Color warningColor = Color(0xFFF97316); // Orange
   static const Color successColor = Color(0xFF22C55E); // Green
-  
-  // Neutral colors
   static const Color surfaceColor = Color(0xFFFAFAFA);
   static const Color backgroundColor = Color(0xFFFFFFFF);
   static const Color cardColor = Color(0xFFFFFFFF);
-  
-  // Dark theme colors
   static const Color darkSurfaceColor = Color(0xFF1F2937);
   static const Color darkBackgroundColor = Color(0xFF111827);
   static const Color darkCardColor = Color(0xFF374151);
-  
-  // Text colors
   static const Color primaryTextColor = Color(0xFF1F2937);
   static const Color secondaryTextColor = Color(0xFF6B7280);
   static const Color darkPrimaryTextColor = Color(0xFFF9FAFB);
   static const Color darkSecondaryTextColor = Color(0xFFD1D5DB);
-  
-  // Border colors
   static const Color borderColor = Color(0xFFE5E7EB);
   static const Color darkBorderColor = Color(0xFF4B5563);
-  
-  // Spacing constants for consistent layout
   static const double spacingXS = 4.0;
   static const double spacingS = 8.0;
   static const double spacingM = 16.0;
   static const double spacingL = 24.0;
   static const double spacingXL = 32.0;
   static const double spacingXXL = 48.0;
-  
-  // Border radius constants
   static const double radiusS = 8.0;
   static const double radiusM = 12.0;
   static const double radiusL = 16.0;
   static const double radiusXL = 24.0;
   static const double radiusXXL = 32.0;
-  
-  // Elevation constants
   static const double elevationS = 2.0;
   static const double elevationM = 4.0;
   static const double elevationL = 8.0;
-  
-  /// Light theme configuration
   static ThemeData get lightTheme {
     return ThemeData(
-      // Color scheme
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         brightness: Brightness.light,
@@ -64,14 +43,8 @@ class AppTheme {
         error: errorColor,
         surface: surfaceColor,
       ),
-      
-      // Material Design 3
       useMaterial3: true,
-      
-      // Scaffold background
       scaffoldBackgroundColor: backgroundColor,
-      
-      // App bar theme
       appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
@@ -84,8 +57,6 @@ class AppTheme {
           color: primaryTextColor,
         ),
       ),
-      
-      // Card theme with rounded corners and shadows
       cardTheme: CardThemeData(
         elevation: elevationS,
         shadowColor: Colors.black.withValues(alpha: 0.1),
@@ -96,8 +67,6 @@ class AppTheme {
         color: cardColor,
         margin: const EdgeInsets.all(spacingS),
       ),
-      
-      // Elevated button theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: elevationS,
@@ -115,8 +84,6 @@ class AppTheme {
           ),
         ),
       ),
-      
-      // Outlined button theme
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           shape: RoundedRectangleBorder(
@@ -133,8 +100,6 @@ class AppTheme {
           ),
         ),
       ),
-      
-      // Text button theme
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(
@@ -150,8 +115,6 @@ class AppTheme {
           ),
         ),
       ),
-      
-      // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusS),
@@ -176,8 +139,6 @@ class AppTheme {
         filled: true,
         fillColor: surfaceColor,
       ),
-      
-      // Bottom navigation bar theme
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         elevation: elevationL,
@@ -193,16 +154,12 @@ class AppTheme {
           fontWeight: FontWeight.w500,
         ),
       ),
-      
-      // Floating action button theme
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         elevation: elevationM,
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         shape: CircleBorder(),
       ),
-      
-      // Chip theme
       chipTheme: ChipThemeData(
         backgroundColor: surfaceColor,
         selectedColor: primaryColor.withValues(alpha: 0.1),
@@ -218,8 +175,6 @@ class AppTheme {
           vertical: spacingS,
         ),
       ),
-      
-      // List tile theme
       listTileTheme: const ListTileThemeData(
         contentPadding: EdgeInsets.symmetric(
           horizontal: spacingM,
@@ -229,15 +184,11 @@ class AppTheme {
           borderRadius: BorderRadius.all(Radius.circular(radiusS)),
         ),
       ),
-      
-      // Divider theme
       dividerTheme: const DividerThemeData(
         color: Color(0xFFE5E7EB),
         thickness: 1,
         space: spacingM,
       ),
-      
-      // Text theme
       textTheme: const TextTheme(
         displayLarge: TextStyle(
           fontSize: 32,
@@ -332,11 +283,8 @@ class AppTheme {
       ),
     );
   }
-  
-  /// Dark theme configuration
   static ThemeData get darkTheme {
     return ThemeData(
-      // Color scheme
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         brightness: Brightness.dark,
@@ -346,14 +294,8 @@ class AppTheme {
         error: errorColor,
         surface: darkSurfaceColor,
       ),
-      
-      // Material Design 3
       useMaterial3: true,
-      
-      // Scaffold background
       scaffoldBackgroundColor: darkBackgroundColor,
-      
-      // App bar theme
       appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
@@ -366,8 +308,6 @@ class AppTheme {
           color: darkPrimaryTextColor,
         ),
       ),
-      
-      // Card theme
       cardTheme: CardThemeData(
         elevation: elevationS,
         shadowColor: Colors.black.withValues(alpha: 0.3),
@@ -378,8 +318,6 @@ class AppTheme {
         color: darkCardColor,
         margin: const EdgeInsets.all(spacingS),
       ),
-      
-      // Button themes (similar to light theme but with dark colors)
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: elevationS,
@@ -397,8 +335,6 @@ class AppTheme {
           ),
         ),
       ),
-      
-      // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusS),
@@ -423,8 +359,6 @@ class AppTheme {
         filled: true,
         fillColor: darkSurfaceColor,
       ),
-      
-      // Bottom navigation bar theme
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         elevation: elevationL,
@@ -440,8 +374,6 @@ class AppTheme {
           fontWeight: FontWeight.w500,
         ),
       ),
-      
-      // Text theme for dark mode
       textTheme: const TextTheme(
         displayLarge: TextStyle(
           fontSize: 32,

@@ -5,8 +5,6 @@ import 'package:scholar_lens/theme/app_theme.dart';
 import 'package:scholar_lens/theme/responsive.dart';
 import 'package:scholar_lens/utils/responsive_chapter_utils.dart';
 import 'package:scholar_lens/utils/accessibility_utils.dart';
-
-/// Header component for the chapter reading screen with navigation and progress
 class ChapterReadingHeader extends StatelessWidget {
   final UploadedTextbook textbook;
   final ChapterReadingState readingState;
@@ -15,7 +13,6 @@ class ChapterReadingHeader extends StatelessWidget {
   final String? pageRange;
   final int? estimatedReadingTime;
   final bool isChapterCompleted;
-
   const ChapterReadingHeader({
     super.key,
     required this.textbook,
@@ -26,7 +23,6 @@ class ChapterReadingHeader extends StatelessWidget {
     this.estimatedReadingTime,
     this.isChapterCompleted = false,
   });
-
   @override
   Widget build(BuildContext context) {
     return ResponsiveChapterLayout(
@@ -57,10 +53,8 @@ class ChapterReadingHeader extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildNavigationRow(BuildContext context) {
     final buttonSize = ResponsiveChapterUtils.getMinTouchTargetSize(context);
-    
     return AccessibilityUtils.createAccessibleNavigation(
       semanticLabel: 'Chapter navigation',
       children: [
@@ -107,15 +101,12 @@ class ChapterReadingHeader extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildChapterInfo(BuildContext context) {
     final isCompact = ResponsiveChapterUtils.shouldUseCompactLayout(context);
-    
     return Responsive.isMobile(context) && isCompact
         ? _buildCompactChapterInfo(context)
         : _buildFullChapterInfo(context);
   }
-
   Widget _buildCompactChapterInfo(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,7 +146,6 @@ class ChapterReadingHeader extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildFullChapterInfo(BuildContext context) {
     return Row(
       children: [
@@ -194,13 +184,11 @@ class ChapterReadingHeader extends StatelessWidget {
             ],
           ),
         ),
-        // Completion status indicator
         if (isChapterCompleted || readingState.isChapterCompleted)
           _buildCompletionBadge(context),
       ],
     );
   }
-
   Widget _buildCompletionBadge(BuildContext context) {
     return Semantics(
       label: 'Chapter completed',
@@ -233,7 +221,6 @@ class ChapterReadingHeader extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildMetadata(BuildContext context) {
     return Row(
       children: [
@@ -275,13 +262,11 @@ class ChapterReadingHeader extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildProgressSection(BuildContext context) {
     final progress = readingState.readingProgress;
     final progressPercentage = (progress * 100).toInt();
     final progressBarHeight = ResponsiveChapterUtils.getProgressBarHeight(context);
     final progressLabel = AccessibilityUtils.createProgressLabel(progress, context: 'Chapter reading');
-    
     return Semantics(
       label: 'Chapter progress section',
       child: Column(
@@ -329,7 +314,6 @@ class ChapterReadingHeader extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppTheme.spacingS),
-          // Animated progress bar
           TweenAnimationBuilder<double>(
             duration: AccessibilityUtils.isReduceMotionEnabled(context) 
                 ? Duration.zero 
@@ -397,8 +381,6 @@ class ChapterReadingHeader extends StatelessWidget {
       ),
     );
   }
-
-  /// Returns appropriate color for progress bar based on completion percentage
   Color _getProgressColor(BuildContext context, double progress) {
     if (progress >= 1.0) {
       return AppTheme.successColor;

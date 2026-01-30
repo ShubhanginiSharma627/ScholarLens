@@ -4,23 +4,16 @@ import '../services/flashcard_service.dart';
 import '../widgets/common/top_navigation_bar.dart';
 import 'create_flashcard_screen.dart';
 import 'all_cards_view_screen.dart';
-
-/// Screen for managing flashcards with organization and filtering
 class FlashcardManagementScreen extends StatefulWidget {
   const FlashcardManagementScreen({super.key});
-
   @override
   State<FlashcardManagementScreen> createState() => _FlashcardManagementScreenState();
 }
-
 class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
   final _flashcardService = FlashcardService();
-  
   List<Flashcard> _allFlashcards = [];
   List<String> _subjects = [];
   bool _isLoading = true;
-
-  // Mock data for demonstration
   final List<Map<String, dynamic>> _mockDecks = [
     {
       'name': 'Cell Biology',
@@ -47,22 +40,18 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
       'icon': Icons.layers,
     },
   ];
-
   @override
   void initState() {
     super.initState();
     _loadData();
   }
-
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
     });
-
     try {
       final flashcards = await _flashcardService.getAllFlashcards();
       final subjects = await _flashcardService.getSubjects();
-
       setState(() {
         _allFlashcards = flashcards;
         _subjects = subjects;
@@ -82,7 +71,6 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
       }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,7 +85,6 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header section
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -123,8 +110,6 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
                       ],
                     ),
                   ),
-                  
-                  // Your Decks section
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -140,7 +125,6 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
                     ),
                     child: Column(
                       children: [
-                        // Header with Generate button
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -191,15 +175,11 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        
-                        // Deck list
                         ..._mockDecks.map((deck) => _buildDeckTile(deck)),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
-                  // Offline Mode section
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
@@ -245,7 +225,6 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
             ),
     );
   }
-
   Widget _buildDeckTile(Map<String, dynamic> deck) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -310,7 +289,6 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
           size: 28,
         ),
         onTap: () {
-          // Navigate to deck study screen
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Opening ${deck['name']} deck...'),

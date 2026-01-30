@@ -1,22 +1,16 @@
 import 'package:flutter/material.dart';
-
 import '../../models/recent_activity.dart';
-
-/// List tile widget for displaying recent activity with leading icon, title, and timestamp
 class ActivityListTile extends StatelessWidget {
   final RecentActivity activity;
   final VoidCallback onTap;
-
   const ActivityListTile({
     super.key,
     required this.activity,
     required this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
     return ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
@@ -81,8 +75,6 @@ class ActivityListTile extends StatelessWidget {
       ),
     );
   }
-
-  /// Gets appropriate icon for activity type
   IconData _getActivityIcon(ActivityType type) {
     switch (type) {
       case ActivityType.lesson:
@@ -97,8 +89,6 @@ class ActivityListTile extends StatelessWidget {
         return Icons.upload_file;
     }
   }
-
-  /// Gets appropriate color for activity type
   Color _getActivityColor(ActivityType type) {
     switch (type) {
       case ActivityType.lesson:
@@ -113,8 +103,6 @@ class ActivityListTile extends StatelessWidget {
         return Colors.teal;
     }
   }
-
-  /// Gets appropriate color for subject
   Color _getSubjectColor(String subject) {
     switch (subject.toLowerCase()) {
       case 'math':

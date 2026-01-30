@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/chapter_section.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_icons.dart';
-
-/// Navigation component for moving between chapter sections
-/// Provides previous/next buttons and section overview functionality
 class SectionNavigator extends StatelessWidget {
   final int currentSection;
   final int totalSections;
@@ -14,7 +11,6 @@ class SectionNavigator extends StatelessWidget {
   final VoidCallback? onPreviousPressed;
   final VoidCallback? onNextPressed;
   final VoidCallback? onShowAllSections;
-
   const SectionNavigator({
     super.key,
     required this.currentSection,
@@ -26,12 +22,10 @@ class SectionNavigator extends StatelessWidget {
     this.onNextPressed,
     this.onShowAllSections,
   });
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingM),
       decoration: BoxDecoration(
@@ -48,7 +42,6 @@ class SectionNavigator extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Section indicator
           Text(
             'Section $currentSection of $totalSections',
             style: theme.textTheme.titleMedium?.copyWith(
@@ -57,12 +50,9 @@ class SectionNavigator extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppTheme.spacingM),
-          
-          // Navigation buttons row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // Previous button
               _NavigationButton(
                 icon: AppIcons.arrowLeft,
                 label: 'Previous',
@@ -70,14 +60,10 @@ class SectionNavigator extends StatelessWidget {
                 onPressed: onPreviousPressed,
                 theme: theme,
               ),
-              
-              // All Sections button
               _AllSectionsButton(
                 onPressed: () => _showSectionOverview(context),
                 theme: theme,
               ),
-              
-              // Next button
               _NavigationButton(
                 icon: AppIcons.arrowRight,
                 label: 'Next',
@@ -91,8 +77,6 @@ class SectionNavigator extends StatelessWidget {
       ),
     );
   }
-
-  /// Shows the section overview modal
   void _showSectionOverview(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -111,15 +95,12 @@ class SectionNavigator extends StatelessWidget {
     );
   }
 }
-
-/// Individual navigation button widget
 class _NavigationButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isEnabled;
   final VoidCallback? onPressed;
   final ThemeData theme;
-
   const _NavigationButton({
     required this.icon,
     required this.label,
@@ -127,11 +108,9 @@ class _NavigationButton extends StatelessWidget {
     required this.onPressed,
     required this.theme,
   });
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = theme.colorScheme;
-    
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS),
@@ -172,21 +151,16 @@ class _NavigationButton extends StatelessWidget {
     );
   }
 }
-
-/// All Sections overview button
 class _AllSectionsButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final ThemeData theme;
-
   const _AllSectionsButton({
     required this.onPressed,
     required this.theme,
   });
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = theme.colorScheme;
-    
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS),
@@ -221,15 +195,12 @@ class _AllSectionsButton extends StatelessWidget {
     );
   }
 }
-
-/// Modal widget showing all sections with completion indicators
 class _SectionOverviewModal extends StatelessWidget {
   final int currentSection;
   final int totalSections;
   final List<bool> sectionCompletionStatus;
   final List<ChapterSection>? sections;
   final Function(int) onSectionSelected;
-
   const _SectionOverviewModal({
     required this.currentSection,
     required this.totalSections,
@@ -237,12 +208,10 @@ class _SectionOverviewModal extends StatelessWidget {
     required this.sections,
     required this.onSectionSelected,
   });
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
     return Container(
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
@@ -253,7 +222,6 @@ class _SectionOverviewModal extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
           Container(
             margin: const EdgeInsets.only(top: AppTheme.spacingM),
             width: 40,
@@ -263,8 +231,6 @@ class _SectionOverviewModal extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          
-          // Header
           Padding(
             padding: const EdgeInsets.all(AppTheme.spacingL),
             child: Row(
@@ -285,8 +251,6 @@ class _SectionOverviewModal extends StatelessWidget {
               ],
             ),
           ),
-          
-          // Sections list
           Flexible(
             child: ListView.builder(
               shrinkWrap: true,
@@ -301,7 +265,6 @@ class _SectionOverviewModal extends StatelessWidget {
                 final sectionTitle = sections != null && index < sections!.length
                     ? sections![index].title
                     : 'Section $sectionNumber';
-                
                 return _SectionListItem(
                   sectionNumber: sectionNumber,
                   title: sectionTitle,
@@ -313,16 +276,12 @@ class _SectionOverviewModal extends StatelessWidget {
               },
             ),
           ),
-          
-          // Bottom padding for safe area
           SizedBox(height: MediaQuery.of(context).padding.bottom + AppTheme.spacingL),
         ],
       ),
     );
   }
 }
-
-/// Individual section list item in the overview
 class _SectionListItem extends StatelessWidget {
   final int sectionNumber;
   final String title;
@@ -330,7 +289,6 @@ class _SectionListItem extends StatelessWidget {
   final bool isCurrent;
   final VoidCallback onTap;
   final ThemeData theme;
-
   const _SectionListItem({
     required this.sectionNumber,
     required this.title,
@@ -339,11 +297,9 @@ class _SectionListItem extends StatelessWidget {
     required this.onTap,
     required this.theme,
   });
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = theme.colorScheme;
-    
     return Container(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
       decoration: BoxDecoration(

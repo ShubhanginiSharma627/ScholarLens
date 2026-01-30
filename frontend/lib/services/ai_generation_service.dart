@@ -5,22 +5,14 @@ import '../models/ai_generation.dart';
 import '../models/flashcard.dart';
 import 'api_service.dart';
 import 'config_service.dart';
-
-/// Service for AI-powered flashcard generation
-/// 
-/// This service handles communication with the backend AI generation API
-/// and manages the complete workflow from content input to flashcard creation.
 class AIGenerationService {
   final ApiService _apiService;
   final ConfigService _configService;
-  
   AIGenerationService({
     ApiService? apiService,
     ConfigService? configService,
   }) : _apiService = apiService ?? ApiService(),
        _configService = configService ?? ConfigService();
-
-  /// Generate flashcards from content
   Future<AIGenerationResult> generateFromContent({
     required ContentSource contentSource,
     GenerationOptions? options,
@@ -30,12 +22,10 @@ class AIGenerationService {
         'contentSource': contentSource.toJson(),
         'options': options?.toJson() ?? {},
       };
-
       final response = await _apiService.post(
         '/ai-generation/generate',
         requestBody,
       );
-
       if (response['success'] == true) {
         final data = response['data'];
         return AIGenerationResult.fromJson(data);
@@ -51,17 +41,13 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Generate flashcards from image file
   Future<AIGenerationResult> generateFromImage({
     required File imageFile,
     GenerationOptions? options,
   }) async {
     try {
-      // Convert image to base64
       final bytes = await imageFile.readAsBytes();
       final base64Image = base64Encode(bytes);
-      
       final contentSource = ContentSource(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         type: ContentType.image,
@@ -75,7 +61,6 @@ class AIGenerationService {
         ),
         uploadedAt: DateTime.now(),
       );
-
       return await generateFromContent(
         contentSource: contentSource,
         options: options,
@@ -86,18 +71,13 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Generate flashcards from PDF file
   Future<AIGenerationResult> generateFromPDF({
     required File pdfFile,
     GenerationOptions? options,
   }) async {
     try {
-      // For now, we'll read the PDF as bytes and encode as base64
-      // In a full implementation, you might extract text first
       final bytes = await pdfFile.readAsBytes();
       final base64PDF = base64Encode(bytes);
-      
       final contentSource = ContentSource(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         type: ContentType.pdf,
@@ -111,7 +91,6 @@ class AIGenerationService {
         ),
         uploadedAt: DateTime.now(),
       );
-
       return await generateFromContent(
         contentSource: contentSource,
         options: options,
@@ -122,8 +101,6 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Generate flashcards from text
   Future<AIGenerationResult> generateFromText({
     required String text,
     GenerationOptions? options,
@@ -139,7 +116,6 @@ class AIGenerationService {
         ),
         uploadedAt: DateTime.now(),
       );
-
       return await generateFromContent(
         contentSource: contentSource,
         options: options,
@@ -150,8 +126,6 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Generate flashcards from topic
   Future<AIGenerationResult> generateFromTopic({
     required String topic,
     GenerationOptions? options,
@@ -167,7 +141,6 @@ class AIGenerationService {
         ),
         uploadedAt: DateTime.now(),
       );
-
       return await generateFromContent(
         contentSource: contentSource,
         options: options,
@@ -178,20 +151,15 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Get generation session details
   Future<GenerationSession> getGenerationSession(String sessionId) async {
     try {
       final response = await _apiService.get('/ai-generation/sessions/$sessionId');
-
       if (response['success'] == true) {
         final sessionData = response['data']['session'];
         final flashcardsData = response['data']['flashcards'] as List;
-        
         final flashcards = flashcardsData
             .map((card) => GeneratedFlashcard.fromJson(card))
             .toList();
-
         final session = GenerationSession.fromJson(sessionData);
         return session.copyWith(generatedFlashcards: flashcards);
       } else {
@@ -205,8 +173,6 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Get user's generation sessions
   Future<List<GenerationSession>> getUserSessions({
     int limit = 20,
     int offset = 0,
@@ -215,7 +181,6 @@ class AIGenerationService {
       final response = await _apiService.get(
         '/ai-generation/sessions?limit=$limit&offset=$offset',
       );
-
       if (response['success'] == true) {
         final sessionsData = response['data']['sessions'] as List;
         return sessionsData
@@ -232,8 +197,6 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Update a generated flashcard
   Future<void> updateGeneratedFlashcard({
     required String flashcardId,
     required String sessionId,
@@ -244,12 +207,10 @@ class AIGenerationService {
         'sessionId': sessionId,
         ...updates.toJson(),
       };
-
       final response = await _apiService.put(
         '/ai-generation/flashcards/$flashcardId',
         requestBody,
       );
-
       if (response['success'] != true) {
         throw AIGenerationException(
           response['error']['message'] ?? 'Failed to update flashcard',
@@ -261,20 +222,16 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Delete a generated flashcard
   Future<void> deleteGeneratedFlashcard({
     required String flashcardId,
     required String sessionId,
   }) async {
     try {
       final requestBody = {'sessionId': sessionId};
-
       final response = await _apiService.delete(
         '/ai-generation/flashcards/$flashcardId',
         requestBody,
       );
-
       if (response['success'] != true) {
         throw AIGenerationException(
           response['error']['message'] ?? 'Failed to delete flashcard',
@@ -286,8 +243,6 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Regenerate a specific flashcard
   Future<GeneratedFlashcard> regenerateFlashcard({
     required String flashcardId,
     required String sessionId,
@@ -298,12 +253,10 @@ class AIGenerationService {
         'sessionId': sessionId,
         'feedback': feedback,
       };
-
       final response = await _apiService.post(
         '/ai-generation/flashcards/$flashcardId/regenerate',
         requestBody,
       );
-
       if (response['success'] == true) {
         return GeneratedFlashcard.fromJson(response['data']['flashcard']);
       } else {
@@ -317,8 +270,6 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Approve and save flashcards to user's collection
   Future<List<Flashcard>> approveAndSaveFlashcards({
     required String sessionId,
     List<String>? flashcardIds,
@@ -328,12 +279,10 @@ class AIGenerationService {
         'sessionId': sessionId,
         if (flashcardIds != null) 'flashcardIds': flashcardIds,
       };
-
       final response = await _apiService.post(
         '/ai-generation/approve',
         requestBody,
       );
-
       if (response['success'] == true) {
         final flashcardsData = response['data']['flashcards'] as List;
         return flashcardsData
@@ -350,12 +299,9 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Get user's AI generation preferences
   Future<AIGenerationPreferences> getUserPreferences() async {
     try {
       final response = await _apiService.get('/ai-generation/preferences');
-
       if (response['success'] == true) {
         return AIGenerationPreferences.fromJson(response['data']['preferences']);
       } else {
@@ -369,15 +315,12 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Update user's AI generation preferences
   Future<void> updateUserPreferences(AIGenerationPreferences preferences) async {
     try {
       final response = await _apiService.put(
         '/ai-generation/preferences',
         preferences.toJson(),
       );
-
       if (response['success'] != true) {
         throw AIGenerationException(
           response['error']['message'] ?? 'Failed to update preferences',
@@ -389,12 +332,9 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Get user's generation statistics
   Future<AIGenerationStats> getUserStats() async {
     try {
       final response = await _apiService.get('/ai-generation/stats');
-
       if (response['success'] == true) {
         return AIGenerationStats.fromJson(response['data']['stats']);
       } else {
@@ -408,8 +348,6 @@ class AIGenerationService {
       );
     }
   }
-
-  /// Get service health status
   Future<Map<String, dynamic>> getHealthStatus() async {
     try {
       final response = await _apiService.get('/ai-generation/health');
@@ -422,9 +360,6 @@ class AIGenerationService {
       };
     }
   }
-
-  // Helper methods
-
   String _getMimeType(String filePath) {
     final extension = filePath.split('.').last.toLowerCase();
     switch (extension) {
@@ -444,21 +379,17 @@ class AIGenerationService {
     }
   }
 }
-
-/// Result of AI generation process
 class AIGenerationResult {
   final String sessionId;
   final List<GeneratedFlashcard> flashcards;
   final ContentAnalysis? analysis;
   final Map<String, dynamic>? metadata;
-
   const AIGenerationResult({
     required this.sessionId,
     required this.flashcards,
     this.analysis,
     this.metadata,
   });
-
   factory AIGenerationResult.fromJson(Map<String, dynamic> json) {
     return AIGenerationResult(
       sessionId: json['sessionId'] as String,
@@ -472,8 +403,6 @@ class AIGenerationResult {
     );
   }
 }
-
-/// User preferences for AI generation
 class AIGenerationPreferences {
   final DifficultyLevel defaultDifficulty;
   final List<String> preferredSubjects;
@@ -481,7 +410,6 @@ class AIGenerationPreferences {
   final bool includeExplanations;
   final bool includeMemoryTips;
   final double qualityThreshold;
-
   const AIGenerationPreferences({
     required this.defaultDifficulty,
     required this.preferredSubjects,
@@ -490,7 +418,6 @@ class AIGenerationPreferences {
     required this.includeMemoryTips,
     required this.qualityThreshold,
   });
-
   factory AIGenerationPreferences.fromJson(Map<String, dynamic> json) {
     return AIGenerationPreferences(
       defaultDifficulty: DifficultyLevel.fromString(
@@ -503,7 +430,6 @@ class AIGenerationPreferences {
       qualityThreshold: (json['qualityThreshold'] as num?)?.toDouble() ?? 0.7,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'defaultDifficulty': defaultDifficulty.value,
@@ -515,8 +441,6 @@ class AIGenerationPreferences {
     };
   }
 }
-
-/// User statistics for AI generation
 class AIGenerationStats {
   final int totalSessions;
   final int successfulSessions;
@@ -524,7 +448,6 @@ class AIGenerationStats {
   final int totalFlashcards;
   final double averageConfidence;
   final List<String> mostCommonSubjects;
-
   const AIGenerationStats({
     required this.totalSessions,
     required this.successfulSessions,
@@ -533,7 +456,6 @@ class AIGenerationStats {
     required this.averageConfidence,
     required this.mostCommonSubjects,
   });
-
   factory AIGenerationStats.fromJson(Map<String, dynamic> json) {
     return AIGenerationStats(
       totalSessions: json['totalSessions'] as int? ?? 0,
@@ -544,18 +466,13 @@ class AIGenerationStats {
       mostCommonSubjects: List<String>.from(json['mostCommonSubjects'] ?? []),
     );
   }
-
   double get successRate => totalSessions > 0 ? successfulSessions / totalSessions : 0.0;
   double get averageFlashcardsPerSession => successfulSessions > 0 ? totalFlashcards / successfulSessions : 0.0;
 }
-
-/// Exception for AI generation errors
 class AIGenerationException implements Exception {
   final String message;
   final String? details;
-
   const AIGenerationException(this.message, {this.details});
-
   @override
   String toString() {
     if (details != null) {

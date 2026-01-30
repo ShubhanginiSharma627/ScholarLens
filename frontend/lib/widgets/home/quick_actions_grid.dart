@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-
 import 'quick_action_button.dart';
 import '../../screens/tutor_chat_screen.dart';
 import '../../screens/syllabus_scanner_screen.dart';
-
-/// Grid widget that displays quick action buttons in a 2x2 layout
 class QuickActionsGrid extends StatelessWidget {
   const QuickActionsGrid({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -61,14 +57,11 @@ class QuickActionsGrid extends StatelessWidget {
       ],
     );
   }
-
   void _handleSnapAndSolve(BuildContext context) {
-    // TODO: Navigate to camera screen
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Camera feature coming soon!')),
     );
   }
-
   void _handleUploadSyllabus(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -76,14 +69,11 @@ class QuickActionsGrid extends StatelessWidget {
       ),
     );
   }
-
   void _handleReviewFlashcards(BuildContext context) {
-    // TODO: Navigate to flashcards screen
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Flashcards feature coming soon!')),
     );
   }
-
   void _handleAskTutor(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(

@@ -1,36 +1,16 @@
 import 'package:flutter/material.dart';
 import '../animations/animation_manager.dart';
 import '../animations/animation_config.dart';
-
-/// Animated typing indicator widget for chat interface
 class ChatTypingIndicator extends StatefulWidget {
-  /// Whether the typing indicator is visible
   final bool isVisible;
-  
-  /// Custom message to display (default: "AI is typing...")
   final String? message;
-  
-  /// Duration for the bounce animation of dots
   final Duration bounceDuration;
-  
-  /// Delay between each dot's bounce animation
   final Duration bounceDelay;
-  
-  /// Size of the typing dots
   final double dotSize;
-  
-  /// Color of the typing dots
   final Color? dotColor;
-  
-  /// Background color of the indicator
   final Color? backgroundColor;
-  
-  /// Border radius of the indicator container
   final BorderRadius? borderRadius;
-  
-  /// Padding inside the indicator container
   final EdgeInsets? padding;
-
   const ChatTypingIndicator({
     super.key,
     required this.isVisible,
@@ -43,66 +23,49 @@ class ChatTypingIndicator extends StatefulWidget {
     this.borderRadius,
     this.padding,
   });
-
   @override
   State<ChatTypingIndicator> createState() => _ChatTypingIndicatorState();
 }
-
 class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
     with TickerProviderStateMixin {
-  
   late final AnimationManager _animationManager;
   late AnimationController _fadeController;
   late AnimationController _dot1Controller;
   late AnimationController _dot2Controller;
   late AnimationController _dot3Controller;
-  
   late Animation<double> _fadeAnimation;
   late Animation<double> _dot1Animation;
   late Animation<double> _dot2Animation;
   late Animation<double> _dot3Animation;
-  
   String? _fadeAnimationId;
   final List<String> _dotAnimationIds = [];
-  
   bool _isAnimating = false;
-
   @override
   void initState() {
     super.initState();
-    
     _animationManager = AnimationManager();
     _initializeAnimations();
-    
     if (widget.isVisible) {
       _startAnimations();
     }
   }
-
   void _initializeAnimations() {
-    // Initialize fade controller for show/hide
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
-    // Initialize dot bounce controllers
     _dot1Controller = AnimationController(
       duration: widget.bounceDuration,
       vsync: this,
     );
-    
     _dot2Controller = AnimationController(
       duration: widget.bounceDuration,
       vsync: this,
     );
-    
     _dot3Controller = AnimationController(
       duration: widget.bounceDuration,
       vsync: this,
     );
-    
-    // Register animations with manager if initialized
     if (_animationManager.isInitialized) {
       _registerAnimations();
     } else {
@@ -112,24 +75,17 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
         }
       });
     }
-    
-    // Create local animations as fallback
     _createLocalAnimations();
   }
-
   void _registerAnimations() {
     try {
-      // Register fade animation
       final fadeConfig = AnimationConfigs.fadeTransition;
       _fadeAnimationId = _animationManager.registerController(
         controller: _fadeController,
         config: fadeConfig,
         category: AnimationCategory.feedback,
       );
-      
-      // Register dot bounce animations
       final bounceConfig = AnimationConfigs.typingIndicator;
-      
       for (int i = 0; i < 3; i++) {
         final controller = [_dot1Controller, _dot2Controller, _dot3Controller][i];
         final animationId = _animationManager.registerController(
@@ -139,21 +95,16 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
         );
         _dotAnimationIds.add(animationId);
       }
-      
-      // Get managed animations
       final fadeAnim = _animationManager.getAnimation(_fadeAnimationId!);
       if (fadeAnim != null) {
         _fadeAnimation = fadeAnim.animation as Animation<double>;
       } else {
         _createLocalAnimations();
       }
-      
-      // Get dot animations
       if (_dotAnimationIds.length == 3) {
         final dot1Anim = _animationManager.getAnimation(_dotAnimationIds[0]);
         final dot2Anim = _animationManager.getAnimation(_dotAnimationIds[1]);
         final dot3Anim = _animationManager.getAnimation(_dotAnimationIds[2]);
-        
         if (dot1Anim != null && dot2Anim != null && dot3Anim != null) {
           _dot1Animation = dot1Anim.animation as Animation<double>;
           _dot2Animation = dot2Anim.animation as Animation<double>;
@@ -169,7 +120,6 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
       _createLocalAnimations();
     }
   }
-
   void _createLocalAnimations() {
     _fadeAnimation = Tween<double>(
       begin: 0.0,
@@ -178,31 +128,24 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
       parent: _fadeController,
       curve: Curves.easeInOut,
     ));
-    
-    // Create bouncing dot animations
     final bounceTween = Tween<double>(begin: 0.0, end: 1.0);
     final bounceCurve = CurvedAnimation(
       parent: _dot1Controller,
       curve: Curves.easeInOut,
     );
-    
     _dot1Animation = bounceTween.animate(bounceCurve);
-    
     _dot2Animation = bounceTween.animate(CurvedAnimation(
       parent: _dot2Controller,
       curve: Curves.easeInOut,
     ));
-    
     _dot3Animation = bounceTween.animate(CurvedAnimation(
       parent: _dot3Controller,
       curve: Curves.easeInOut,
     ));
   }
-
   @override
   void didUpdateWidget(ChatTypingIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
     if (widget.isVisible != oldWidget.isVisible) {
       if (widget.isVisible) {
         _startAnimations();
@@ -211,33 +154,23 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
       }
     }
   }
-
   void _startAnimations() {
     if (_isAnimating) return;
     _isAnimating = true;
-    
-    // Start fade in
     if (_fadeAnimationId != null) {
       _animationManager.startAnimation(_fadeAnimationId!);
     } else {
       _fadeController.forward();
     }
-    
-    // Start dot bounce animations with staggered delays
     _startDotBounceLoop();
   }
-
   void _startDotBounceLoop() {
     if (!mounted || !widget.isVisible) return;
-    
-    // Start first dot immediately
     if (_dotAnimationIds.isNotEmpty) {
       _animationManager.startAnimation(_dotAnimationIds[0]);
     } else {
       _dot1Controller.forward();
     }
-    
-    // Start second dot after delay
     Future.delayed(widget.bounceDelay, () {
       if (mounted && widget.isVisible) {
         if (_dotAnimationIds.length > 1) {
@@ -247,8 +180,6 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
         }
       }
     });
-    
-    // Start third dot after double delay
     Future.delayed(widget.bounceDelay * 2, () {
       if (mounted && widget.isVisible) {
         if (_dotAnimationIds.length > 2) {
@@ -258,8 +189,6 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
         }
       }
     });
-    
-    // Reset and repeat after full cycle
     Future.delayed(widget.bounceDuration + (widget.bounceDelay * 3), () {
       if (mounted && widget.isVisible) {
         _dot1Controller.reset();
@@ -269,45 +198,32 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
       }
     });
   }
-
   void _stopAnimations() {
     _isAnimating = false;
-    
-    // Fade out
     _fadeController.reverse();
-    
-    // Stop dot animations
     _dot1Controller.stop();
     _dot2Controller.stop();
     _dot3Controller.stop();
   }
-
   @override
   void dispose() {
-    // Dispose animations through manager
     if (_fadeAnimationId != null) {
       _animationManager.disposeController(_fadeAnimationId!);
     }
-    
     for (final animationId in _dotAnimationIds) {
       _animationManager.disposeController(animationId);
     }
-    
-    // Dispose controllers
     _fadeController.dispose();
     _dot1Controller.dispose();
     _dot2Controller.dispose();
     _dot3Controller.dispose();
-    
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     if (!widget.isVisible) {
       return const SizedBox.shrink();
     }
-    
     return AnimatedBuilder(
       animation: _fadeAnimation,
       builder: (context, child) {
@@ -336,7 +252,6 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // AI avatar
                 Container(
                   width: 24,
                   height: 24,
@@ -351,8 +266,6 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
                   ),
                 ),
                 const SizedBox(width: 12),
-                
-                // Typing message (if provided)
                 if (widget.message != null) ...[
                   Text(
                     widget.message!,
@@ -363,8 +276,6 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
                   ),
                   const SizedBox(width: 8),
                 ],
-                
-                // Bouncing dots
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -382,14 +293,12 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
       },
     );
   }
-
   Widget _buildBouncingDot(Animation<double> animation, int index) {
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
         final scale = 1.0 + (animation.value * 0.5);
         final opacity = 0.4 + (animation.value * 0.6);
-        
         return Transform.scale(
           scale: scale,
           child: Container(
@@ -405,10 +314,7 @@ class _ChatTypingIndicatorState extends State<ChatTypingIndicator>
     );
   }
 }
-
-/// Extension methods for easier usage of ChatTypingIndicator
 extension ChatTypingIndicatorExtensions on Widget {
-  /// Wraps this widget with a typing indicator that shows when isTyping is true
   Widget withTypingIndicator({
     required bool isTyping,
     String? typingMessage,

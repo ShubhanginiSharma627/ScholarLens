@@ -2,21 +2,15 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
-
 import '../models/models.dart';
 import 'network_service.dart';
 import 'secure_storage_service.dart';
-
 class AuthenticationService {
   static AuthenticationService? _instance;
   static AuthenticationService get instance => _instance ??= AuthenticationService._();
-
   AuthenticationService._();
-
   final SecureStorageService _secureStorage = SecureStorageService();
   final NetworkService _networkService = NetworkService.instance;
-
-  // Backend API configuration
   static const String _baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'https://scholarlens-afvx.onrender.com/api',
@@ -27,10 +21,7 @@ class AuthenticationService {
   static const String _profileEndpoint = '/auth/profile';
   static const String _refreshEndpoint = '/auth/refresh';
   static const String _passwordResetEndpoint = '/auth/password-reset';
-
   static const Duration _requestTimeout = Duration(seconds: 30);
-
-  /// Sign up with email and password
   Future<AuthResult> signUpWithEmail({
     required String email,
     required String password,
@@ -38,7 +29,6 @@ class AuthenticationService {
   }) async {
     try {
       debugPrint('Attempting to register user with email: $email');
-
       final response = await _networkService.retryOperation(() async {
         return await http.post(
           Uri.parse('$_baseUrl$_registerEndpoint'),
@@ -52,22 +42,18 @@ class AuthenticationService {
           }),
         ).timeout(_requestTimeout);
       });
-
       return await _handleAuthResponse(response, 'Registration');
     } catch (e) {
       debugPrint('Registration error: $e');
       return _handleAuthError(e);
     }
   }
-
-  /// Sign in with email and password
   Future<AuthResult> signInWithEmail({
     required String email,
     required String password,
   }) async {
     try {
       debugPrint('Attempting to sign in user with email: $email');
-
       final response = await _networkService.retryOperation(() async {
         return await http.post(
           Uri.parse('$_baseUrl$_loginEndpoint'),
@@ -80,25 +66,18 @@ class AuthenticationService {
           }),
         ).timeout(_requestTimeout);
       });
-
       return await _handleAuthResponse(response, 'Login');
     } catch (e) {
       debugPrint('Login error: $e');
       return _handleAuthError(e);
     }
   }
-
-  /// Sign out the current user
   Future<AuthResult> signOut() async {
     try {
       debugPrint('Attempting to sign out user');
-
-      // Get current token for logout request
       final token = await _secureStorage.getAccessToken();
-      
       if (token != null) {
         try {
-          // Attempt to notify backend of logout
           await _networkService.retryOperation(() async {
             return await http.post(
               Uri.parse('$_baseUrl$_logoutEndpoint'),
@@ -109,15 +88,11 @@ class AuthenticationService {
             ).timeout(_requestTimeout);
           });
         } catch (e) {
-          // Don't fail logout if backend request fails
           debugPrint('Backend logout request failed: $e');
         }
       }
-
-      // Always clear local storage regardless of backend response
       await _secureStorage.clearAuthenticationData();
       debugPrint('User signed out successfully');
-
       return AuthResult.success(
         user: User(
           id: '',
@@ -135,8 +110,6 @@ class AuthenticationService {
       return _handleAuthError(e);
     }
   }
-
-  /// Get current user profile
   Future<AuthResult> getCurrentUser() async {
     try {
       final token = await _secureStorage.getAccessToken();
@@ -146,28 +119,21 @@ class AuthenticationService {
           errorType: AuthErrorType.tokenInvalid,
         );
       }
-
-      // Check if token is expired
       if (JwtDecoder.isExpired(token)) {
         debugPrint('Access token expired, attempting refresh');
         final refreshResult = await refreshToken();
         if (!refreshResult.success) {
           return refreshResult;
         }
-        // Use the new token
         final newToken = refreshResult.accessToken!;
-        
         return await _fetchUserProfile(newToken);
       }
-
       return await _fetchUserProfile(token);
     } catch (e) {
       debugPrint('Get current user error: $e');
       return _handleAuthError(e);
     }
   }
-
-  /// Refresh the access token
   Future<AuthResult> refreshToken() async {
     try {
       final refreshToken = await _secureStorage.getRefreshToken();
@@ -177,9 +143,7 @@ class AuthenticationService {
           errorType: AuthErrorType.refreshTokenExpired,
         );
       }
-
       debugPrint('Attempting to refresh access token');
-
       final response = await _networkService.retryOperation(() async {
         return await http.post(
           Uri.parse('$_baseUrl$_refreshEndpoint'),
@@ -191,21 +155,17 @@ class AuthenticationService {
           }),
         ).timeout(_requestTimeout);
       });
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['data'] != null) {
           final tokens = data['data']['tokens'];
           final newAccessToken = tokens['accessToken'] as String;
           final newRefreshToken = tokens['refreshToken'] as String;
-
-          // Store new tokens
           await _secureStorage.storeTokens(
             accessToken: newAccessToken,
             refreshToken: newRefreshToken,
             userId: await _secureStorage.getUserId() ?? '',
           );
-
           debugPrint('Token refresh successful');
           return AuthResult.success(
             user: User(
@@ -233,32 +193,23 @@ class AuthenticationService {
       return _handleAuthError(e);
     }
   }
-
-  /// Check if user is currently authenticated
   Future<bool> isAuthenticated() async {
     try {
       final token = await _secureStorage.getAccessToken();
       if (token == null) return false;
-
-      // Check if token is expired
       if (JwtDecoder.isExpired(token)) {
-        // Try to refresh token
         final refreshResult = await refreshToken();
         return refreshResult.success;
       }
-
       return true;
     } catch (e) {
       debugPrint('Authentication check error: $e');
       return false;
     }
   }
-
-  /// Request password reset
   Future<AuthResult> requestPasswordReset(String email) async {
     try {
       debugPrint('Requesting password reset for email: $email');
-
       final response = await _networkService.retryOperation(() async {
         return await http.post(
           Uri.parse('$_baseUrl$_passwordResetEndpoint'),
@@ -270,7 +221,6 @@ class AuthenticationService {
           }),
         ).timeout(_requestTimeout);
       });
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         if (data['success'] == true) {
@@ -301,13 +251,9 @@ class AuthenticationService {
       return _handleAuthError(e);
     }
   }
-
-  /// Get stored authentication token
   Future<String?> getStoredToken() async {
     return await _secureStorage.getAccessToken();
   }
-
-  /// Fetch user profile from backend
   Future<AuthResult> _fetchUserProfile(String token) async {
     try {
       final response = await _networkService.retryOperation(() async {
@@ -319,7 +265,6 @@ class AuthenticationService {
           },
         ).timeout(_requestTimeout);
       });
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['data'] != null) {
@@ -339,15 +284,11 @@ class AuthenticationService {
       return _handleAuthError(e);
     }
   }
-
-  /// Handle authentication response from backend
   Future<AuthResult> _handleAuthResponse(http.Response response, String operation) async {
     try {
       debugPrint('$operation response status: ${response.statusCode}');
       debugPrint('$operation response body: ${response.body}');
-      
       final data = jsonDecode(response.body);
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (data['success'] == true && data['data'] != null) {
           final responseData = data['data'];
@@ -355,18 +296,14 @@ class AuthenticationService {
           final tokens = responseData['tokens'];
           final accessToken = tokens['accessToken'] as String;
           final refreshToken = tokens['refreshToken'] as String;
-
-          // Store authentication data
           await _secureStorage.storeTokens(
             accessToken: accessToken,
             refreshToken: refreshToken,
             userId: user.id,
           );
-
           debugPrint('$operation successful for user: ${user.email}');
           return AuthResult.success(user: user, accessToken: accessToken);
         } else {
-          // Handle error in success response
           String errorMessage = '$operation failed';
           if (data['error'] != null) {
             final error = data['error'];
@@ -393,24 +330,17 @@ class AuthenticationService {
       );
     }
   }
-
-  /// Handle HTTP error responses
   AuthResult _handleHttpError(http.Response response, String operation) {
     try {
       final data = jsonDecode(response.body);
       String errorMessage = 'Unknown server error';
-      
-      // Handle different error response structures from backend
       if (data['error'] != null) {
         final error = data['error'];
         if (error is String) {
           errorMessage = error;
         } else if (error is Map<String, dynamic>) {
-          // Handle structured error object
           if (error['message'] != null) {
             errorMessage = error['message'] as String;
-            
-            // Add validation details if available
             if (error['details'] != null && error['details'] is List) {
               final details = error['details'] as List;
               if (details.isNotEmpty) {
@@ -427,7 +357,6 @@ class AuthenticationService {
           errorMessage = error.toString();
         }
       }
-      
       AuthErrorType errorType;
       switch (response.statusCode) {
         case 400:
@@ -447,7 +376,6 @@ class AuthenticationService {
           errorType = AuthErrorType.serverError;
           break;
       }
-
       debugPrint('$operation HTTP error ${response.statusCode}: $errorMessage');
       debugPrint('$operation Full response body: ${response.body}');
       return AuthResult.failure(error: errorMessage, errorType: errorType);
@@ -460,14 +388,10 @@ class AuthenticationService {
       );
     }
   }
-
-  /// Handle authentication errors
   AuthResult _handleAuthError(dynamic error) {
     final networkError = _networkService.detectNetworkError(error);
-    
     AuthErrorType errorType;
     String errorMessage;
-
     switch (networkError.type) {
       case NetworkErrorType.timeout:
         errorType = AuthErrorType.networkError;
@@ -486,16 +410,11 @@ class AuthenticationService {
         errorMessage = 'An unexpected error occurred. Please try again.';
         break;
     }
-
     return AuthResult.failure(error: errorMessage, errorType: errorType);
   }
-
-  /// Map backend error messages to error types
   AuthErrorType _mapErrorType(String? errorMessage) {
     if (errorMessage == null) return AuthErrorType.unknown;
-
     final message = errorMessage.toLowerCase();
-    
     if (message.contains('already exists') || message.contains('duplicate')) {
       return AuthErrorType.emailAlreadyExists;
     } else if (message.contains('invalid') && message.contains('password')) {

@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../providers/app_state_provider.dart';
 import '../../models/learning_session.dart';
 import 'learning_session_card.dart';
-
-/// Section widget that displays recent learning sessions as horizontal scrollable cards
 class ContinueLearningSection extends StatelessWidget {
   const ContinueLearningSection({super.key});
-
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppStateProvider>();
     final recentSessions = appState.recentSessions;
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -55,10 +50,8 @@ class ContinueLearningSection extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
-    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -96,16 +89,12 @@ class ContinueLearningSection extends StatelessWidget {
       ),
     );
   }
-
   void _handleViewAll(BuildContext context) {
-    // TODO: Navigate to all sessions screen
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('View all sessions coming soon!')),
     );
   }
-
   void _handleSessionTap(BuildContext context, LearningSession session) {
-    // TODO: Navigate to session details or resume session
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Resume ${session.content.lessonTitle}')),
     );

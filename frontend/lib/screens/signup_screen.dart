@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../providers/providers.dart';
 import '../services/form_validator.dart';
 import '../theme/app_theme.dart';
@@ -10,28 +9,22 @@ import '../widgets/common/form_divider.dart';
 import '../widgets/common/modern_text_field.dart';
 import '../widgets/common/modern_button.dart';
 import 'login_screen.dart';
-
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
-
   static const String routeName = '/signup';
-
   @override
   State<SignupScreen> createState() => _SignupScreenState();
 }
-
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
   bool _rememberMe = false;
-
   @override
   void dispose() {
     _nameController.dispose();
@@ -40,7 +33,6 @@ class _SignupScreenState extends State<SignupScreen> {
     _confirmPasswordController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,54 +46,28 @@ class _SignupScreenState extends State<SignupScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: AppTheme.spacingL),
-                  
-                  // Header
                   _buildHeader(),
-                  
                   const SizedBox(height: AppTheme.spacingL),
-                  
-                  // Form Card
                   ModernFormCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Sign Up Header
                         _buildFormHeader(),
-                        
                         const SizedBox(height: AppTheme.spacingL),
-                        
-                        // Google Sign-In Button
                         _buildGoogleSignInButton(authProvider),
-                        
                         const SizedBox(height: AppTheme.spacingM),
-                        
-                        // Divider
                         const FormDivider(),
-                        
                         const SizedBox(height: AppTheme.spacingM),
-                        
-                        // Signup Form
                         _buildSignupForm(authProvider),
-                        
                         const SizedBox(height: AppTheme.spacingM),
-                        
-                        // Terms and Conditions
                         _buildTermsAndConditions(),
-                        
                         const SizedBox(height: AppTheme.spacingL),
-                        
-                        // Signup Button
                         _buildSignupButton(authProvider),
                       ],
                     ),
                   ),
-                  
                   const SizedBox(height: AppTheme.spacingL),
-                  
-                  // Login Link
                   _buildLoginLink(),
-                  
-                  // Error Message
                   if (authProvider.error != null) ...[
                     const SizedBox(height: AppTheme.spacingL),
                     _buildErrorMessage(authProvider.error!),
@@ -114,11 +80,9 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
     );
   }
-
   Widget _buildHeader() {
     return Column(
       children: [
-        // App Logo/Icon
         Container(
           width: 64,
           height: 64,
@@ -132,10 +96,7 @@ class _SignupScreenState extends State<SignupScreen> {
             color: AppTheme.primaryColor,
           ),
         ),
-        
         const SizedBox(height: AppTheme.spacingM),
-        
-        // Welcome Text
         Text(
           'Create Account',
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
@@ -144,9 +105,7 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
           textAlign: TextAlign.center,
         ),
-        
         const SizedBox(height: AppTheme.spacingXS),
-        
         Text(
           'Start your learning journey today',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -158,7 +117,6 @@ class _SignupScreenState extends State<SignupScreen> {
       ],
     );
   }
-
   Widget _buildFormHeader() {
     return Column(
       children: [
@@ -171,9 +129,7 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
           textAlign: TextAlign.center,
         ),
-        
         const SizedBox(height: AppTheme.spacingXS),
-        
         Text(
           'Create your account to get started',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -185,13 +141,11 @@ class _SignupScreenState extends State<SignupScreen> {
       ],
     );
   }
-
   Widget _buildSignupForm(AuthenticationProvider authProvider) {
     return Form(
       key: _formKey,
       child: Column(
         children: [
-          // Name Field
           ModernTextField(
             controller: _nameController,
             labelText: 'Full Name',
@@ -203,10 +157,7 @@ class _SignupScreenState extends State<SignupScreen> {
               authProvider.updateFormField('name', value);
             },
           ),
-          
           const SizedBox(height: AppTheme.spacingM),
-          
-          // Email Field
           ModernTextField(
             controller: _emailController,
             labelText: 'Email',
@@ -218,10 +169,7 @@ class _SignupScreenState extends State<SignupScreen> {
               authProvider.updateFormField('email', value);
             },
           ),
-          
           const SizedBox(height: AppTheme.spacingM),
-          
-          // Password Field
           Consumer<AuthenticationProvider>(
             builder: (context, provider, child) {
               final passwordResult = provider.formValidationState.getFieldResult('password');
@@ -248,24 +196,18 @@ class _SignupScreenState extends State<SignupScreen> {
                     validator: FormValidator.validatePassword,
                     onChanged: (value) {
                       authProvider.updateFormField('password', value);
-                      // Update confirm password validation
                       if (_confirmPasswordController.text.isNotEmpty) {
                         authProvider.updateFormField('confirmPassword', _confirmPasswordController.text);
                       }
                     },
                   ),
-                  
                   const SizedBox(height: AppTheme.spacingS),
-                  
-                  // Password requirement text
                   Text(
                     'Must be at least 6 characters',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppTheme.secondaryTextColor,
                     ),
                   ),
-                  
-                  // Password Strength Indicator
                   if (passwordResult != null && passwordResult.metadata != null) ...[
                     const SizedBox(height: AppTheme.spacingS),
                     _buildPasswordStrengthIndicator(
@@ -277,10 +219,7 @@ class _SignupScreenState extends State<SignupScreen> {
               );
             },
           ),
-          
           const SizedBox(height: AppTheme.spacingM),
-          
-          // Confirm Password Field
           ModernTextField(
             controller: _confirmPasswordController,
             labelText: 'Confirm Password',
@@ -312,7 +251,6 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
     );
   }
-
   Widget _buildPasswordStrengthIndicator(int strength, String description) {
     Color strengthColor;
     switch (strength) {
@@ -332,7 +270,6 @@ class _SignupScreenState extends State<SignupScreen> {
       default:
         strengthColor = AppTheme.secondaryTextColor;
     }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -358,7 +295,6 @@ class _SignupScreenState extends State<SignupScreen> {
       ],
     );
   }
-
   Widget _buildTermsAndConditions() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,7 +340,6 @@ class _SignupScreenState extends State<SignupScreen> {
       ],
     );
   }
-
   Widget _buildSignupButton(AuthenticationProvider authProvider) {
     return ModernButton.primary(
       text: 'Create Account',
@@ -412,7 +347,6 @@ class _SignupScreenState extends State<SignupScreen> {
       onPressed: _acceptTerms ? () => _handleSignup(authProvider) : null,
     );
   }
-
   Widget _buildGoogleSignInButton(AuthenticationProvider authProvider) {
     return ModernButton.secondary(
       text: 'Continue with Google',
@@ -432,7 +366,6 @@ class _SignupScreenState extends State<SignupScreen> {
       onPressed: () => _handleGoogleSignIn(authProvider),
     );
   }
-
   Widget _buildLoginLink() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -456,7 +389,6 @@ class _SignupScreenState extends State<SignupScreen> {
       ],
     );
   }
-
   Widget _buildErrorMessage(String error) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -494,7 +426,6 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
     );
   }
-
   void _handleSignup(AuthenticationProvider authProvider) async {
     if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -505,7 +436,6 @@ class _SignupScreenState extends State<SignupScreen> {
       );
       return;
     }
-
     if (_formKey.currentState?.validate() ?? false) {
       await authProvider.signUpWithEmail(
         email: _emailController.text.trim(),
@@ -513,11 +443,8 @@ class _SignupScreenState extends State<SignupScreen> {
         name: _nameController.text.trim(),
         rememberMe: _rememberMe,
       );
-      
-      // No manual navigation needed - AuthWrapper handles this automatically
     }
   }
-
   void _handleGoogleSignIn(AuthenticationProvider authProvider) {
     if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -528,10 +455,8 @@ class _SignupScreenState extends State<SignupScreen> {
       );
       return;
     }
-
     authProvider.signUpWithGoogle(rememberMe: _rememberMe);
   }
-
   void _navigateToLogin() {
     Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
   }

@@ -4,21 +4,11 @@ import 'dart:math' as math;
 import '../../models/flashcard.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
-
-/// Enhanced flashcard widget with 3D flip animation and modern styling
-/// 
-/// Features:
-/// - Smooth 3D flip animation using AnimationController and Transform with Matrix4
-/// - Gradient backgrounds for question and answer states
-/// - Enhanced typography and visual hierarchy
-/// - "Tap to reveal answer" instruction text
-/// - Improved accessibility and semantic labels
 class EnhancedFlashcardWidget extends StatefulWidget {
   final Flashcard flashcard;
   final bool isFlipped;
   final VoidCallback onFlip;
   final Function(Difficulty)? onDifficultyRated;
-
   const EnhancedFlashcardWidget({
     super.key,
     required this.flashcard,
@@ -26,18 +16,15 @@ class EnhancedFlashcardWidget extends StatefulWidget {
     required this.onFlip,
     this.onDifficultyRated,
   });
-
   @override
   State<EnhancedFlashcardWidget> createState() => _EnhancedFlashcardWidgetState();
 }
-
 class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _flipAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<double> _depthAnimation;
-
   @override
   void initState() {
     super.initState();
@@ -45,8 +32,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
       duration: const Duration(milliseconds: 600), // Optimized timing for better UX
       vsync: this,
     );
-    
-    // Create flip animation with enhanced easeInOut curve for smoother motion
     _flipAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -55,8 +40,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
       curve: Curves.easeInOutCubic, // More sophisticated easing curve
       reverseCurve: Curves.easeInOutCubic, // Consistent reverse animation
     ));
-    
-    // Enhanced scale animation with better timing intervals
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 0.98, // Subtle scale for premium feel
@@ -65,8 +48,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
       curve: const Interval(0.0, 0.4, curve: Curves.easeInOutQuart),
       reverseCurve: const Interval(0.6, 1.0, curve: Curves.easeInOutQuart),
     ));
-    
-    // Add depth animation for enhanced 3D effect
     _depthAnimation = Tween<double>(
       begin: 0.0,
       end: 20.0,
@@ -74,13 +55,10 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
       parent: _animationController,
       curve: const Interval(0.2, 0.8, curve: Curves.easeInOutSine),
     ));
-    
-    // Set initial state based on isFlipped
     if (widget.isFlipped) {
       _animationController.value = 1.0;
     }
   }
-
   @override
   void didUpdateWidget(EnhancedFlashcardWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -92,15 +70,11 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
       }
     }
   }
-
   @override
   void dispose() {
-    // Critical: Dispose animation controller to prevent memory leaks
-    // This ensures all animation resources are properly cleaned up
     _animationController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Semantics(
@@ -116,13 +90,10 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
           builder: (context, child) {
             final isShowingFront = _flipAnimation.value < 0.5;
             final rotationValue = _flipAnimation.value * math.pi;
-            
-            // Enhanced 3D transformation with depth and perspective
             final transform = vector_math.Matrix4.identity()
               ..setEntry(3, 2, 0.0008) // Enhanced perspective for more pronounced 3D effect
               ..translateByVector3(vector_math.Vector3(0.0, 0.0, -_depthAnimation.value)) // Add depth translation
               ..rotateY(rotationValue);
-            
             return Transform.scale(
               scale: _scaleAnimation.value,
               child: Transform(
@@ -142,11 +113,9 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
       ),
     );
   }
-
   Widget _buildQuestionCard(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 300),
@@ -191,11 +160,8 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Subject badge with enhanced styling
               _buildSubjectBadge(context, AppTheme.primaryColor, false),
               const SizedBox(height: AppTheme.spacingXL),
-              
-              // Question icon with animation
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.0, end: 1.0),
                 duration: const Duration(milliseconds: 600),
@@ -218,8 +184,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
                 },
               ),
               const SizedBox(height: AppTheme.spacingXL),
-              
-              // Question text with enhanced typography and visual hierarchy
               Text(
                 widget.flashcard.question,
                 style: AppTypography.getTextStyle(context, 'headlineLarge').copyWith(
@@ -233,8 +197,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppTheme.spacingXL),
-              
-              // Enhanced "Tap to reveal" instruction
               _buildTapInstruction(context),
             ],
           ),
@@ -242,11 +204,9 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
       ),
     );
   }
-
   Widget _buildAnswerCard(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 300),
@@ -291,11 +251,8 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Subject badge for answer state
               _buildSubjectBadge(context, AppTheme.successColor, true),
               const SizedBox(height: AppTheme.spacingXL),
-              
-              // Answer icon with animation
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.0, end: 1.0),
                 duration: const Duration(milliseconds: 600),
@@ -318,8 +275,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
                 },
               ),
               const SizedBox(height: AppTheme.spacingXL),
-              
-              // Answer text with enhanced styling and visual differentiation
               Text(
                 widget.flashcard.answer,
                 style: AppTypography.getTextStyle(context, 'headlineLarge').copyWith(
@@ -334,8 +289,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppTheme.spacingXL),
-              
-              // Enhanced card statistics
               _buildCardStats(context),
             ],
           ),
@@ -343,7 +296,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
       ),
     );
   }
-
   Widget _buildSubjectBadge(BuildContext context, Color color, bool isAnswer) {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -402,10 +354,8 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
       ),
     );
   }
-
   Widget _buildTapInstruction(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppTheme.spacingXL,
@@ -456,10 +406,8 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
       ),
     );
   }
-
   Widget _buildCardStats(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingL),
       decoration: BoxDecoration(
@@ -519,7 +467,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
       ),
     );
   }
-
   Widget _buildStatChip(
     BuildContext context,
     String label,
@@ -530,7 +477,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
     final difficultyColor = _getDifficultyColor(widget.flashcard.difficulty);
     final isReviewStat = label == 'Reviews';
     final chipColor = isReviewStat ? AppTheme.primaryColor : difficultyColor;
-    
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -585,7 +531,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
       ),
     );
   }
-
   IconData _getDifficultyIcon(Difficulty difficulty) {
     switch (difficulty) {
       case Difficulty.easy:
@@ -596,7 +541,6 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
         return Icons.trending_up_rounded;
     }
   }
-
   Color _getDifficultyColor(Difficulty difficulty) {
     switch (difficulty) {
       case Difficulty.easy:

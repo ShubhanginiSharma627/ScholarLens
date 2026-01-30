@@ -4,22 +4,17 @@ import '../services/camera_service.dart';
 import '../services/camera_error_handler.dart';
 import '../models/processed_image.dart';
 import '../animations/camera_animations.dart';
-
-/// Screen for camera capture with live preview and controls
 class CameraScreen extends StatefulWidget {
   final String? title;
   final Function(ProcessedImage)? onImageCaptured;
-  
   const CameraScreen({
     super.key,
     this.title,
     this.onImageCaptured,
   });
-
   @override
   State<CameraScreen> createState() => _CameraScreenState();
 }
-
 class _CameraScreenState extends State<CameraScreen> 
     with TickerProviderStateMixin, WidgetsBindingObserver, CameraErrorHandlerMixin {
   late CameraService _cameraService;
@@ -28,7 +23,6 @@ class _CameraScreenState extends State<CameraScreen>
   late AnimationController _scanningController;
   late AnimationController _processingController;
   late AnimationController _retakeController;
-  
   bool _isInitializing = true;
   bool _isCapturing = false;
   bool _isScanning = false;
@@ -36,14 +30,11 @@ class _CameraScreenState extends State<CameraScreen>
   bool _showRetakeOption = false;
   ProcessedImage? _capturedImage;
   String? _errorMessage;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _cameraService = CameraServiceImpl();
-    
-    // Initialize animation controllers
     _entranceController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
@@ -64,10 +55,8 @@ class _CameraScreenState extends State<CameraScreen>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
     _initializeCamera();
   }
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -79,33 +68,26 @@ class _CameraScreenState extends State<CameraScreen>
     _retakeController.dispose();
     super.dispose();
   }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!_cameraService.isInitialized) return;
-
     if (state == AppLifecycleState.inactive) {
       _cameraService.dispose();
     } else if (state == AppLifecycleState.resumed) {
       _initializeCamera();
     }
   }
-
   Future<void> _initializeCamera() async {
     try {
       setState(() {
         _isInitializing = true;
         _errorMessage = null;
       });
-
       await _cameraService.initialize();
-
       if (mounted) {
         setState(() {
           _isInitializing = false;
         });
-        
-        // Start entrance animation
         _entranceController.forward();
       }
     } catch (e) {
@@ -117,64 +99,42 @@ class _CameraScreenState extends State<CameraScreen>
       }
     }
   }
-
   Future<void> _captureImage() async {
     if (_isCapturing || !_cameraService.isInitialized) return;
-
     try {
       setState(() {
         _isCapturing = true;
         _errorMessage = null;
       });
-
-      // Trigger capture flash animation
       await CameraAnimations.triggerCaptureEffect(_captureController);
-      
-      // Start scanning animation
       setState(() {
         _isScanning = true;
       });
       CameraAnimations.triggerScanningSequence(_scanningController);
-      
-      // Simulate scanning delay
       await Future.delayed(const Duration(milliseconds: 1500));
-      
-      // Stop scanning and start processing
       CameraAnimations.stopScanning(_scanningController);
       setState(() {
         _isScanning = false;
         _isProcessing = true;
       });
-      
       CameraAnimations.triggerProcessingAnimation(_processingController);
-
       final processedImage = await _cameraService.captureAndProcess(
         cropTitle: widget.title ?? 'Crop Study Material',
       );
-
-      // Stop processing animation
       CameraAnimations.stopProcessing(_processingController);
       setState(() {
         _isProcessing = false;
         _capturedImage = processedImage;
         _showRetakeOption = true;
       });
-
-      // Show success animation briefly
       await Future.delayed(const Duration(milliseconds: 500));
-
       if (mounted) {
-        // Call callback if provided
         widget.onImageCaptured?.call(processedImage);
-        
-        // Navigate back with result
         Navigator.of(context).pop(processedImage);
       }
     } catch (e) {
-      // Stop all animations on error
       CameraAnimations.stopScanning(_scanningController);
       CameraAnimations.stopProcessing(_processingController);
-      
       if (mounted) {
         setState(() {
           _isCapturing = false;
@@ -191,17 +151,13 @@ class _CameraScreenState extends State<CameraScreen>
       }
     }
   }
-
   Future<void> _retakePhoto() async {
-    // Start retake animation
     await CameraAnimations.triggerRetakeAnimation(_retakeController);
-    
     setState(() {
       _showRetakeOption = false;
       _capturedImage = null;
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -215,7 +171,6 @@ class _CameraScreenState extends State<CameraScreen>
       body: _buildBody(),
     );
   }
-
   Widget _buildBody() {
     if (_isInitializing) {
       return const Center(
@@ -232,7 +187,6 @@ class _CameraScreenState extends State<CameraScreen>
         ),
       );
     }
-
     if (_errorMessage != null) {
       return Center(
         child: Column(
@@ -269,7 +223,6 @@ class _CameraScreenState extends State<CameraScreen>
         ),
       );
     }
-
     if (!_cameraService.isInitialized) {
       return const Center(
         child: Text(
@@ -278,35 +231,24 @@ class _CameraScreenState extends State<CameraScreen>
         ),
       );
     }
-
-    // Build camera view with entrance animation
     Widget cameraView = Stack(
       children: [
-        // Camera preview
         Positioned.fill(
           child: CameraPreview(_cameraService.controller!),
         ),
-        
-        // Overlay with capture controls
         Positioned.fill(
           child: _buildCameraOverlay(),
         ),
-        
-        // Capture flash animation
         if (_isCapturing)
           CameraAnimations.createCaptureFlashAnimation(
             child: Container(),
             controller: _captureController,
           ),
-        
-        // Scanning animation
         if (_isScanning)
           CameraAnimations.createScanningAnimation(
             child: Container(),
             controller: _scanningController,
           ),
-        
-        // Processing animation
         if (_isProcessing)
           CameraAnimations.createProcessingAnimation(
             child: Container(),
@@ -315,18 +257,14 @@ class _CameraScreenState extends State<CameraScreen>
           ),
       ],
     );
-
-    // Wrap with entrance animation
     return CameraAnimations.createCameraEntranceAnimation(
       child: cameraView,
       controller: _entranceController,
     );
   }
-
   Widget _buildCameraOverlay() {
     return Column(
       children: [
-        // Top instruction area
         Container(
           padding: const EdgeInsets.all(16),
           child: const Text(
@@ -345,11 +283,7 @@ class _CameraScreenState extends State<CameraScreen>
             ),
           ),
         ),
-        
-        // Spacer to push controls to bottom
         const Spacer(),
-        
-        // Bottom controls
         Container(
           padding: const EdgeInsets.all(24),
           child: _showRetakeOption ? _buildRetakeControls() : _buildCameraControls(),
@@ -357,26 +291,19 @@ class _CameraScreenState extends State<CameraScreen>
       ],
     );
   }
-
   Widget _buildCameraControls() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        // Cancel button
         _buildControlButton(
           icon: Icons.close,
           onPressed: () => Navigator.of(context).pop(),
           backgroundColor: Colors.black54,
         ),
-        
-        // Capture button with animation
         _buildAnimatedCaptureButton(),
-        
-        // Gallery button (placeholder for future implementation)
         _buildControlButton(
           icon: Icons.photo_library,
           onPressed: () {
-            // TODO: Implement gallery selection
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Gallery selection coming soon'),
@@ -388,7 +315,6 @@ class _CameraScreenState extends State<CameraScreen>
       ],
     );
   }
-
   Widget _buildRetakeControls() {
     return CameraAnimations.createRetakeTransition(
       oldPhoto: _capturedImage != null 
@@ -407,7 +333,6 @@ class _CameraScreenState extends State<CameraScreen>
       newCameraView: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Use photo button
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () {
@@ -429,7 +354,6 @@ class _CameraScreenState extends State<CameraScreen>
             ),
           ),
           const SizedBox(width: 16),
-          // Retake button
           Expanded(
             child: ElevatedButton.icon(
               onPressed: _retakePhoto,
@@ -450,7 +374,6 @@ class _CameraScreenState extends State<CameraScreen>
       controller: _retakeController,
     );
   }
-
   Widget _buildAnimatedCaptureButton() {
     return CameraAnimations.createCameraButtonAnimation(
       onPressed: _captureImage,
@@ -488,7 +411,6 @@ class _CameraScreenState extends State<CameraScreen>
       ),
     );
   }
-
   Widget _buildControlButton({
     required IconData icon,
     required VoidCallback onPressed,
@@ -512,18 +434,14 @@ class _CameraScreenState extends State<CameraScreen>
     );
   }
 }
-
-/// Widget for displaying camera preview with crop overlay
 class CameraPreviewWithOverlay extends StatelessWidget {
   final CameraController controller;
   final Rect? cropRect;
-  
   const CameraPreviewWithOverlay({
     super.key,
     required this.controller,
     this.cropRect,
   });
-
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -533,7 +451,6 @@ class CameraPreviewWithOverlay extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildCropOverlay() {
     return CustomPaint(
       painter: CropOverlayPainter(cropRect!),
@@ -541,48 +458,32 @@ class CameraPreviewWithOverlay extends StatelessWidget {
     );
   }
 }
-
-/// Custom painter for crop overlay
 class CropOverlayPainter extends CustomPainter {
   final Rect cropRect;
-  
   CropOverlayPainter(this.cropRect);
-
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.black54
       ..style = PaintingStyle.fill;
-
     final cropPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
-
-    // Draw overlay (darken areas outside crop)
     final path = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
       ..addRect(cropRect)
       ..fillType = PathFillType.evenOdd;
-
     canvas.drawPath(path, paint);
-    
-    // Draw crop rectangle border
     canvas.drawRect(cropRect, cropPaint);
-    
-    // Draw corner indicators
     _drawCornerIndicators(canvas, cropRect);
   }
-
   void _drawCornerIndicators(Canvas canvas, Rect rect) {
     final paint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
-
     const cornerSize = 20.0;
-
-    // Top-left corner
     canvas.drawLine(
       Offset(rect.left, rect.top),
       Offset(rect.left + cornerSize, rect.top),
@@ -593,8 +494,6 @@ class CropOverlayPainter extends CustomPainter {
       Offset(rect.left, rect.top + cornerSize),
       paint,
     );
-
-    // Top-right corner
     canvas.drawLine(
       Offset(rect.right - cornerSize, rect.top),
       Offset(rect.right, rect.top),
@@ -605,8 +504,6 @@ class CropOverlayPainter extends CustomPainter {
       Offset(rect.right, rect.top + cornerSize),
       paint,
     );
-
-    // Bottom-left corner
     canvas.drawLine(
       Offset(rect.left, rect.bottom - cornerSize),
       Offset(rect.left, rect.bottom),
@@ -617,8 +514,6 @@ class CropOverlayPainter extends CustomPainter {
       Offset(rect.left + cornerSize, rect.bottom),
       paint,
     );
-
-    // Bottom-right corner
     canvas.drawLine(
       Offset(rect.right - cornerSize, rect.bottom),
       Offset(rect.right, rect.bottom),
@@ -630,7 +525,6 @@ class CropOverlayPainter extends CustomPainter {
       paint,
     );
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

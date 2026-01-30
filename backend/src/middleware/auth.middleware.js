@@ -1,19 +1,15 @@
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-
-// JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-
   if (!token) {
     return res.status(401).json({ 
       success: false, 
       error: { message: 'Access token required' } 
     });
   }
-
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
       return res.status(403).json({ 
@@ -25,12 +21,9 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
-
-// Optional authentication (for public endpoints that can benefit from user context)
 const optionalAuth = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-
   if (token) {
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
       if (!err) {
@@ -40,8 +33,6 @@ const optionalAuth = (req, res, next) => {
   }
   next();
 };
-
-// Rate limiting middleware
 const createRateLimit = (windowMs = 15 * 60 * 1000, max = 100) => {
   return rateLimit({
     windowMs,
@@ -54,8 +45,6 @@ const createRateLimit = (windowMs = 15 * 60 * 1000, max = 100) => {
     legacyHeaders: false,
   });
 };
-
-// Validation middleware
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -69,8 +58,6 @@ const validateRequest = (req, res, next) => {
   }
   next();
 };
-
-// Common validation rules
 const authValidation = {
   register: [
     body('email').isEmail().normalizeEmail(),
@@ -82,7 +69,6 @@ const authValidation = {
     body('password').notEmpty(),
   ]
 };
-
 const aiValidation = {
   generateText: [
     body('prompt').trim().isLength({ min: 1, max: 5000 }),
@@ -96,7 +82,6 @@ const aiValidation = {
     body('prompt').trim().isLength({ min: 1, max: 2000 }),
   ]
 };
-
 module.exports = {
   authenticateToken,
   optionalAuth,

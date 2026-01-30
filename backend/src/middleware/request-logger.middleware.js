@@ -1,6 +1,4 @@
 const winston = require('winston');
-
-// Configure request logger
 const requestLogger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
@@ -12,19 +10,10 @@ const requestLogger = winston.createLogger({
     new winston.transports.File({ filename: 'logs/requests.log' })
   ]
 });
-
-/**
- * Request logging middleware
- * Logs all incoming HTTP requests with detailed information
- */
 const logRequests = (req, res, next) => {
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const startTime = Date.now();
-  
-  // Add request ID to request object for use in other middleware/controllers
   req.requestId = requestId;
-  
-  // Log incoming request
   requestLogger.info(`[${requestId}] Incoming request`, {
     method: req.method,
     url: req.url,
@@ -41,19 +30,15 @@ const logRequests = (req, res, next) => {
     ip: req.ip,
     body: req.method === 'POST' || req.method === 'PUT' ? {
       ...req.body,
-      // Redact sensitive fields
       password: req.body?.password ? '[REDACTED]' : undefined,
       token: req.body?.token ? '[REDACTED]' : undefined,
       apiKey: req.body?.apiKey ? '[REDACTED]' : undefined
     } : undefined,
     timestamp: new Date().toISOString()
   });
-
-  // Override res.json to log response
   const originalJson = res.json;
   res.json = function(body) {
     const duration = Date.now() - startTime;
-    
     requestLogger.info(`[${requestId}] Response sent`, {
       statusCode: res.statusCode,
       duration,
@@ -62,11 +47,8 @@ const logRequests = (req, res, next) => {
       error: body?.error?.message,
       timestamp: new Date().toISOString()
     });
-    
     return originalJson.call(this, body);
   };
-
-  // Override res.status to capture status changes
   const originalStatus = res.status;
   res.status = function(code) {
     if (code >= 400) {
@@ -74,11 +56,8 @@ const logRequests = (req, res, next) => {
     }
     return originalStatus.call(this, code);
   };
-
-  // Log when request finishes (for non-JSON responses)
   res.on('finish', () => {
     const duration = Date.now() - startTime;
-    
     if (!res.headersSent || res.statusCode >= 400) {
       requestLogger.info(`[${requestId}] Request finished`, {
         statusCode: res.statusCode,
@@ -87,11 +66,8 @@ const logRequests = (req, res, next) => {
       });
     }
   });
-
-  // Log errors
   res.on('error', (error) => {
     const duration = Date.now() - startTime;
-    
     requestLogger.error(`[${requestId}] Response error`, {
       error: error.message,
       stack: error.stack,
@@ -99,17 +75,10 @@ const logRequests = (req, res, next) => {
       timestamp: new Date().toISOString()
     });
   });
-
   next();
 };
-
-/**
- * Error logging middleware
- * Logs unhandled errors in the request pipeline
- */
 const logErrors = (error, req, res, next) => {
   const requestId = req.requestId || 'unknown';
-  
   requestLogger.error(`[${requestId}] Unhandled error`, {
     error: error.message,
     stack: error.stack,
@@ -119,8 +88,6 @@ const logErrors = (error, req, res, next) => {
     body: req.body,
     timestamp: new Date().toISOString()
   });
-
-  // Don't expose internal errors to client
   if (!res.headersSent) {
     res.status(500).json({
       success: false,
@@ -131,10 +98,8 @@ const logErrors = (error, req, res, next) => {
       }
     });
   }
-  
   next(error);
 };
-
 module.exports = {
   logRequests,
   logErrors,

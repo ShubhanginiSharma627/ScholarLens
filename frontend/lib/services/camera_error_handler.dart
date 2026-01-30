@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'camera_service.dart';
-
-/// Handles camera-related errors and provides user-friendly messages
 class CameraErrorHandler {
-  /// Handles camera exceptions and returns user-friendly error information
   static CameraErrorInfo handleCameraError(dynamic error) {
     if (error is CameraException) {
       return _handleCameraException(error);
@@ -22,11 +19,9 @@ class CameraErrorHandler {
       );
     }
   }
-
   static CameraErrorInfo _handleScholarLensCameraException(ScholarLensCameraException error) {
     final message = error.message.toLowerCase();
     final details = error.details.toLowerCase();
-    
     if (message.contains('permission') || details.contains('permission')) {
       return CameraErrorInfo(
         type: CameraErrorType.permissionDenied,
@@ -37,7 +32,6 @@ class CameraErrorHandler {
         actionIcon: Icons.settings,
       );
     }
-    
     if (message.contains('camera') && (message.contains('not') || details.contains('not available'))) {
       return CameraErrorInfo(
         type: CameraErrorType.hardwareUnavailable,
@@ -48,7 +42,6 @@ class CameraErrorHandler {
         actionIcon: Icons.photo_library,
       );
     }
-    
     if (message.contains('initialization')) {
       return CameraErrorInfo(
         type: CameraErrorType.initializationFailed,
@@ -59,7 +52,6 @@ class CameraErrorHandler {
         actionIcon: Icons.refresh,
       );
     }
-    
     if (message.contains('capture')) {
       return CameraErrorInfo(
         type: CameraErrorType.captureFailed,
@@ -70,7 +62,6 @@ class CameraErrorHandler {
         actionIcon: Icons.camera_alt,
       );
     }
-    
     if (message.contains('crop')) {
       return CameraErrorInfo(
         type: CameraErrorType.cropFailed,
@@ -81,7 +72,6 @@ class CameraErrorHandler {
         actionIcon: Icons.crop,
       );
     }
-    
     if (message.contains('compress')) {
       return CameraErrorInfo(
         type: CameraErrorType.compressionFailed,
@@ -92,7 +82,6 @@ class CameraErrorHandler {
         actionIcon: Icons.compress,
       );
     }
-    
     return CameraErrorInfo(
       type: CameraErrorType.generic,
       title: 'Camera Error',
@@ -101,10 +90,8 @@ class CameraErrorHandler {
       suggestedAction: 'Please try again',
     );
   }
-
   static CameraErrorInfo _handleCameraException(CameraException error) {
     final description = error.description?.toLowerCase() ?? '';
-    
     if (description.contains('permission') || description.contains('denied')) {
       return CameraErrorInfo(
         type: CameraErrorType.permissionDenied,
@@ -115,7 +102,6 @@ class CameraErrorHandler {
         actionIcon: Icons.settings,
       );
     }
-    
     if (description.contains('no camera') || description.contains('not available')) {
       return CameraErrorInfo(
         type: CameraErrorType.hardwareUnavailable,
@@ -126,7 +112,6 @@ class CameraErrorHandler {
         actionIcon: Icons.photo_library,
       );
     }
-    
     if (description.contains('initialization') || description.contains('initialize')) {
       return CameraErrorInfo(
         type: CameraErrorType.initializationFailed,
@@ -137,7 +122,6 @@ class CameraErrorHandler {
         actionIcon: Icons.refresh,
       );
     }
-    
     if (description.contains('capture') || description.contains('picture')) {
       return CameraErrorInfo(
         type: CameraErrorType.captureFailed,
@@ -148,7 +132,6 @@ class CameraErrorHandler {
         actionIcon: Icons.camera_alt,
       );
     }
-    
     if (description.contains('crop')) {
       return CameraErrorInfo(
         type: CameraErrorType.cropFailed,
@@ -159,7 +142,6 @@ class CameraErrorHandler {
         actionIcon: Icons.crop,
       );
     }
-    
     if (description.contains('compress')) {
       return CameraErrorInfo(
         type: CameraErrorType.compressionFailed,
@@ -170,7 +152,6 @@ class CameraErrorHandler {
         actionIcon: Icons.compress,
       );
     }
-    
     return CameraErrorInfo(
       type: CameraErrorType.generic,
       title: 'Camera Error',
@@ -179,10 +160,8 @@ class CameraErrorHandler {
       suggestedAction: 'Please try again',
     );
   }
-
   static CameraErrorInfo _handleGenericException(Exception error) {
     final message = error.toString().toLowerCase();
-    
     if (message.contains('storage') || message.contains('space')) {
       return CameraErrorInfo(
         type: CameraErrorType.storageError,
@@ -193,7 +172,6 @@ class CameraErrorHandler {
         actionIcon: Icons.storage,
       );
     }
-    
     if (message.contains('network') || message.contains('internet')) {
       return CameraErrorInfo(
         type: CameraErrorType.networkError,
@@ -204,7 +182,6 @@ class CameraErrorHandler {
         actionIcon: Icons.wifi_off,
       );
     }
-    
     return CameraErrorInfo(
       type: CameraErrorType.generic,
       title: 'Error',
@@ -213,8 +190,6 @@ class CameraErrorHandler {
       suggestedAction: 'Please try again',
     );
   }
-
-  /// Shows an error dialog with appropriate actions
   static Future<void> showErrorDialog(
     BuildContext context,
     CameraErrorInfo errorInfo, {
@@ -293,7 +268,6 @@ class CameraErrorHandler {
       ),
     );
   }
-
   static IconData _getErrorIcon(CameraErrorType type) {
     switch (type) {
       case CameraErrorType.permissionDenied:
@@ -317,7 +291,6 @@ class CameraErrorHandler {
         return Icons.error;
     }
   }
-
   static Color _getErrorColor(CameraErrorType type) {
     switch (type) {
       case CameraErrorType.permissionDenied:
@@ -332,7 +305,6 @@ class CameraErrorHandler {
         return Colors.grey;
     }
   }
-
   static String _getAlternativeActionText(CameraErrorType type) {
     switch (type) {
       case CameraErrorType.permissionDenied:
@@ -346,8 +318,6 @@ class CameraErrorHandler {
     }
   }
 }
-
-/// Information about a camera error
 class CameraErrorInfo {
   final CameraErrorType type;
   final String title;
@@ -355,7 +325,6 @@ class CameraErrorInfo {
   final bool canRetry;
   final String? suggestedAction;
   final IconData? actionIcon;
-
   const CameraErrorInfo({
     required this.type,
     required this.title,
@@ -365,8 +334,6 @@ class CameraErrorInfo {
     this.actionIcon,
   });
 }
-
-/// Types of camera errors
 enum CameraErrorType {
   permissionDenied,
   hardwareUnavailable,
@@ -379,13 +346,9 @@ enum CameraErrorType {
   generic,
   unknown,
 }
-
-/// Mixin for widgets that use camera functionality
 mixin CameraErrorHandlerMixin<T extends StatefulWidget> on State<T> {
-  /// Handles camera errors with appropriate UI feedback
   void handleCameraError(dynamic error, {VoidCallback? onRetry}) {
     final errorInfo = CameraErrorHandler.handleCameraError(error);
-    
     CameraErrorHandler.showErrorDialog(
       context,
       errorInfo,
@@ -393,12 +356,10 @@ mixin CameraErrorHandlerMixin<T extends StatefulWidget> on State<T> {
       onAlternativeAction: _getAlternativeAction(errorInfo.type),
     );
   }
-
   VoidCallback? _getAlternativeAction(CameraErrorType type) {
     switch (type) {
       case CameraErrorType.permissionDenied:
         return () {
-          // TODO: Open app settings
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Please enable camera permission in device settings'),
@@ -408,7 +369,6 @@ mixin CameraErrorHandlerMixin<T extends StatefulWidget> on State<T> {
       case CameraErrorType.hardwareUnavailable:
       case CameraErrorType.captureFailed:
         return () {
-          // TODO: Open gallery picker
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Gallery selection coming soon'),

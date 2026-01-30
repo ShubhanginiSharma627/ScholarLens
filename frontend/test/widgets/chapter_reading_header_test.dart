@@ -5,12 +5,10 @@ import 'package:scholar_lens/models/chapter_reading_state.dart';
 import 'package:scholar_lens/models/chapter_section.dart';
 import 'package:scholar_lens/widgets/chapter_reading_header.dart';
 import 'package:scholar_lens/theme/app_theme.dart';
-
 void main() {
   group('ChapterReadingHeader', () {
     late UploadedTextbook mockTextbook;
     late ChapterReadingState mockReadingState;
-
     setUp(() {
       mockTextbook = UploadedTextbook(
         id: 'test-textbook-1',
@@ -24,7 +22,6 @@ void main() {
         keyTopics: ['topic1', 'topic2'],
         subject: 'Mathematics',
       );
-
       final mockSections = [
         const ChapterSection(
           sectionNumber: 1,
@@ -41,17 +38,14 @@ void main() {
           isCompleted: true,
         ),
       ];
-
       mockReadingState = ChapterReadingState.initial(
         textbookId: 'test-textbook-1',
         chapterNumber: 1,
         sections: mockSections,
       ).copyWith(readingProgress: 0.5);
     });
-
     testWidgets('renders header with textbook navigation', (WidgetTester tester) async {
       bool backPressed = false;
-
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.lightTheme,
@@ -67,28 +61,16 @@ void main() {
           ),
         ),
       );
-
-      // Verify back navigation text
       expect(find.text('Back to Test Textbook'), findsOneWidget);
-      
-      // Verify chapter title
       expect(find.text('Test Chapter'), findsOneWidget);
-      
-      // Verify page range
       expect(find.text('pp. 1-25'), findsOneWidget);
-      
-      // Verify estimated reading time
       expect(find.text('15 min read'), findsOneWidget);
-
-      // Test back button functionality
       await tester.tap(find.byIcon(Icons.arrow_back));
       await tester.pump();
       expect(backPressed, isTrue);
     });
-
     testWidgets('displays completion status when chapter is completed', (WidgetTester tester) async {
       final completedState = mockReadingState.copyWith(readingProgress: 1.0);
-
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.lightTheme,
@@ -103,12 +85,9 @@ void main() {
           ),
         ),
       );
-
-      // Verify completion indicator
       expect(find.text('Completed'), findsOneWidget);
       expect(find.byIcon(Icons.check_circle), findsOneWidget);
     });
-
     testWidgets('shows animated progress bar with correct percentage', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -123,22 +102,14 @@ void main() {
           ),
         ),
       );
-
-      // Verify progress percentage
       expect(find.text('50%'), findsOneWidget);
-      
-      // Verify section progress
       expect(find.text('(1/2 sections)'), findsOneWidget);
-      
-      // Verify progress bar exists
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
     });
-
     testWidgets('displays reading time when available', (WidgetTester tester) async {
       final stateWithTime = mockReadingState.copyWith(
         readingTime: const Duration(minutes: 25),
       );
-
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.lightTheme,
@@ -153,14 +124,9 @@ void main() {
           ),
         ),
       );
-
-      // Verify reading time display
       expect(find.text('Reading time: 25m'), findsOneWidget);
-      
-      // Verify remaining time calculation
       expect(find.text('5 min remaining'), findsOneWidget);
     });
-
     testWidgets('handles missing optional parameters gracefully', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -174,11 +140,7 @@ void main() {
           ),
         ),
       );
-
-      // Should display default chapter title
       expect(find.text('Chapter 1'), findsOneWidget);
-      
-      // Should not crash and should render progress
       expect(find.text('50%'), findsOneWidget);
     });
   });

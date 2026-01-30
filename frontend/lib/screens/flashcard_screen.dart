@@ -4,22 +4,17 @@ import '../models/study_session_progress.dart';
 import '../widgets/flashcard/enhanced_flashcard_widget.dart';
 import '../widgets/flashcard/modern_progress_tracker.dart';
 import '../widgets/difficulty_rating_bar.dart';
-
-/// Screen for reviewing flashcards with navigation and progress tracking
 class FlashcardScreen extends StatefulWidget {
   final List<Flashcard> flashcards;
   final String? subject;
-
   const FlashcardScreen({
     super.key,
     required this.flashcards,
     this.subject,
   });
-
   @override
   State<FlashcardScreen> createState() => _FlashcardScreenState();
 }
-
 class _FlashcardScreenState extends State<FlashcardScreen> 
     with TickerProviderStateMixin {
   late PageController _pageController;
@@ -28,11 +23,9 @@ class _FlashcardScreenState extends State<FlashcardScreen>
   late AnimationController _uiElementsController;
   late Animation<double> _progressAnimation;
   late Animation<double> _fadeAnimation;
-  
   int _currentIndex = 0;
   bool _isFlipped = false;
   final Map<int, Difficulty?> _ratings = {};
-
   @override
   void initState() {
     super.initState();
@@ -41,19 +34,14 @@ class _FlashcardScreenState extends State<FlashcardScreen>
       totalCards: widget.flashcards.length,
       subject: widget.subject,
     );
-    
-    // Initialize animation controllers for smooth transitions
     _progressAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
     _uiElementsController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
-    // Create animations for smooth progress updates
     _progressAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -61,8 +49,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
       parent: _progressAnimationController,
       curve: Curves.easeInOutCubic,
     ));
-    
-    // Create fade animation for UI elements
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -70,12 +56,9 @@ class _FlashcardScreenState extends State<FlashcardScreen>
       parent: _uiElementsController,
       curve: Curves.easeInOut,
     ));
-    
-    // Start initial animations
     _progressAnimationController.forward();
     _uiElementsController.forward();
   }
-
   @override
   void dispose() {
     _pageController.dispose();
@@ -83,100 +66,70 @@ class _FlashcardScreenState extends State<FlashcardScreen>
     _uiElementsController.dispose();
     super.dispose();
   }
-
   void _onFlip() {
     setState(() {
       _isFlipped = !_isFlipped;
     });
   }
-
   void _onDifficultyRated(Difficulty difficulty) {
     setState(() {
       _ratings[_currentIndex] = difficulty;
-      // Update session progress with real-time tracking
       _sessionProgress = _sessionProgress.rateCard(
         widget.flashcards[_currentIndex].id,
         difficulty,
       );
     });
-    
-    // Animate progress update
     _progressAnimationController.reset();
     _progressAnimationController.forward();
-    
-    // Auto-advance to next card after rating
     if (_currentIndex < widget.flashcards.length - 1) {
       _nextCard();
     }
   }
-
   void _nextCard() {
     if (_currentIndex < widget.flashcards.length - 1) {
-      // Fade out UI elements before transition
       _uiElementsController.reverse().then((_) {
         setState(() {
           _currentIndex++;
           _isFlipped = false;
-          // Update session progress for navigation
           _sessionProgress = _sessionProgress.nextCard();
         });
-        
-        // Animate progress update
         _progressAnimationController.reset();
         _progressAnimationController.forward();
-        
-        // Fade UI elements back in
         _uiElementsController.forward();
       });
-      
-      // Enhanced page transition with custom curve
       _pageController.nextPage(
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOutCubic,
       );
     }
   }
-
   void _previousCard() {
     if (_currentIndex > 0) {
-      // Fade out UI elements before transition
       _uiElementsController.reverse().then((_) {
         setState(() {
           _currentIndex--;
           _isFlipped = false;
-          // Update session progress for navigation
           _sessionProgress = _sessionProgress.previousCard();
         });
-        
-        // Animate progress update
         _progressAnimationController.reset();
         _progressAnimationController.forward();
-        
-        // Fade UI elements back in
         _uiElementsController.forward();
       });
-      
-      // Enhanced page transition with custom curve
       _pageController.previousPage(
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOutCubic,
       );
     }
   }
-
   void _onPageChanged(int index) {
     setState(() {
       _currentIndex = index;
       _isFlipped = false;
-      // Update session progress when page changes
       _sessionProgress = _sessionProgress.jumpToCard(index);
     });
-    
-    // Animate progress update for manual page changes
     _progressAnimationController.reset();
     _progressAnimationController.forward();
   }
-
   Widget _buildAnimatedNavButton({
     required VoidCallback? onPressed,
     required IconData icon,
@@ -217,7 +170,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     if (widget.flashcards.isEmpty) {
@@ -255,7 +207,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
         ),
       );
     }
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.subject ?? 'Flashcards'),
@@ -263,14 +214,12 @@ class _FlashcardScreenState extends State<FlashcardScreen>
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              // TODO: Navigate to create flashcard screen
             },
           ),
         ],
       ),
       body: Column(
         children: [
-          // Modern progress tracker with smooth animated updates
           AnimatedBuilder(
             animation: _progressAnimation,
             builder: (context, child) {
@@ -285,14 +234,11 @@ class _FlashcardScreenState extends State<FlashcardScreen>
               );
             },
           ),
-          
-          // Flashcard display with enhanced PageView
           Expanded(
             child: PageView.builder(
               controller: _pageController,
               onPageChanged: _onPageChanged,
               itemCount: widget.flashcards.length,
-              // Enhanced physics for smoother scrolling
               physics: const BouncingScrollPhysics(),
               itemBuilder: (context, index) {
                 return AnimatedBuilder(
@@ -303,7 +249,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
                       value = _pageController.page! - index;
                       value = (1 - (value.abs() * 0.1)).clamp(0.0, 1.0);
                     }
-                    
                     return Transform.scale(
                       scale: value,
                       child: Opacity(
@@ -324,8 +269,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
               },
             ),
           ),
-          
-          // Card counter display with fade animation
           FadeTransition(
             opacity: _fadeAnimation,
             child: Container(
@@ -340,8 +283,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
               ),
             ),
           ),
-          
-          // Navigation controls with fade animation
           FadeTransition(
             opacity: _fadeAnimation,
             child: Container(
@@ -368,8 +309,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
               ),
             ),
           ),
-          
-          // Difficulty rating with slide animation (only show when flipped)
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             transitionBuilder: (Widget child, Animation<double> animation) {

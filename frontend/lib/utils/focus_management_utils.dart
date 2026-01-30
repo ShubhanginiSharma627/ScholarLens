@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-/// Utility class for managing focus and keyboard navigation in the chapter reading interface
 class FocusManagementUtils {
-  /// Creates a focus node with proper disposal handling
   static FocusNode createManagedFocusNode({
     String? debugLabel,
     bool canRequestFocus = true,
@@ -15,8 +12,6 @@ class FocusManagementUtils {
       skipTraversal: skipTraversal,
     );
   }
-
-  /// Creates a focus scope with proper keyboard navigation
   static Widget createFocusScope({
     required Widget child,
     FocusScopeNode? node,
@@ -30,8 +25,6 @@ class FocusManagementUtils {
       child: child,
     );
   }
-
-  /// Creates a focusable widget with visual focus indicators
   static Widget createFocusableWidget({
     required Widget child,
     required FocusNode focusNode,
@@ -52,7 +45,6 @@ class FocusManagementUtils {
         builder: (context) {
           final theme = Theme.of(context);
           final hasFocus = focusNode.hasFocus;
-          
           return GestureDetector(
             onTap: () {
               focusNode.requestFocus();
@@ -76,8 +68,6 @@ class FocusManagementUtils {
       ),
     );
   }
-
-  /// Creates a keyboard navigation handler
   static Widget createKeyboardNavigationHandler({
     required Widget child,
     Map<LogicalKeySet, VoidCallback>? shortcuts,
@@ -93,7 +83,6 @@ class FocusManagementUtils {
       LogicalKeySet(LogicalKeyboardKey.enter): ActivateIntent(),
       LogicalKeySet(LogicalKeyboardKey.space): ActivateIntent(),
     };
-
     final defaultActions = <Type, Action<Intent>>{
       NextFocusIntent: CallbackAction<NextFocusIntent>(
         onInvoke: (intent) => FocusScope.of(child as BuildContext).nextFocus(),
@@ -102,7 +91,6 @@ class FocusManagementUtils {
         onInvoke: (intent) => FocusScope.of(child as BuildContext).previousFocus(),
       ),
     };
-
     return Shortcuts(
       shortcuts: {
         ...defaultShortcuts,
@@ -121,8 +109,6 @@ class FocusManagementUtils {
       ),
     );
   }
-
-  /// Creates a focus traversal group for logical navigation sections
   static Widget createFocusTraversalGroup({
     required Widget child,
     FocusTraversalPolicy? policy,
@@ -136,8 +122,6 @@ class FocusManagementUtils {
       child: child,
     );
   }
-
-  /// Creates a focus order widget for explicit focus ordering
   static Widget createFocusOrder({
     required Widget child,
     required double order,
@@ -147,8 +131,6 @@ class FocusManagementUtils {
       child: child,
     );
   }
-
-  /// Creates an accessible button with focus management
   static Widget createFocusableButton({
     required Widget child,
     required VoidCallback? onPressed,
@@ -161,7 +143,6 @@ class FocusManagementUtils {
     EdgeInsets? padding,
   }) {
     final buttonFocusNode = focusNode ?? FocusNode();
-    
     return Focus(
       focusNode: buttonFocusNode,
       autofocus: autofocus,
@@ -169,20 +150,17 @@ class FocusManagementUtils {
         builder: (context) {
           final theme = Theme.of(context);
           final hasFocus = buttonFocusNode.hasFocus;
-          
           Widget button = ElevatedButton(
             onPressed: onPressed,
             focusNode: buttonFocusNode,
             child: child,
           );
-
           if (tooltip != null) {
             button = Tooltip(
               message: tooltip,
               child: button,
             );
           }
-
           return Container(
             decoration: hasFocus
                 ? BoxDecoration(
@@ -199,8 +177,6 @@ class FocusManagementUtils {
       ),
     );
   }
-
-  /// Creates a focusable card with visual indicators
   static Widget createFocusableCard({
     required Widget child,
     VoidCallback? onTap,
@@ -212,7 +188,6 @@ class FocusManagementUtils {
     BorderRadius? borderRadius,
   }) {
     final cardFocusNode = focusNode ?? FocusNode();
-    
     return Focus(
       focusNode: cardFocusNode,
       autofocus: autofocus,
@@ -220,7 +195,6 @@ class FocusManagementUtils {
         builder: (context) {
           final theme = Theme.of(context);
           final hasFocus = cardFocusNode.hasFocus;
-          
           return Card(
             elevation: hasFocus ? (elevation ?? 4.0) * 1.5 : elevation,
             shape: RoundedRectangleBorder(
@@ -248,8 +222,6 @@ class FocusManagementUtils {
       ),
     );
   }
-
-  /// Creates a focus indicator overlay
   static Widget createFocusIndicator({
     required Widget child,
     required bool hasFocus,
@@ -262,7 +234,6 @@ class FocusManagementUtils {
       builder: (context) {
         final theme = Theme.of(context);
         final shouldShow = hasFocus && (!showOnlyOnKeyboard || _isKeyboardNavigation(context));
-        
         return Container(
           decoration: shouldShow
               ? BoxDecoration(
@@ -278,8 +249,6 @@ class FocusManagementUtils {
       },
     );
   }
-
-  /// Manages focus for a list of widgets
   static List<Widget> createFocusableList({
     required List<Widget> children,
     required List<FocusNode> focusNodes,
@@ -287,7 +256,6 @@ class FocusManagementUtils {
   }) {
     assert(children.length == focusNodes.length, 
            'Children and focus nodes lists must have the same length');
-    
     return List.generate(children.length, (index) {
       return FocusTraversalOrder(
         order: NumericFocusOrder(index.toDouble()),
@@ -298,8 +266,6 @@ class FocusManagementUtils {
       );
     });
   }
-
-  /// Creates a focus scope for modal dialogs
   static Widget createModalFocusScope({
     required Widget child,
     bool trapFocus = true,
@@ -312,8 +278,6 @@ class FocusManagementUtils {
       ),
     );
   }
-
-  /// Requests focus with proper timing
   static void requestFocusWithDelay(FocusNode focusNode, {Duration delay = const Duration(milliseconds: 100)}) {
     Future.delayed(delay, () {
       if (focusNode.canRequestFocus) {
@@ -321,56 +285,37 @@ class FocusManagementUtils {
       }
     });
   }
-
-  /// Moves focus to next focusable element
   static void focusNext(BuildContext context) {
     FocusScope.of(context).nextFocus();
   }
-
-  /// Moves focus to previous focusable element
   static void focusPrevious(BuildContext context) {
     FocusScope.of(context).previousFocus();
   }
-
-  /// Unfocuses current element
   static void unfocus(BuildContext context) {
     FocusScope.of(context).unfocus();
   }
-
-  /// Checks if keyboard navigation is being used
   static bool _isKeyboardNavigation(BuildContext context) {
-    // This is a simplified check - in a real implementation,
-    // you might track the last input method used
     return FocusManager.instance.highlightMode == FocusHighlightMode.traditional;
   }
-
-  /// Disposes a list of focus nodes
   static void disposeFocusNodes(List<FocusNode> focusNodes) {
     for (final node in focusNodes) {
       node.dispose();
     }
   }
 }
-
-/// Custom intent for callback actions
 class CallbackIntent extends Intent {
   final VoidCallback callback;
-  
   const CallbackIntent(this.callback);
 }
-
-/// Custom traversal policy for modal dialogs that traps focus
 class _ModalTraversalPolicy extends FocusTraversalPolicy {
   @override
   Iterable<FocusNode> sortDescendants(Iterable<FocusNode> descendants, FocusNode currentNode) {
     return descendants.toList()..sort((a, b) => a.rect.top.compareTo(b.rect.top));
   }
-
   @override
   bool inDirection(FocusNode currentNode, TraversalDirection direction) {
     final sorted = sortDescendants(currentNode.nearestScope!.traversalDescendants, currentNode).toList();
     final currentIndex = sorted.indexOf(currentNode);
-    
     switch (direction) {
       case TraversalDirection.up:
       case TraversalDirection.left:
@@ -378,7 +323,6 @@ class _ModalTraversalPolicy extends FocusTraversalPolicy {
           sorted[currentIndex - 1].requestFocus();
           return true;
         } else {
-          // Wrap to last element
           sorted.last.requestFocus();
           return true;
         }
@@ -388,18 +332,15 @@ class _ModalTraversalPolicy extends FocusTraversalPolicy {
           sorted[currentIndex + 1].requestFocus();
           return true;
         } else {
-          // Wrap to first element
           sorted.first.requestFocus();
           return true;
         }
     }
   }
-
   @override
   FocusNode? findFirstFocusInDirection(FocusNode currentNode, TraversalDirection direction) {
     final sorted = sortDescendants(currentNode.nearestScope!.traversalDescendants, currentNode).toList();
     if (sorted.isEmpty) return null;
-    
     switch (direction) {
       case TraversalDirection.up:
       case TraversalDirection.left:
@@ -410,12 +351,8 @@ class _ModalTraversalPolicy extends FocusTraversalPolicy {
     }
   }
 }
-
-/// Focus management mixin for stateful widgets
 mixin FocusManagementMixin<T extends StatefulWidget> on State<T> {
   final List<FocusNode> _focusNodes = [];
-  
-  /// Creates and tracks a focus node
   FocusNode createFocusNode({
     String? debugLabel,
     bool canRequestFocus = true,
@@ -429,15 +366,12 @@ mixin FocusManagementMixin<T extends StatefulWidget> on State<T> {
     _focusNodes.add(node);
     return node;
   }
-  
-  /// Disposes all tracked focus nodes
   void disposeFocusNodes() {
     for (final node in _focusNodes) {
       node.dispose();
     }
     _focusNodes.clear();
   }
-  
   @override
   void dispose() {
     disposeFocusNodes();

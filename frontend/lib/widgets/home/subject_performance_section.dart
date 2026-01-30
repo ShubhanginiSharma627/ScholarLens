@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../providers/progress_provider.dart';
 import 'circular_progress_card.dart';
-
-/// Section widget that displays subject performance with circular progress indicators
 class SubjectPerformanceSection extends StatelessWidget {
   const SubjectPerformanceSection({super.key});
-
   @override
   Widget build(BuildContext context) {
     final progress = context.watch<ProgressProvider>();
     final subjectsWithProgress = progress.getSubjectsWithProgress();
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -46,10 +41,8 @@ class SubjectPerformanceSection extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
-    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -87,9 +80,7 @@ class SubjectPerformanceSection extends StatelessWidget {
       ),
     );
   }
-
   void _handleSubjectTap(BuildContext context, String subject) {
-    // TODO: Navigate to subject details screen
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('View $subject details coming soon!')),
     );

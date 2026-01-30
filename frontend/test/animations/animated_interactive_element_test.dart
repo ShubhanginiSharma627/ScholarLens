@@ -2,24 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scholar_lens/animations/animated_interactive_element.dart';
 import 'package:scholar_lens/animations/animation_manager.dart';
-
 void main() {
   group('AnimatedInteractiveElement', () {
     late AnimationManager animationManager;
-
     setUpAll(() async {
-      // Initialize the animation manager
       animationManager = AnimationManager();
       await animationManager.initialize();
     });
-
     tearDownAll(() {
       animationManager.dispose();
     });
-
     testWidgets('renders child widget correctly', (WidgetTester tester) async {
       const testChild = Text('Test Child');
-      
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -29,13 +23,10 @@ void main() {
           ),
         ),
       );
-
       expect(find.text('Test Child'), findsOneWidget);
     });
-
     testWidgets('calls onTap callback when tapped', (WidgetTester tester) async {
       bool tapped = false;
-      
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -46,16 +37,12 @@ void main() {
           ),
         ),
       );
-
       await tester.tap(find.text('Tap Me'));
       await tester.pump();
-
       expect(tapped, isTrue);
     });
-
     testWidgets('calls onLongPress callback when long pressed', (WidgetTester tester) async {
       bool longPressed = false;
-      
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -66,13 +53,10 @@ void main() {
           ),
         ),
       );
-
       await tester.longPress(find.text('Long Press Me'));
       await tester.pump();
-
       expect(longPressed, isTrue);
     });
-
     testWidgets('applies scale animation on tap down', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -88,24 +72,13 @@ void main() {
           ),
         ),
       );
-
-      // Find the container
       final containerFinder = find.byType(Container);
       expect(containerFinder, findsOneWidget);
-
-      // Tap down to trigger scale animation
       await tester.press(containerFinder);
       await tester.pump();
-      
-      // Let animation start
       await tester.pump(const Duration(milliseconds: 50));
-
-      // The widget should be scaled down (we can't easily test the exact scale value
-      // but we can verify the animation system is working by checking that
-      // the tap was registered and the widget is still present)
       expect(containerFinder, findsOneWidget);
     });
-
     testWidgets('respects custom animation durations', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -118,16 +91,11 @@ void main() {
           ),
         ),
       );
-
-      // Tap and release
       await tester.tap(find.text('Custom Duration'));
       await tester.pump();
-      
-      // Verify widget is still present after animation
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('Custom Duration'), findsOneWidget);
     });
-
     testWidgets('applies semantic properties correctly', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -141,19 +109,12 @@ void main() {
           ),
         ),
       );
-
-      // Verify semantic properties are applied by checking the widget exists
-      // and has the expected semantic label
       expect(find.text('Semantic Test'), findsOneWidget);
-      
-      // Check that the semantic label is applied
       final semantics = tester.getSemantics(find.text('Semantic Test'));
       expect(semantics.label, contains('Test Button'));
     });
-
     testWidgets('extension methods work correctly', (WidgetTester tester) async {
       bool tapped = false;
-      
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -163,16 +124,12 @@ void main() {
           ),
         ),
       );
-
       await tester.tap(find.text('Extension Test'));
       await tester.pump();
-
       expect(tapped, isTrue);
     });
-
     testWidgets('handles disabled state correctly', (WidgetTester tester) async {
       bool tapped = false;
-      
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -183,13 +140,10 @@ void main() {
           ),
         ),
       );
-
       await tester.tap(find.text('Disabled'));
       await tester.pump();
-
       expect(tapped, isFalse);
     });
-
     testWidgets('respects custom scale down value', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -205,21 +159,14 @@ void main() {
           ),
         ),
       );
-
       final containerFinder = find.byType(Container);
-      
-      // Press down to trigger animation
       await tester.press(containerFinder);
       await tester.pump(const Duration(milliseconds: 50));
-      
-      // Widget should still be present
       expect(containerFinder, findsOneWidget);
     });
-
     group('Extension Methods', () {
       testWidgets('asInteractive works with default settings', (WidgetTester tester) async {
         bool tapped = false;
-        
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -229,16 +176,12 @@ void main() {
             ),
           ),
         );
-
         await tester.tap(find.text('Interactive'));
         await tester.pump();
-
         expect(tapped, isTrue);
       });
-
       testWidgets('asInteractiveCard works with card settings', (WidgetTester tester) async {
         bool tapped = false;
-        
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -253,16 +196,12 @@ void main() {
             ),
           ),
         );
-
         await tester.tap(find.text('Card'));
         await tester.pump();
-
         expect(tapped, isTrue);
       });
-
       testWidgets('asInteractiveListItem works with list item settings', (WidgetTester tester) async {
         bool tapped = false;
-        
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -274,18 +213,14 @@ void main() {
             ),
           ),
         );
-
         await tester.tap(find.text('List Item'));
         await tester.pump();
-
         expect(tapped, isTrue);
       });
     });
-
     group('Edge Cases', () {
       testWidgets('handles rapid taps correctly', (WidgetTester tester) async {
         int tapCount = 0;
-        
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -296,16 +231,12 @@ void main() {
             ),
           ),
         );
-
-        // Rapid taps
         for (int i = 0; i < 5; i++) {
           await tester.tap(find.text('Rapid Tap'));
           await tester.pump(const Duration(milliseconds: 10));
         }
-
         expect(tapCount, equals(5));
       });
-
       testWidgets('handles tap cancel correctly', (WidgetTester tester) async {
         await tester.pumpWidget(
           MaterialApp(
@@ -320,18 +251,11 @@ void main() {
             ),
           ),
         );
-
         final containerFinder = find.byType(Container);
-        
-        // Start tap but don't complete it
         await tester.press(containerFinder);
         await tester.pump(const Duration(milliseconds: 50));
-        
-        // Cancel the tap by dragging away
         await tester.drag(containerFinder, const Offset(200, 0));
         await tester.pump();
-        
-        // Widget should still be present and functional
         expect(containerFinder, findsOneWidget);
       });
     });

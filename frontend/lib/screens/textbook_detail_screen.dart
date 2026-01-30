@@ -1,32 +1,23 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../widgets/common/polished_components.dart';
-
-/// Textbook detail screen showing comprehensive study interface
 class TextbookDetailScreen extends StatefulWidget {
   final UploadedTextbook textbook;
-  
   const TextbookDetailScreen({
     super.key,
     required this.textbook,
   });
-  
   @override
   State<TextbookDetailScreen> createState() => _TextbookDetailScreenState();
 }
-
 class _TextbookDetailScreenState extends State<TextbookDetailScreen> {
   late TextbookProgress progress;
-  
   @override
   void initState() {
     super.initState();
     _loadTextbookProgress();
   }
-  
   void _loadTextbookProgress() {
-    // TODO: Load progress from service
-    // For now, using mock data
     setState(() {
       progress = TextbookProgress(
         textbookId: widget.textbook.id,
@@ -40,13 +31,11 @@ class _TextbookDetailScreenState extends State<TextbookDetailScreen> {
       );
     });
   }
-  
   List<ChapterProgress> _generateChapterProgresses() {
     return widget.textbook.chapters.asMap().entries.map((entry) {
       final index = entry.key;
       final chapter = entry.value;
       final chapterNumber = index + 1;
-      
       return ChapterProgress(
         chapterNumber: chapterNumber,
         chapterTitle: chapter,
@@ -59,7 +48,6 @@ class _TextbookDetailScreenState extends State<TextbookDetailScreen> {
       );
     }).toList();
   }
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,7 +84,6 @@ class _TextbookDetailScreenState extends State<TextbookDetailScreen> {
       ),
     );
   }
-  
   void _continueStudying(BuildContext context) {
     Navigator.pushNamed(
       context,
@@ -108,16 +95,12 @@ class _TextbookDetailScreenState extends State<TextbookDetailScreen> {
     );
   }
 }
-
-/// Header with app branding, streak counter, and user profile
 class TextbookDetailHeader extends StatelessWidget {
   final UploadedTextbook textbook;
-  
   const TextbookDetailHeader({
     super.key,
     required this.textbook,
   });
-  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -186,16 +169,12 @@ class TextbookDetailHeader extends StatelessWidget {
     );
   }
 }
-
-/// Purple gradient card showing textbook overview
 class TextbookOverviewCard extends StatelessWidget {
   final UploadedTextbook textbook;
-  
   const TextbookOverviewCard({
     super.key,
     required this.textbook,
   });
-  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -260,20 +239,15 @@ class TextbookOverviewCard extends StatelessWidget {
     );
   }
 }
-
-/// Progress tracking section with completion percentage and progress bar
 class ProgressTrackingSection extends StatelessWidget {
   final TextbookProgress progress;
-  
   const ProgressTrackingSection({
     super.key,
     required this.progress,
   });
-  
   @override
   Widget build(BuildContext context) {
     final progressPercentage = progress.completionPercentage.round();
-    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(20),
@@ -353,15 +327,12 @@ class ProgressTrackingSection extends StatelessWidget {
     );
   }
 }
-/// Study tools grid with 2x2 layout for four action buttons
 class StudyToolsGrid extends StatelessWidget {
   final UploadedTextbook textbook;
-  
   const StudyToolsGrid({
     super.key,
     required this.textbook,
   });
-  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -406,21 +377,16 @@ class StudyToolsGrid extends StatelessWidget {
       ),
     );
   }
-  
   void _generateFlashcards(BuildContext context) {
     Navigator.pushNamed(context, '/create-flashcard', arguments: textbook);
   }
-  
   void _createQuiz(BuildContext context) {
     Navigator.pushNamed(context, '/quiz', arguments: textbook);
   }
-  
   void _askAITutor(BuildContext context) {
     Navigator.pushNamed(context, '/tutor-chat', arguments: textbook);
   }
-  
   void _summarizeContent(BuildContext context) {
-    // Navigate to summary screen or show summary dialog
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Summarize feature coming soon!'),
@@ -429,15 +395,12 @@ class StudyToolsGrid extends StatelessWidget {
     );
   }
 }
-
-/// Individual study tool button component
 class StudyToolButton extends StatelessWidget {
   final String title;
   final IconData icon;
   final Color backgroundColor;
   final Color textColor;
   final VoidCallback onPressed;
-  
   const StudyToolButton({
     super.key,
     required this.title,
@@ -446,7 +409,6 @@ class StudyToolButton extends StatelessWidget {
     required this.textColor,
     required this.onPressed,
   });
-  
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
@@ -480,15 +442,12 @@ class StudyToolButton extends StatelessWidget {
     );
   }
 }
-/// Key topics section with topic tags in pill format
 class KeyTopicsSection extends StatelessWidget {
   final List<String> topics;
-  
   const KeyTopicsSection({
     super.key,
     required this.topics,
   });
-  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -541,17 +500,14 @@ class KeyTopicsSection extends StatelessWidget {
     );
   }
 }
-/// Chapter navigation section with chapter list
 class ChapterNavigationSection extends StatelessWidget {
   final UploadedTextbook textbook;
   final TextbookProgress progress;
-  
   const ChapterNavigationSection({
     super.key,
     required this.textbook,
     required this.progress,
   });
-  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -594,7 +550,6 @@ class ChapterNavigationSection extends StatelessWidget {
       ),
     );
   }
-  
   void _openChapter(BuildContext context, int chapterNumber) {
     Navigator.pushNamed(
       context,
@@ -606,20 +561,16 @@ class ChapterNavigationSection extends StatelessWidget {
     );
   }
 }
-
-/// Individual chapter list item with completion status indicators
 class ChapterListItem extends StatelessWidget {
   final ChapterProgress chapterProgress;
   final bool isCurrent;
   final VoidCallback onTap;
-  
   const ChapterListItem({
     super.key,
     required this.chapterProgress,
     required this.isCurrent,
     required this.onTap,
   });
-  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -636,7 +587,6 @@ class ChapterListItem extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Status indicator
               Container(
                 width: 32,
                 height: 32,
@@ -720,15 +670,12 @@ class ChapterListItem extends StatelessWidget {
     );
   }
 }
-/// Continue studying button with play icon and purple background
 class ContinueStudyingButton extends StatelessWidget {
   final VoidCallback onPressed;
-  
   const ContinueStudyingButton({
     super.key,
     required this.onPressed,
   });
-  
   @override
   Widget build(BuildContext context) {
     return Container(

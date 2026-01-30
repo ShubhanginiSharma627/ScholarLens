@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../models/flashcard.dart';
 import 'card_list_item.dart';
-
-/// Example usage of CardListItem widget
-/// 
-/// This file demonstrates how to use the CardListItem widget
-/// in different scenarios and configurations.
 class CardListItemExample extends StatelessWidget {
   const CardListItemExample({super.key});
-
   @override
   Widget build(BuildContext context) {
-    // Sample flashcards for demonstration
     final sampleFlashcards = [
       Flashcard.create(
         subject: 'Mathematics',
@@ -38,7 +31,6 @@ class CardListItemExample extends StatelessWidget {
         difficulty: Difficulty.hard,
       ),
     ];
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Card List Item Examples'),
@@ -49,13 +41,11 @@ class CardListItemExample extends StatelessWidget {
         itemBuilder: (context, index) {
           final flashcard = sampleFlashcards[index];
           final isMastered = flashcard.reviewCount >= 3; // Simple mastery logic
-          
           return CardListItem(
             flashcard: flashcard,
             isMastered: isMastered,
             cardNumber: index + 1,
             onTap: () {
-              // Handle card tap - navigate to study mode
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Tapped card: ${flashcard.question}'),
@@ -69,11 +59,8 @@ class CardListItemExample extends StatelessWidget {
     );
   }
 }
-
-/// Example of CardListItem in a more complex list with sections
 class CardListWithSections extends StatelessWidget {
   const CardListWithSections({super.key});
-
   @override
   Widget build(BuildContext context) {
     final masteredCards = <Flashcard>[
@@ -83,7 +70,6 @@ class CardListWithSections extends StatelessWidget {
         answer: '4',
       ).copyWith(reviewCount: 10, difficulty: Difficulty.easy),
     ];
-
     final studyCards = <Flashcard>[
       Flashcard.create(
         subject: 'Physics',
@@ -96,14 +82,12 @@ class CardListWithSections extends StatelessWidget {
         answer: '6',
       ).copyWith(reviewCount: 0, difficulty: Difficulty.hard),
     ];
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cards by Status'),
       ),
       body: ListView(
         children: [
-          // Mastered cards section
           if (masteredCards.isNotEmpty) ...[
             const Padding(
               padding: EdgeInsets.all(16),
@@ -124,8 +108,6 @@ class CardListWithSections extends StatelessWidget {
               );
             }),
           ],
-
-          // Study cards section
           if (studyCards.isNotEmpty) ...[
             const Padding(
               padding: EdgeInsets.all(16),
@@ -150,7 +132,6 @@ class CardListWithSections extends StatelessWidget {
       ),
     );
   }
-
   void _handleCardTap(BuildContext context, Flashcard flashcard) {
     showDialog(
       context: context,
@@ -181,7 +162,6 @@ class CardListWithSections extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // Navigate to study mode
             },
             child: const Text('Study'),
           ),

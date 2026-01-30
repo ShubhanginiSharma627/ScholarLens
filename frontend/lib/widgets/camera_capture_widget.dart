@@ -2,15 +2,12 @@ import 'package:flutter/material.dart';
 import '../screens/camera_screen.dart';
 import '../models/processed_image.dart';
 import '../animations/camera_animations.dart';
-
-/// Widget for triggering camera capture functionality
 class CameraCaptureWidget extends StatelessWidget {
   final String? title;
   final Function(ProcessedImage)? onImageCaptured;
   final Widget? child;
   final String buttonText;
   final IconData buttonIcon;
-
   const CameraCaptureWidget({
     super.key,
     this.title,
@@ -19,7 +16,6 @@ class CameraCaptureWidget extends StatelessWidget {
     this.buttonText = 'Capture Image',
     this.buttonIcon = Icons.camera_alt,
   });
-
   @override
   Widget build(BuildContext context) {
     if (child != null) {
@@ -28,14 +24,12 @@ class CameraCaptureWidget extends StatelessWidget {
         child: child!,
       );
     }
-
     return ElevatedButton.icon(
       onPressed: () => _openCamera(context),
       icon: Icon(buttonIcon),
       label: Text(buttonText),
     );
   }
-
   Future<void> _openCamera(BuildContext context) async {
     try {
       final result = await Navigator.of(context).push<ProcessedImage>(
@@ -46,7 +40,6 @@ class CameraCaptureWidget extends StatelessWidget {
           ),
         ),
       );
-
       if (result != null && onImageCaptured != null) {
         onImageCaptured!(result);
       }
@@ -62,20 +55,16 @@ class CameraCaptureWidget extends StatelessWidget {
     }
   }
 }
-
-/// Floating action button for camera capture
 class CameraCaptureFAB extends StatelessWidget {
   final String? title;
   final Function(ProcessedImage)? onImageCaptured;
   final String? heroTag;
-
   const CameraCaptureFAB({
     super.key,
     this.title,
     this.onImageCaptured,
     this.heroTag,
   });
-
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton(
@@ -84,7 +73,6 @@ class CameraCaptureFAB extends StatelessWidget {
       child: const Icon(Icons.camera_alt),
     );
   }
-
   Future<void> _openCamera(BuildContext context) async {
     try {
       final result = await Navigator.of(context).push<ProcessedImage>(
@@ -95,7 +83,6 @@ class CameraCaptureFAB extends StatelessWidget {
           ),
         ),
       );
-
       if (result != null && onImageCaptured != null) {
         onImageCaptured!(result);
       }
@@ -111,20 +98,16 @@ class CameraCaptureFAB extends StatelessWidget {
     }
   }
 }
-
-/// Card widget for displaying processed image information
 class ProcessedImageCard extends StatelessWidget {
   final ProcessedImage processedImage;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
-
   const ProcessedImageCard({
     super.key,
     required this.processedImage,
     this.onTap,
     this.onDelete,
   });
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -195,7 +178,6 @@ class ProcessedImageCard extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -218,7 +200,6 @@ class ProcessedImageCard extends StatelessWidget {
       ),
     );
   }
-
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
   }

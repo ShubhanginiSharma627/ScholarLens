@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../providers/app_state_provider.dart';
-
-/// Header widget that displays greeting message with user name and time context
 class GreetingHeader extends StatelessWidget {
   const GreetingHeader({super.key});
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appState = context.watch<AppStateProvider>();
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -60,11 +55,8 @@ class GreetingHeader extends StatelessWidget {
       ],
     );
   }
-
-  /// Gets appropriate greeting based on current time
   String _getGreetingMessage() {
     final hour = DateTime.now().hour;
-    
     if (hour < 12) {
       return 'Good morning,';
     } else if (hour < 17) {

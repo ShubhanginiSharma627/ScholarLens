@@ -1,25 +1,18 @@
 const enhancedAiService = require('../services/enhanced-ai.service');
 const firestore = require('@google-cloud/firestore');
 const { createLogger, logBusiness, logPerformance } = require('../config/logging.config');
-
 const db = new firestore.Firestore();
-
-// Create service-specific logger
 const logger = createLogger('enhanced-ai-controller');
-
-// Enhanced topic explanation with cache
 const explainTopicWithCache = async (req, res) => {
   try {
     const { topic, audience, type, context, variation, subject } = req.body;
     const userId = req.user?.userId;
-
     if (!topic) {
       return res.status(400).json({
         success: false,
         error: { message: 'Topic is required' }
       });
     }
-
     const result = await enhancedAiService.generateExplanationWithCache(topic, {
       audience: audience || 'student',
       type: type || 'detailed',
@@ -27,8 +20,6 @@ const explainTopicWithCache = async (req, res) => {
       variation,
       subject
     });
-
-    // Log interaction if user is authenticated
     if (userId) {
       await db.collection('interactions').add({
         type: 'enhanced_topic_explanation',
@@ -41,7 +32,6 @@ const explainTopicWithCache = async (req, res) => {
         timestamp: new Date(),
       });
     }
-
     res.json({
       success: true,
       data: { 
@@ -54,7 +44,6 @@ const explainTopicWithCache = async (req, res) => {
         ...(result.confidence && { confidence: result.confidence })
       }
     });
-
   } catch (error) {
     logger.error('Enhanced topic explanation error:', error);
     res.status(500).json({
@@ -63,20 +52,16 @@ const explainTopicWithCache = async (req, res) => {
     });
   }
 };
-
-// Enhanced quiz generation with cache
 const createQuizQuestionsWithCache = async (req, res) => {
   try {
     const { topic, count, type, subject, difficulty } = req.body;
     const userId = req.user?.userId;
-
     if (!topic) {
       return res.status(400).json({
         success: false,
         error: { message: 'Topic is required' }
       });
     }
-
     const result = await enhancedAiService.generateQuizWithCache(
       topic, 
       count || 5, 
@@ -86,8 +71,6 @@ const createQuizQuestionsWithCache = async (req, res) => {
         difficulty
       }
     );
-
-    // Log interaction if user is authenticated
     if (userId) {
       await db.collection('interactions').add({
         type: 'enhanced_quiz_generation',
@@ -100,7 +83,6 @@ const createQuizQuestionsWithCache = async (req, res) => {
         timestamp: new Date(),
       });
     }
-
     res.json({
       success: true,
       data: { 
@@ -114,7 +96,6 @@ const createQuizQuestionsWithCache = async (req, res) => {
         ...(result.aiQuestions && { aiQuestions: result.aiQuestions })
       }
     });
-
   } catch (error) {
     logger.error('Enhanced quiz generation error:', error);
     res.status(500).json({
@@ -123,15 +104,11 @@ const createQuizQuestionsWithCache = async (req, res) => {
     });
   }
 };
-
-// Enhanced tutor chat with cache
 const chatWithTutorWithCache = async (req, res) => {
   const requestId = `enhanced_chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  
   try {
     const { message, subject, studentLevel, conversationHistory, learningGoals, sessionType } = req.body;
     const userId = req.user?.userId;
-
     logger.info(`[${requestId}] Enhanced tutor chat request received`, {
       userId: userId || 'anonymous',
       messageLength: message?.length || 0,
@@ -146,7 +123,6 @@ const chatWithTutorWithCache = async (req, res) => {
         contentType: req.headers['content-type']
       }
     });
-
     if (!message) {
       logger.warn(`[${requestId}] Missing message in request body`);
       return res.status(400).json({
@@ -154,9 +130,7 @@ const chatWithTutorWithCache = async (req, res) => {
         error: { message: 'Message is required' }
       });
     }
-
     const startTime = Date.now();
-    
     try {
       const result = await enhancedAiService.generateTutorResponseWithCache(message, {
         subject,
@@ -165,9 +139,7 @@ const chatWithTutorWithCache = async (req, res) => {
         learningGoals,
         sessionType: sessionType || 'general_chat'
       });
-
       const processingTime = Date.now() - startTime;
-
       logger.info(`[${requestId}] Enhanced tutor response generated`, {
         responseLength: result.response?.length || 0,
         processingTime,
@@ -177,8 +149,6 @@ const chatWithTutorWithCache = async (req, res) => {
         confidence: result.confidence,
         hasError: !!result.error
       });
-
-      // Validate response
       if (!result.response || result.response.trim() === '') {
         logger.error(`[${requestId}] Empty enhanced tutor response`, {
           processingTime,
@@ -190,8 +160,6 @@ const chatWithTutorWithCache = async (req, res) => {
           error: { message: 'Failed to generate response. Please try again.' }
         });
       }
-
-      // Log interaction if user is authenticated
       if (userId) {
         try {
           await db.collection('chat_sessions').add({
@@ -215,7 +183,6 @@ const chatWithTutorWithCache = async (req, res) => {
           });
         }
       }
-
       res.json({
         success: true,
         data: { 
@@ -229,10 +196,8 @@ const chatWithTutorWithCache = async (req, res) => {
           timestamp: new Date().toISOString()
         }
       });
-
     } catch (generationError) {
       const processingTime = Date.now() - startTime;
-      
       logger.error(`[${requestId}] Enhanced tutor response generation failed`, {
         error: generationError.message,
         stack: generationError.stack,
@@ -243,11 +208,8 @@ const chatWithTutorWithCache = async (req, res) => {
         sessionType,
         errorCode: generationError.code
       });
-
-      // Provide specific error messages
       let errorMessage = 'Failed to generate tutor response';
       let statusCode = 500;
-      
       if (generationError.message.includes('BILLING_DISABLED')) {
         errorMessage = 'AI service is temporarily unavailable due to billing configuration.';
         statusCode = 503;
@@ -258,7 +220,6 @@ const chatWithTutorWithCache = async (req, res) => {
         errorMessage = 'Request timed out. Please try again with a shorter message.';
         statusCode = 408;
       }
-      
       return res.status(statusCode).json({
         success: false,
         error: { 
@@ -268,7 +229,6 @@ const chatWithTutorWithCache = async (req, res) => {
         }
       });
     }
-
   } catch (error) {
     logger.error(`[${requestId}] Enhanced tutor chat request failed`, {
       error: error.message,
@@ -276,7 +236,6 @@ const chatWithTutorWithCache = async (req, res) => {
       requestBody: req.body,
       userId: req.user?.userId || 'anonymous'
     });
-    
     res.status(500).json({
       success: false,
       error: { 
@@ -286,20 +245,16 @@ const chatWithTutorWithCache = async (req, res) => {
     });
   }
 };
-
-// Enhanced flashcard generation with cache
 const generateFlashcardsWithCache = async (req, res) => {
   try {
     const { topic, count, difficulty, tags, subject } = req.body;
     const userId = req.user?.userId;
-
     if (!topic) {
       return res.status(400).json({
         success: false,
         error: { message: 'Topic is required' }
       });
     }
-
     const result = await enhancedAiService.generateFlashcardsWithCache(
       topic,
       count || 5,
@@ -309,12 +264,9 @@ const generateFlashcardsWithCache = async (req, res) => {
         subject
       }
     );
-
-    // Parse the flashcards response if it's a string
     let flashcardsData = result.flashcards;
     if (typeof flashcardsData === 'string') {
       try {
-        // Remove markdown code blocks if present
         const cleanedResponse = flashcardsData.replace(/```json\n?|\n?```/g, '').trim();
         const parsed = JSON.parse(cleanedResponse);
         flashcardsData = parsed.flashcards || parsed;
@@ -326,13 +278,9 @@ const generateFlashcardsWithCache = async (req, res) => {
         });
       }
     }
-
-    // Ensure flashcardsData is an array
     if (!Array.isArray(flashcardsData)) {
       flashcardsData = [];
     }
-
-    // Save flashcards to database if user is authenticated
     const savedFlashcards = [];
     if (userId && flashcardsData.length > 0) {
       for (const flashcard of flashcardsData) {
@@ -353,12 +301,9 @@ const generateFlashcardsWithCache = async (req, res) => {
             correctCount: 0,
             lastStudied: null
           };
-
-          // Only add fields that are not undefined
           const cleanedDoc = Object.fromEntries(
             Object.entries(flashcardDoc).filter(([_, value]) => value !== undefined)
           );
-
           const docRef = await db.collection('flashcards').add(cleanedDoc);
           savedFlashcards.push({
             id: docRef.id,
@@ -368,8 +313,6 @@ const generateFlashcardsWithCache = async (req, res) => {
           logger.error('Error saving flashcard:', saveError.message);
         }
       }
-
-      // Log interaction
       await db.collection('interactions').add({
         type: 'enhanced_flashcard_generation',
         userId,
@@ -381,7 +324,6 @@ const generateFlashcardsWithCache = async (req, res) => {
         timestamp: new Date(),
       });
     }
-
     res.status(201).json({
       success: true,
       data: {
@@ -398,7 +340,6 @@ const generateFlashcardsWithCache = async (req, res) => {
         }
       }
     });
-
   } catch (error) {
     logger.error('Enhanced flashcard generation error:', error);
     res.status(500).json({
@@ -407,12 +348,9 @@ const generateFlashcardsWithCache = async (req, res) => {
     });
   }
 };
-
-// Get enhanced AI service status
 const getEnhancedAIStatus = async (req, res) => {
   try {
     const status = await enhancedAiService.getEnhancedServiceStatus();
-
     res.json({
       success: true,
       data: {
@@ -420,7 +358,6 @@ const getEnhancedAIStatus = async (req, res) => {
         timestamp: new Date().toISOString()
       }
     });
-
   } catch (error) {
     logger.error('Enhanced AI status check error:', error);
     res.status(500).json({
@@ -429,24 +366,18 @@ const getEnhancedAIStatus = async (req, res) => {
     });
   }
 };
-
-// Analyze quiz performance (uses ScienceQA if available)
 const analyzeQuizPerformance = async (req, res) => {
   try {
     const { results } = req.body;
     const userId = req.user?.userId;
-
     if (!results || !Array.isArray(results)) {
       return res.status(400).json({
         success: false,
         error: { message: 'Results array is required' }
       });
     }
-
-    // Try ScienceQA first
     let feedback = null;
     let source = 'none';
-
     try {
       feedback = await enhancedAiService.scienceqa.analyzePerformance(results);
       if (feedback) {
@@ -455,13 +386,10 @@ const analyzeQuizPerformance = async (req, res) => {
     } catch (error) {
       logger.warn('ScienceQA performance analysis failed:', error.message);
     }
-
-    // Fallback to basic analysis if ScienceQA fails
     if (!feedback) {
       const totalQuestions = results.length;
       const correctAnswers = results.filter(r => r.is_correct).length;
       const accuracy = (correctAnswers / totalQuestions) * 100;
-
       if (accuracy >= 90) {
         feedback = "Excellent performance! You've mastered this topic.";
       } else if (accuracy >= 70) {
@@ -471,11 +399,8 @@ const analyzeQuizPerformance = async (req, res) => {
       } else {
         feedback = "Keep practicing! Consider reviewing the study materials.";
       }
-      
       source = 'basic_analysis';
     }
-
-    // Log interaction if user is authenticated
     if (userId) {
       await db.collection('quiz_analyses').add({
         userId,
@@ -486,7 +411,6 @@ const analyzeQuizPerformance = async (req, res) => {
         timestamp: new Date(),
       });
     }
-
     res.json({
       success: true,
       data: {
@@ -498,7 +422,6 @@ const analyzeQuizPerformance = async (req, res) => {
         timestamp: new Date().toISOString()
       }
     });
-
   } catch (error) {
     logger.error('Quiz performance analysis error:', error);
     res.status(500).json({
@@ -507,7 +430,6 @@ const analyzeQuizPerformance = async (req, res) => {
     });
   }
 };
-
 module.exports = {
   explainTopicWithCache,
   createQuizQuestionsWithCache,

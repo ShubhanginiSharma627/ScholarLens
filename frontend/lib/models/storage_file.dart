@@ -1,4 +1,3 @@
-/// Represents a file stored in Google Cloud Storage
 class StorageFile {
   final String name;
   final String bucket;
@@ -9,7 +8,6 @@ class StorageFile {
   final String? folder;
   final Map<String, String> metadata;
   final bool isPublic;
-
   const StorageFile({
     required this.name,
     required this.bucket,
@@ -21,8 +19,6 @@ class StorageFile {
     required this.metadata,
     required this.isPublic,
   });
-
-  /// Creates a StorageFile from JSON
   factory StorageFile.fromJson(Map<String, dynamic> json) {
     return StorageFile(
       name: json['name'] as String,
@@ -36,8 +32,6 @@ class StorageFile {
       isPublic: json['isPublic'] as bool? ?? false,
     );
   }
-
-  /// Converts StorageFile to JSON
   Map<String, dynamic> toJson() {
     return {
       'name': name,
@@ -51,25 +45,17 @@ class StorageFile {
       'isPublic': isPublic,
     };
   }
-
-  /// Gets the file extension
   String get extension {
     final parts = name.split('.');
     return parts.length > 1 ? parts.last.toLowerCase() : '';
   }
-
-  /// Gets the display name (filename without folder path)
   String get displayName {
     final parts = name.split('/');
     return parts.last;
   }
-
-  /// Gets the original filename from metadata
   String get originalName {
     return metadata['originalName'] ?? displayName;
   }
-
-  /// Gets the file size in a human-readable format
   String get formattedSize {
     if (size < 1024) return '$size B';
     if (size < 1024 * 1024) return '${(size / 1024).toStringAsFixed(1)} KB';
@@ -78,30 +64,20 @@ class StorageFile {
     }
     return '${(size / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
-
-  /// Checks if the file is an image
   bool get isImage {
     return contentType.startsWith('image/');
   }
-
-  /// Checks if the file is a document
   bool get isDocument {
     return contentType.startsWith('application/') ||
         contentType.startsWith('text/') ||
         ['pdf', 'doc', 'docx', 'txt', 'rtf'].contains(extension);
   }
-
-  /// Checks if the file is a video
   bool get isVideo {
     return contentType.startsWith('video/');
   }
-
-  /// Checks if the file is an audio file
   bool get isAudio {
     return contentType.startsWith('audio/');
   }
-
-  /// Creates a copy with updated fields
   StorageFile copyWith({
     String? name,
     String? bucket,
@@ -125,7 +101,6 @@ class StorageFile {
       isPublic: isPublic ?? this.isPublic,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -139,7 +114,6 @@ class StorageFile {
         other.folder == folder &&
         other.isPublic == isPublic;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -153,7 +127,6 @@ class StorageFile {
       isPublic,
     );
   }
-
   @override
   String toString() {
     return 'StorageFile(name: $name, size: $formattedSize, contentType: $contentType)';

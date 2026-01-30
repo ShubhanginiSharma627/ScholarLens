@@ -3,28 +3,13 @@ import 'package:scholar_lens/theme/app_theme.dart';
 import 'package:scholar_lens/theme/responsive.dart';
 import 'package:scholar_lens/utils/responsive_chapter_utils.dart';
 import 'package:scholar_lens/utils/accessibility_utils.dart';
-
-/// A toolbar widget that provides interactive study tools including
-/// highlight mode toggle, bookmark functionality, and AI tutor access
 class StudyToolsBar extends StatelessWidget {
-  /// Whether highlight mode is currently active
   final bool isHighlightMode;
-  
-  /// Callback when highlight button is pressed to toggle highlight mode
   final VoidCallback onHighlightToggle;
-  
-  /// Callback when bookmark button is pressed to bookmark current section
   final VoidCallback onBookmarkPressed;
-  
-  /// Callback when AI tutor button is pressed to open AI assistance
   final VoidCallback onAITutorPressed;
-  
-  /// Whether the bookmark button should show as active (current section is bookmarked)
   final bool isCurrentSectionBookmarked;
-  
-  /// Whether the AI tutor service is available
   final bool isAITutorAvailable;
-
   const StudyToolsBar({
     super.key,
     required this.isHighlightMode,
@@ -34,13 +19,11 @@ class StudyToolsBar extends StatelessWidget {
     this.isCurrentSectionBookmarked = false,
     this.isAITutorAvailable = true,
   });
-
   @override
   Widget build(BuildContext context) {
     final isCompact = ResponsiveChapterUtils.shouldUseCompactLayout(context);
     final buttonSize = ResponsiveChapterUtils.getMinTouchTargetSize(context);
     final spacing = ResponsiveChapterUtils.getToolButtonSpacing(context);
-    
     return Semantics(
       label: 'Study tools',
       hint: 'Interactive tools for highlighting, bookmarking, and AI assistance',
@@ -61,7 +44,6 @@ class StudyToolsBar extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildCompactLayout(BuildContext context, double buttonSize, double spacing) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -101,7 +83,6 @@ class StudyToolsBar extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildFullLayout(BuildContext context, double buttonSize, double spacing) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -144,7 +125,6 @@ class StudyToolsBar extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildToolButton({
     required BuildContext context,
     required IconData icon,
@@ -157,11 +137,8 @@ class StudyToolsBar extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
-    // Determine button colors based on state
     Color? backgroundColor;
     Color? foregroundColor;
-    
     if (isDisabled) {
       backgroundColor = colorScheme.surfaceContainerHighest.withValues(alpha: 0.3);
       foregroundColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
@@ -172,14 +149,11 @@ class StudyToolsBar extends StatelessWidget {
       backgroundColor = null;
       foregroundColor = colorScheme.onSurfaceVariant;
     }
-
-    // Create semantic label
     final semanticLabel = isActive 
         ? '$label active' 
         : isDisabled 
             ? '$label disabled' 
             : label;
-
     return Expanded(
       child: AccessibilityUtils.createAccessibleButton(
         semanticLabel: semanticLabel,
@@ -221,7 +195,6 @@ class StudyToolsBar extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildCompactToolButton({
     required BuildContext context,
     required IconData icon,
@@ -233,11 +206,8 @@ class StudyToolsBar extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
-    // Determine button colors based on state
     Color? backgroundColor;
     Color? foregroundColor;
-    
     if (isDisabled) {
       backgroundColor = colorScheme.surfaceContainerHighest.withValues(alpha: 0.3);
       foregroundColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
@@ -248,8 +218,6 @@ class StudyToolsBar extends StatelessWidget {
       backgroundColor = null;
       foregroundColor = colorScheme.onSurfaceVariant;
     }
-
-    // Create semantic label based on icon
     String semanticLabel;
     if (icon == Icons.highlight_alt) {
       semanticLabel = AccessibilityUtils.createHighlightModeLabel(isActive);
@@ -260,7 +228,6 @@ class StudyToolsBar extends StatelessWidget {
     } else {
       semanticLabel = tooltip;
     }
-
     return AccessibilityUtils.createAccessibleButton(
       semanticLabel: semanticLabel,
       tooltip: tooltip,

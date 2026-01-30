@@ -6,15 +6,10 @@ import 'camera_error_handler.dart';
 import 'network_service.dart';
 import 'audio_service.dart';
 import 'voice_input_service.dart';
-
-/// Comprehensive error handler for all app errors
 class ErrorHandler {
   static ErrorHandler? _instance;
   static ErrorHandler get instance => _instance ??= ErrorHandler._();
-
   ErrorHandler._();
-
-  /// Handles any error and returns appropriate error information
   static ErrorInfo handleError(dynamic error, {ErrorContext? context}) {
     if (error is CameraErrorInfo) {
       return _convertCameraError(error);
@@ -40,8 +35,6 @@ class ErrorHandler {
       return _handleUnknownError(error, context);
     }
   }
-
-  /// Converts camera error to generic error info
   static ErrorInfo _convertCameraError(CameraErrorInfo cameraError) {
     return ErrorInfo(
       type: ErrorType.camera,
@@ -54,8 +47,6 @@ class ErrorHandler {
       severity: _mapCameraErrorSeverity(cameraError.type),
     );
   }
-
-  /// Converts network error to generic error info
   static ErrorInfo _convertNetworkError(NetworkError networkError) {
     return ErrorInfo(
       type: ErrorType.network,
@@ -69,11 +60,8 @@ class ErrorHandler {
       statusCode: networkError.statusCode,
     );
   }
-
-  /// Handles audio service errors
   static ErrorInfo _handleAudioError(AudioServiceException error) {
     final message = error.message.toLowerCase();
-    
     if (message.contains('permission') || message.contains('denied')) {
       return ErrorInfo(
         type: ErrorType.audio,
@@ -86,7 +74,6 @@ class ErrorHandler {
         severity: ErrorSeverity.medium,
       );
     }
-    
     if (message.contains('not available') || message.contains('unavailable')) {
       return ErrorInfo(
         type: ErrorType.audio,
@@ -99,7 +86,6 @@ class ErrorHandler {
         severity: ErrorSeverity.low,
       );
     }
-    
     if (message.contains('initialization') || message.contains('initialize')) {
       return ErrorInfo(
         type: ErrorType.audio,
@@ -112,7 +98,6 @@ class ErrorHandler {
         severity: ErrorSeverity.medium,
       );
     }
-    
     return ErrorInfo(
       type: ErrorType.audio,
       category: ErrorCategory.generic,
@@ -124,11 +109,8 @@ class ErrorHandler {
       severity: ErrorSeverity.low,
     );
   }
-
-  /// Handles voice input errors
   static ErrorInfo _handleVoiceError(VoiceInputException error) {
     final message = error.message.toLowerCase();
-    
     if (message.contains('permission') || message.contains('denied')) {
       return ErrorInfo(
         type: ErrorType.voice,
@@ -141,7 +123,6 @@ class ErrorHandler {
         severity: ErrorSeverity.medium,
       );
     }
-    
     if (message.contains('not available') || message.contains('unavailable')) {
       return ErrorInfo(
         type: ErrorType.voice,
@@ -154,7 +135,6 @@ class ErrorHandler {
         severity: ErrorSeverity.low,
       );
     }
-    
     if (message.contains('already listening')) {
       return ErrorInfo(
         type: ErrorType.voice,
@@ -167,7 +147,6 @@ class ErrorHandler {
         severity: ErrorSeverity.low,
       );
     }
-    
     return ErrorInfo(
       type: ErrorType.voice,
       category: ErrorCategory.generic,
@@ -179,12 +158,9 @@ class ErrorHandler {
       severity: ErrorSeverity.low,
     );
   }
-
-  /// Handles platform-specific errors
   static ErrorInfo _handlePlatformError(PlatformException error, ErrorContext? context) {
     final code = error.code.toLowerCase();
     final message = error.message?.toLowerCase() ?? '';
-    
     if (code.contains('permission') || message.contains('permission')) {
       return ErrorInfo(
         type: ErrorType.platform,
@@ -197,7 +173,6 @@ class ErrorHandler {
         severity: ErrorSeverity.high,
       );
     }
-    
     if (code.contains('camera') || message.contains('camera')) {
       return ErrorInfo(
         type: ErrorType.platform,
@@ -210,7 +185,6 @@ class ErrorHandler {
         severity: ErrorSeverity.medium,
       );
     }
-    
     if (code.contains('audio') || code.contains('microphone') || message.contains('audio')) {
       return ErrorInfo(
         type: ErrorType.platform,
@@ -223,7 +197,6 @@ class ErrorHandler {
         severity: ErrorSeverity.medium,
       );
     }
-    
     return ErrorInfo(
       type: ErrorType.platform,
       category: ErrorCategory.generic,
@@ -235,8 +208,6 @@ class ErrorHandler {
       severity: ErrorSeverity.medium,
     );
   }
-
-  /// Handles socket errors (network connectivity)
   static ErrorInfo _handleSocketError(SocketException error) {
     return ErrorInfo(
       type: ErrorType.network,
@@ -249,8 +220,6 @@ class ErrorHandler {
       severity: ErrorSeverity.medium,
     );
   }
-
-  /// Handles timeout errors
   static ErrorInfo _handleTimeoutError(TimeoutException error) {
     return ErrorInfo(
       type: ErrorType.network,
@@ -263,8 +232,6 @@ class ErrorHandler {
       severity: ErrorSeverity.medium,
     );
   }
-
-  /// Handles format errors (data parsing)
   static ErrorInfo _handleFormatError(FormatException error) {
     return ErrorInfo(
       type: ErrorType.data,
@@ -277,11 +244,8 @@ class ErrorHandler {
       severity: ErrorSeverity.medium,
     );
   }
-
-  /// Handles file system errors
   static ErrorInfo _handleFileSystemError(FileSystemException error) {
     final message = error.message.toLowerCase();
-    
     if (message.contains('space') || message.contains('storage')) {
       return ErrorInfo(
         type: ErrorType.storage,
@@ -294,7 +258,6 @@ class ErrorHandler {
         severity: ErrorSeverity.high,
       );
     }
-    
     if (message.contains('permission') || message.contains('access')) {
       return ErrorInfo(
         type: ErrorType.storage,
@@ -307,7 +270,6 @@ class ErrorHandler {
         severity: ErrorSeverity.medium,
       );
     }
-    
     return ErrorInfo(
       type: ErrorType.storage,
       category: ErrorCategory.generic,
@@ -319,11 +281,8 @@ class ErrorHandler {
       severity: ErrorSeverity.medium,
     );
   }
-
-  /// Handles generic exceptions
   static ErrorInfo _handleGenericException(Exception error, ErrorContext? context) {
     final message = error.toString().toLowerCase();
-    
     if (message.contains('network') || message.contains('internet')) {
       return ErrorInfo(
         type: ErrorType.network,
@@ -336,7 +295,6 @@ class ErrorHandler {
         severity: ErrorSeverity.medium,
       );
     }
-    
     return ErrorInfo(
       type: ErrorType.generic,
       category: ErrorCategory.generic,
@@ -348,8 +306,6 @@ class ErrorHandler {
       severity: ErrorSeverity.low,
     );
   }
-
-  /// Handles unknown errors
   static ErrorInfo _handleUnknownError(dynamic error, ErrorContext? context) {
     return ErrorInfo(
       type: ErrorType.unknown,
@@ -362,8 +318,6 @@ class ErrorHandler {
       severity: ErrorSeverity.medium,
     );
   }
-
-  /// Shows an error dialog with appropriate actions
   static Future<void> showErrorDialog(
     BuildContext context,
     ErrorInfo errorInfo, {
@@ -446,8 +400,6 @@ class ErrorHandler {
       ),
     );
   }
-
-  /// Shows a snackbar for less critical errors
   static void showErrorSnackBar(
     BuildContext context,
     ErrorInfo errorInfo, {
@@ -480,8 +432,6 @@ class ErrorHandler {
       ),
     );
   }
-
-  /// Handles error with appropriate UI feedback based on severity
   static void handleErrorWithUI(
     BuildContext context,
     dynamic error, {
@@ -491,7 +441,6 @@ class ErrorHandler {
     bool forceDialog = false,
   }) {
     final errorInfo = handleError(error, context: errorContext);
-    
     if (forceDialog || errorInfo.severity == ErrorSeverity.high) {
       showErrorDialog(
         context,
@@ -503,9 +452,6 @@ class ErrorHandler {
       showErrorSnackBar(context, errorInfo, onRetry: onRetry);
     }
   }
-
-  // Helper methods for mapping error types and categories
-
   static ErrorCategory _mapCameraErrorCategory(CameraErrorType type) {
     switch (type) {
       case CameraErrorType.permissionDenied:
@@ -522,7 +468,6 @@ class ErrorHandler {
         return ErrorCategory.generic;
     }
   }
-
   static ErrorSeverity _mapCameraErrorSeverity(CameraErrorType type) {
     switch (type) {
       case CameraErrorType.permissionDenied:
@@ -534,7 +479,6 @@ class ErrorHandler {
         return ErrorSeverity.low;
     }
   }
-
   static ErrorCategory _mapNetworkErrorCategory(NetworkErrorType type) {
     switch (type) {
       case NetworkErrorType.noConnection:
@@ -547,7 +491,6 @@ class ErrorHandler {
         return ErrorCategory.generic;
     }
   }
-
   static ErrorSeverity _mapNetworkErrorSeverity(NetworkErrorType type) {
     switch (type) {
       case NetworkErrorType.noConnection:
@@ -558,7 +501,6 @@ class ErrorHandler {
         return ErrorSeverity.low;
     }
   }
-
   static String _getNetworkErrorTitle(NetworkErrorType type) {
     switch (type) {
       case NetworkErrorType.noConnection:
@@ -571,11 +513,9 @@ class ErrorHandler {
         return 'Network Error';
     }
   }
-
   static bool _canRetryNetworkError(NetworkErrorType type) {
     return type != NetworkErrorType.serverError;
   }
-
   static String _getNetworkErrorAction(NetworkErrorType type) {
     switch (type) {
       case NetworkErrorType.noConnection:
@@ -588,7 +528,6 @@ class ErrorHandler {
         return 'Try again later';
     }
   }
-
   static IconData _getNetworkErrorIcon(NetworkErrorType type) {
     switch (type) {
       case NetworkErrorType.noConnection:
@@ -601,7 +540,6 @@ class ErrorHandler {
         return Icons.error;
     }
   }
-
   static IconData _getErrorIcon(ErrorType type, ErrorCategory category) {
     switch (type) {
       case ErrorType.camera:
@@ -622,7 +560,6 @@ class ErrorHandler {
         return Icons.error;
     }
   }
-
   static Color _getErrorColor(ErrorSeverity severity) {
     switch (severity) {
       case ErrorSeverity.low:
@@ -633,7 +570,6 @@ class ErrorHandler {
         return Colors.red;
     }
   }
-
   static String _getAlternativeActionText(ErrorType type) {
     switch (type) {
       case ErrorType.camera:
@@ -647,8 +583,6 @@ class ErrorHandler {
     }
   }
 }
-
-/// Comprehensive error information
 class ErrorInfo {
   final ErrorType type;
   final ErrorCategory category;
@@ -660,7 +594,6 @@ class ErrorInfo {
   final ErrorSeverity severity;
   final int? statusCode;
   final DateTime timestamp;
-
   ErrorInfo({
     required this.type,
     required this.category,
@@ -672,14 +605,11 @@ class ErrorInfo {
     required this.severity,
     this.statusCode,
   }) : timestamp = DateTime.now();
-
   @override
   String toString() {
     return 'ErrorInfo(type: $type, category: $category, title: $title, severity: $severity)';
   }
 }
-
-/// Types of errors in the application
 enum ErrorType {
   camera,
   network,
@@ -691,8 +621,6 @@ enum ErrorType {
   generic,
   unknown,
 }
-
-/// Categories of errors for more specific handling
 enum ErrorCategory {
   permission,
   hardware,
@@ -705,30 +633,22 @@ enum ErrorCategory {
   state,
   generic,
 }
-
-/// Error severity levels
 enum ErrorSeverity {
   low,    // Minor issues, can continue with degraded functionality
   medium, // Moderate issues, some features may not work
   high,   // Critical issues, major functionality affected
 }
-
-/// Context information for error handling
 class ErrorContext {
   final String? screen;
   final String? feature;
   final Map<String, dynamic>? metadata;
-
   const ErrorContext({
     this.screen,
     this.feature,
     this.metadata,
   });
 }
-
-/// Mixin for widgets that need error handling
 mixin ErrorHandlerMixin<T extends StatefulWidget> on State<T> {
-  /// Handles errors with appropriate UI feedback
   void handleError(
     dynamic error, {
     VoidCallback? onRetry,
@@ -740,7 +660,6 @@ mixin ErrorHandlerMixin<T extends StatefulWidget> on State<T> {
       screen: widget.runtimeType.toString(),
       feature: feature,
     );
-
     ErrorHandler.handleErrorWithUI(
       this.context,
       error,
@@ -750,13 +669,9 @@ mixin ErrorHandlerMixin<T extends StatefulWidget> on State<T> {
       forceDialog: forceDialog,
     );
   }
-
-  /// Shows error dialog
   void showErrorDialog(ErrorInfo errorInfo, {VoidCallback? onRetry}) {
     ErrorHandler.showErrorDialog(context, errorInfo, onRetry: onRetry);
   }
-
-  /// Shows error snackbar
   void showErrorSnackBar(ErrorInfo errorInfo, {VoidCallback? onRetry}) {
     ErrorHandler.showErrorSnackBar(context, errorInfo, onRetry: onRetry);
   }
