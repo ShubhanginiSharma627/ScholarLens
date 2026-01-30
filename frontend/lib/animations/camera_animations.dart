@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-/// Camera-specific animations for smooth transitions and feedback
 class _CameraAnimationUtils {
-  /// Creates a smooth transition animation for camera opening
   static PageRouteBuilder<T> createCameraOpenTransition<T>(Widget child) {
     return PageRouteBuilder<T>(
       pageBuilder: (context, animation, secondaryAnimation) => child,
@@ -16,8 +13,6 @@ class _CameraAnimationUtils {
       },
     );
   }
-
-  /// Creates a capture feedback animation with flash effect
   static Widget createCaptureFlashAnimation({
     required Widget child,
     required AnimationController controller,
@@ -30,7 +25,6 @@ class _CameraAnimationUtils {
       parent: controller,
       curve: const Interval(0.0, 0.3, curve: Curves.easeOut),
     ));
-
     final fadeAnimation = Tween<double>(
       begin: 1.0,
       end: 0.0,
@@ -38,7 +32,6 @@ class _CameraAnimationUtils {
       parent: controller,
       curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
     ));
-
     return Stack(
       children: [
         child,
@@ -56,8 +49,6 @@ class _CameraAnimationUtils {
       ],
     );
   }
-
-  /// Creates a scanning progress animation with circular indicator
   static Widget createScanningAnimation({
     required Widget child,
     required AnimationController controller,
@@ -71,7 +62,6 @@ class _CameraAnimationUtils {
       parent: controller,
       curve: Curves.easeInOut,
     ));
-
     return Stack(
       children: [
         child,
@@ -102,8 +92,6 @@ class _CameraAnimationUtils {
       ],
     );
   }
-
-  /// Creates a processing animation with rotating indicator
   static Widget createProcessingAnimation({
     required Widget child,
     required AnimationController controller,
@@ -148,8 +136,6 @@ class _CameraAnimationUtils {
       ],
     );
   }
-
-  /// Creates camera screen entrance animation
   static Widget createCameraEntranceAnimation({
     required Widget child,
     required AnimationController controller,
@@ -161,7 +147,6 @@ class _CameraAnimationUtils {
       parent: controller,
       curve: Curves.easeOut,
     ));
-
     final fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -169,7 +154,6 @@ class _CameraAnimationUtils {
       parent: controller,
       curve: Curves.easeOut,
     ));
-
     return SlideTransition(
       position: slideAnimation,
       child: FadeTransition(
@@ -178,8 +162,6 @@ class _CameraAnimationUtils {
       ),
     );
   }
-
-  /// Creates a camera button animation with scale and haptic feedback
   static Widget createCameraButtonAnimation({
     required Widget child,
     required VoidCallback onPressed,
@@ -191,8 +173,6 @@ class _CameraAnimationUtils {
       child: child,
     );
   }
-
-  /// Creates a retake transition animation
   static Widget createRetakeTransition({
     required Widget oldPhoto,
     required Widget newCameraView,
@@ -205,7 +185,6 @@ class _CameraAnimationUtils {
       parent: controller,
       curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
     ));
-
     final slideInAnimation = Tween<Offset>(
       begin: const Offset(1.0, 0.0),
       end: Offset.zero,
@@ -213,7 +192,6 @@ class _CameraAnimationUtils {
       parent: controller,
       curve: const Interval(0.5, 1.0, curve: Curves.easeOut),
     ));
-
     return Stack(
       children: [
         SlideTransition(
@@ -227,15 +205,11 @@ class _CameraAnimationUtils {
       ],
     );
   }
-
-  /// Triggers capture feedback with haptic and visual effects
   static Future<void> triggerCaptureEffect(AnimationController controller) async {
     await HapticFeedback.heavyImpact();
     controller.reset();
     await controller.forward();
   }
-
-  /// Triggers scanning animation sequence
   static Future<void> triggerScanningSequence(
     AnimationController controller, {
     Duration scanDuration = const Duration(seconds: 3),
@@ -244,14 +218,10 @@ class _CameraAnimationUtils {
     controller.reset();
     controller.repeat();
   }
-
-  /// Stops scanning animation
   static void stopScanning(AnimationController controller) {
     controller.stop();
     controller.reset();
   }
-
-  /// Triggers processing animation
   static Future<void> triggerProcessingAnimation(
     AnimationController controller, {
     Duration processingDuration = const Duration(seconds: 2),
@@ -260,14 +230,10 @@ class _CameraAnimationUtils {
     controller.reset();
     controller.repeat();
   }
-
-  /// Stops processing animation
   static void stopProcessing(AnimationController controller) {
     controller.stop();
     controller.reset();
   }
-
-  /// Triggers retake animation sequence
   static Future<void> triggerRetakeAnimation(
     AnimationController controller, {
     Duration retakeDuration = const Duration(milliseconds: 600),
@@ -277,28 +243,22 @@ class _CameraAnimationUtils {
     await controller.forward();
   }
 }
-
-/// Internal animated camera button widget
 class _AnimatedCameraButton extends StatefulWidget {
   final Widget child;
   final VoidCallback onPressed;
   final Duration duration;
-
   const _AnimatedCameraButton({
     required this.child,
     required this.onPressed,
     required this.duration,
   });
-
   @override
   State<_AnimatedCameraButton> createState() => _AnimatedCameraButtonState();
 }
-
 class _AnimatedCameraButtonState extends State<_AnimatedCameraButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-
   @override
   void initState() {
     super.initState();
@@ -314,27 +274,22 @@ class _AnimatedCameraButtonState extends State<_AnimatedCameraButton>
       curve: Curves.easeInOut,
     ));
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   void _handleTapDown(TapDownDetails details) {
     HapticFeedback.lightImpact();
     _controller.forward();
   }
-
   void _handleTapUp(TapUpDetails details) {
     _controller.reverse();
     widget.onPressed();
   }
-
   void _handleTapCancel() {
     _controller.reverse();
   }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -353,15 +308,10 @@ class _AnimatedCameraButtonState extends State<_AnimatedCameraButton>
     );
   }
 }
-
-/// Public interface for camera animations
 class CameraAnimations {
-  /// Creates a smooth transition animation for camera opening
   static PageRouteBuilder<T> createCameraOpenTransition<T>(Widget child) {
     return _CameraAnimationUtils.createCameraOpenTransition<T>(child);
   }
-
-  /// Creates a capture feedback animation with flash effect
   static Widget createCaptureFlashAnimation({
     required Widget child,
     required AnimationController controller,
@@ -373,8 +323,6 @@ class CameraAnimations {
       flashColor: flashColor,
     );
   }
-
-  /// Creates a scanning progress animation with circular indicator
   static Widget createScanningAnimation({
     required Widget child,
     required AnimationController controller,
@@ -388,8 +336,6 @@ class CameraAnimations {
       strokeWidth: strokeWidth,
     );
   }
-
-  /// Creates a processing animation with rotating indicator
   static Widget createProcessingAnimation({
     required Widget child,
     required AnimationController controller,
@@ -403,8 +349,6 @@ class CameraAnimations {
       indicatorColor: indicatorColor,
     );
   }
-
-  /// Creates camera screen entrance animation
   static Widget createCameraEntranceAnimation({
     required Widget child,
     required AnimationController controller,
@@ -414,8 +358,6 @@ class CameraAnimations {
       controller: controller,
     );
   }
-
-  /// Creates a camera button animation with scale and haptic feedback
   static Widget createCameraButtonAnimation({
     required Widget child,
     required VoidCallback onPressed,
@@ -427,8 +369,6 @@ class CameraAnimations {
       duration: duration,
     );
   }
-
-  /// Creates a retake transition animation
   static Widget createRetakeTransition({
     required Widget oldPhoto,
     required Widget newCameraView,
@@ -440,13 +380,9 @@ class CameraAnimations {
       controller: controller,
     );
   }
-
-  /// Triggers capture feedback with haptic and visual effects
   static Future<void> triggerCaptureEffect(AnimationController controller) {
     return _CameraAnimationUtils.triggerCaptureEffect(controller);
   }
-
-  /// Triggers scanning animation sequence
   static Future<void> triggerScanningSequence(
     AnimationController controller, {
     Duration scanDuration = const Duration(seconds: 3),
@@ -456,13 +392,9 @@ class CameraAnimations {
       scanDuration: scanDuration,
     );
   }
-
-  /// Stops scanning animation
   static void stopScanning(AnimationController controller) {
     _CameraAnimationUtils.stopScanning(controller);
   }
-
-  /// Triggers processing animation
   static Future<void> triggerProcessingAnimation(
     AnimationController controller, {
     Duration processingDuration = const Duration(seconds: 2),
@@ -472,13 +404,9 @@ class CameraAnimations {
       processingDuration: processingDuration,
     );
   }
-
-  /// Stops processing animation
   static void stopProcessing(AnimationController controller) {
     _CameraAnimationUtils.stopProcessing(controller);
   }
-
-  /// Triggers retake animation sequence
   static Future<void> triggerRetakeAnimation(
     AnimationController controller, {
     Duration retakeDuration = const Duration(milliseconds: 600),
@@ -488,21 +416,15 @@ class CameraAnimations {
       retakeDuration: retakeDuration,
     );
   }
-
-  /// Triggers results reveal animation
   static Future<void> triggerResultsReveal(AnimationController controller) async {
     controller.reset();
     await controller.forward();
   }
-
-  /// Triggers success animation
   static Future<void> triggerSuccessAnimation(AnimationController controller) async {
     await HapticFeedback.mediumImpact();
     controller.reset();
     await controller.forward();
   }
-
-  /// Creates enhanced results reveal animation
   static Widget createEnhancedResultsReveal({
     required Widget child,
     required AnimationController controller,
@@ -514,7 +436,6 @@ class CameraAnimations {
       parent: controller,
       curve: Curves.easeOutBack,
     ));
-
     final fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -522,7 +443,6 @@ class CameraAnimations {
       parent: controller,
       curve: Curves.easeOut,
     ));
-
     return SlideTransition(
       position: slideAnimation,
       child: FadeTransition(

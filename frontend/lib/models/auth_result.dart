@@ -1,5 +1,4 @@
 import 'user.dart';
-
 class AuthResult {
   final bool success;
   final User? user;
@@ -7,7 +6,6 @@ class AuthResult {
   final String? refreshToken;
   final String? error;
   final AuthErrorType? errorType;
-
   const AuthResult({
     required this.success,
     this.user,
@@ -16,7 +14,6 @@ class AuthResult {
     this.error,
     this.errorType,
   });
-
   factory AuthResult.success({
     required User user,
     required String accessToken,
@@ -29,7 +26,6 @@ class AuthResult {
       refreshToken: refreshToken,
     );
   }
-
   factory AuthResult.failure({
     required String error,
     required AuthErrorType errorType,
@@ -40,7 +36,6 @@ class AuthResult {
       errorType: errorType,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -52,7 +47,6 @@ class AuthResult {
         other.error == error &&
         other.errorType == errorType;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -64,7 +58,6 @@ class AuthResult {
       errorType,
     );
   }
-
   @override
   String toString() {
     if (success) {
@@ -74,14 +67,12 @@ class AuthResult {
     }
   }
 }
-
 enum AuthenticationState {
   unauthenticated,
   authenticating,
   authenticated,
   error,
 }
-
 enum AuthErrorType {
   invalidCredentials,
   userNotFound,
@@ -102,7 +93,6 @@ enum AuthErrorType {
   accountExistsWithDifferentCredential,
   unknown,
 }
-
 extension AuthErrorTypeExtension on AuthErrorType {
   String get message {
     switch (this) {
@@ -144,7 +134,6 @@ extension AuthErrorTypeExtension on AuthErrorType {
         return 'An unexpected error occurred. Please try again.';
     }
   }
-
   bool get isRetryable {
     switch (this) {
       case AuthErrorType.networkError:
@@ -155,7 +144,6 @@ extension AuthErrorTypeExtension on AuthErrorType {
         return false;
     }
   }
-
   bool get requiresReauthentication {
     switch (this) {
       case AuthErrorType.tokenExpired:

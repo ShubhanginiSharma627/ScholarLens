@@ -1,8 +1,6 @@
 import 'user_progress.dart';
 import 'learning_session.dart';
 import 'chat_message.dart';
-
-/// Represents the global application state
 class AppState {
   final UserProgress userProgress;
   final List<LearningSession> recentSessions;
@@ -13,7 +11,6 @@ class AppState {
   final String? currentUserId;
   final String userName;
   final AppSettings settings;
-
   const AppState({
     required this.userProgress,
     required this.recentSessions,
@@ -25,8 +22,6 @@ class AppState {
     required this.userName,
     required this.settings,
   });
-
-  /// Creates an AppState from JSON
   factory AppState.fromJson(Map<String, dynamic> json) {
     return AppState(
       userProgress: UserProgress.fromJson(json['user_progress'] as Map<String, dynamic>),
@@ -50,8 +45,6 @@ class AppState {
       settings: AppSettings.fromJson(json['settings'] as Map<String, dynamic>),
     );
   }
-
-  /// Converts AppState to JSON
   Map<String, dynamic> toJson() {
     return {
       'user_progress': userProgress.toJson(),
@@ -65,8 +58,6 @@ class AppState {
       'settings': settings.toJson(),
     };
   }
-
-  /// Creates initial app state for new users
   factory AppState.initial() {
     return AppState(
       userProgress: UserProgress.empty(),
@@ -80,8 +71,6 @@ class AppState {
       settings: AppSettings.defaults(),
     );
   }
-
-  /// Creates a copy with updated fields
   AppState copyWith({
     UserProgress? userProgress,
     List<LearningSession>? recentSessions,
@@ -105,42 +94,28 @@ class AppState {
       settings: settings ?? this.settings,
     );
   }
-
-  /// Adds a new chat message
   AppState addChatMessage(ChatMessage message) {
     return copyWith(
       chatHistory: [...chatHistory, message],
     );
   }
-
-  /// Updates a chat message
   AppState updateChatMessage(String messageId, ChatMessage updatedMessage) {
     final updatedHistory = chatHistory.map((message) {
       return message.id == messageId ? updatedMessage : message;
     }).toList();
-    
     return copyWith(chatHistory: updatedHistory);
   }
-
-  /// Adds a new learning session
   AppState addLearningSession(LearningSession session) {
     final updatedSessions = [session, ...recentSessions];
-    // Keep only the last 10 sessions
     final limitedSessions = updatedSessions.take(10).toList();
-    
     return copyWith(recentSessions: limitedSessions);
   }
-
-  /// Updates user progress
   AppState updateProgress(UserProgress newProgress) {
     return copyWith(userProgress: newProgress);
   }
-
-  /// Toggles offline mode
   AppState toggleOfflineMode() {
     return copyWith(isOfflineMode: !isOfflineMode);
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -155,7 +130,6 @@ class AppState {
         other.userName == userName &&
         other.settings == settings;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -170,13 +144,10 @@ class AppState {
       settings,
     );
   }
-
   @override
   String toString() {
     return 'AppState(userId: $currentUserId, offline: $isOfflineMode, audio: $audioState, voice: $voiceState, sessions: ${recentSessions.length}, messages: ${chatHistory.length})';
   }
-
-  /// Helper method to compare lists
   bool _listEquals<T>(List<T> a, List<T> b) {
     if (a.length != b.length) return false;
     for (int i = 0; i < a.length; i++) {
@@ -185,30 +156,22 @@ class AppState {
     return true;
   }
 }
-
-/// Audio playback states
 enum AudioState {
   idle('Idle'),
   playing('Playing'),
   paused('Paused'),
   stopped('Stopped');
-
   const AudioState(this.displayName);
   final String displayName;
 }
-
-/// Voice input states
 enum VoiceInputState {
   idle('Idle'),
   listening('Listening'),
   processing('Processing'),
   error('Error');
-
   const VoiceInputState(this.displayName);
   final String displayName;
 }
-
-/// Application settings
 class AppSettings {
   final bool notificationsEnabled;
   final bool ttsEnabled;
@@ -216,7 +179,6 @@ class AppSettings {
   final String preferredLanguage;
   final bool darkModeEnabled;
   final bool offlineModeEnabled;
-
   const AppSettings({
     required this.notificationsEnabled,
     required this.ttsEnabled,
@@ -225,8 +187,6 @@ class AppSettings {
     required this.darkModeEnabled,
     required this.offlineModeEnabled,
   });
-
-  /// Creates default settings
   factory AppSettings.defaults() {
     return const AppSettings(
       notificationsEnabled: true,
@@ -237,8 +197,6 @@ class AppSettings {
       offlineModeEnabled: true,
     );
   }
-
-  /// Creates settings from JSON
   factory AppSettings.fromJson(Map<String, dynamic> json) {
     return AppSettings(
       notificationsEnabled: json['notifications_enabled'] as bool,
@@ -249,8 +207,6 @@ class AppSettings {
       offlineModeEnabled: json['offline_mode_enabled'] as bool,
     );
   }
-
-  /// Converts settings to JSON
   Map<String, dynamic> toJson() {
     return {
       'notifications_enabled': notificationsEnabled,
@@ -261,8 +217,6 @@ class AppSettings {
       'offline_mode_enabled': offlineModeEnabled,
     };
   }
-
-  /// Creates a copy with updated fields
   AppSettings copyWith({
     bool? notificationsEnabled,
     bool? ttsEnabled,
@@ -280,7 +234,6 @@ class AppSettings {
       offlineModeEnabled: offlineModeEnabled ?? this.offlineModeEnabled,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -292,7 +245,6 @@ class AppSettings {
         other.darkModeEnabled == darkModeEnabled &&
         other.offlineModeEnabled == offlineModeEnabled;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -304,7 +256,6 @@ class AppSettings {
       offlineModeEnabled,
     );
   }
-
   @override
   String toString() {
     return 'AppSettings(notifications: $notificationsEnabled, tts: $ttsEnabled, speed: $ttsSpeed, lang: $preferredLanguage, dark: $darkModeEnabled, offline: $offlineModeEnabled)';

@@ -1,20 +1,11 @@
-/// AI Flashcard Generation Data Models
-/// 
-/// This file contains all data models and interfaces for the AI-powered
-/// flashcard generation system, extending the existing flashcard infrastructure.
-
 import 'flashcard.dart';
-
-/// Represents different types of content sources for AI analysis
 enum ContentType {
   image('image'),
   pdf('pdf'),
   text('text'),
   topic('topic');
-
   const ContentType(this.value);
   final String value;
-
   static ContentType fromString(String value) {
     return ContentType.values.firstWhere(
       (type) => type.value == value,
@@ -22,18 +13,14 @@ enum ContentType {
     );
   }
 }
-
-/// Represents the status of a generation session
 enum GenerationStatus {
   processing('processing'),
   generated('generated'),
   reviewed('reviewed'),
   saved('saved'),
   failed('failed');
-
   const GenerationStatus(this.value);
   final String value;
-
   static GenerationStatus fromString(String value) {
     return GenerationStatus.values.firstWhere(
       (status) => status.value == value,
@@ -41,24 +28,18 @@ enum GenerationStatus {
     );
   }
 }
-
-/// Difficulty levels for AI-generated content (extends existing Difficulty enum)
 enum DifficultyLevel {
   beginner('beginner'),
   intermediate('intermediate'),
   advanced('advanced');
-
   const DifficultyLevel(this.value);
   final String value;
-
   static DifficultyLevel fromString(String value) {
     return DifficultyLevel.values.firstWhere(
       (level) => level.value == value,
       orElse: () => DifficultyLevel.intermediate,
     );
   }
-
-  /// Convert to existing Difficulty enum for compatibility
   Difficulty toDifficulty() {
     switch (this) {
       case DifficultyLevel.beginner:
@@ -69,8 +50,6 @@ enum DifficultyLevel {
         return Difficulty.hard;
     }
   }
-
-  /// Create from existing Difficulty enum
   static DifficultyLevel fromDifficulty(Difficulty difficulty) {
     switch (difficulty) {
       case Difficulty.easy:
@@ -82,15 +61,12 @@ enum DifficultyLevel {
     }
   }
 }
-
-/// Metadata for content sources
 class ContentMetadata {
   final String? fileName;
   final int? fileSize;
   final String? mimeType;
   final DateTime? uploadedAt;
   final Map<String, dynamic>? additionalData;
-
   const ContentMetadata({
     this.fileName,
     this.fileSize,
@@ -98,7 +74,6 @@ class ContentMetadata {
     this.uploadedAt,
     this.additionalData,
   });
-
   factory ContentMetadata.fromJson(Map<String, dynamic> json) {
     return ContentMetadata(
       fileName: json['file_name'] as String?,
@@ -110,7 +85,6 @@ class ContentMetadata {
       additionalData: json['additional_data'] as Map<String, dynamic>?,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'file_name': fileName,
@@ -121,21 +95,17 @@ class ContentMetadata {
     };
   }
 }
-
-/// Represents extracted content from various sources
 class ExtractedContent {
   final String text;
   final ContentType contentType;
   final ContentMetadata metadata;
   final List<String> concepts;
-
   const ExtractedContent({
     required this.text,
     required this.contentType,
     required this.metadata,
     required this.concepts,
   });
-
   factory ExtractedContent.fromJson(Map<String, dynamic> json) {
     return ExtractedContent(
       text: json['text'] as String,
@@ -144,7 +114,6 @@ class ExtractedContent {
       concepts: List<String>.from(json['concepts'] as List),
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'text': text,
@@ -154,19 +123,15 @@ class ExtractedContent {
     };
   }
 }
-
-/// Represents the result of content validation
 class ValidationResult {
   final bool isValid;
   final List<String> errors;
   final List<String> warnings;
-
   const ValidationResult({
     required this.isValid,
     required this.errors,
     required this.warnings,
   });
-
   factory ValidationResult.valid() {
     return const ValidationResult(
       isValid: true,
@@ -174,7 +139,6 @@ class ValidationResult {
       warnings: [],
     );
   }
-
   factory ValidationResult.invalid(List<String> errors, [List<String>? warnings]) {
     return ValidationResult(
       isValid: false,
@@ -183,8 +147,6 @@ class ValidationResult {
     );
   }
 }
-
-/// Represents AI analysis of content
 class ContentAnalysis {
   final String id;
   final List<String> keyTopics;
@@ -193,7 +155,6 @@ class ContentAnalysis {
   final String subjectArea;
   final Map<String, double> conceptWeights;
   final DateTime analyzedAt;
-
   const ContentAnalysis({
     required this.id,
     required this.keyTopics,
@@ -203,7 +164,6 @@ class ContentAnalysis {
     required this.conceptWeights,
     required this.analyzedAt,
   });
-
   factory ContentAnalysis.fromJson(Map<String, dynamic> json) {
     return ContentAnalysis(
       id: json['id'] as String,
@@ -215,7 +175,6 @@ class ContentAnalysis {
       analyzedAt: DateTime.parse(json['analyzed_at'] as String),
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -228,8 +187,6 @@ class ContentAnalysis {
     };
   }
 }
-
-/// Options for AI flashcard generation
 class GenerationOptions {
   final int count;
   final DifficultyLevel? minDifficulty;
@@ -238,7 +195,6 @@ class GenerationOptions {
   final List<String> focusAreas;
   final bool includeConcepts;
   final bool includeExplanations;
-
   const GenerationOptions({
     required this.count,
     this.minDifficulty,
@@ -248,7 +204,6 @@ class GenerationOptions {
     this.includeConcepts = true,
     this.includeExplanations = false,
   });
-
   factory GenerationOptions.fromJson(Map<String, dynamic> json) {
     return GenerationOptions(
       count: json['count'] as int,
@@ -264,7 +219,6 @@ class GenerationOptions {
       includeExplanations: json['include_explanations'] as bool? ?? false,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'count': count,
@@ -277,8 +231,6 @@ class GenerationOptions {
     };
   }
 }
-
-/// Represents a quality score for generated content
 class QualityScore {
   final double overall;
   final double clarity;
@@ -286,7 +238,6 @@ class QualityScore {
   final double difficulty;
   final double relevance;
   final List<String> feedback;
-
   const QualityScore({
     required this.overall,
     required this.clarity,
@@ -295,7 +246,6 @@ class QualityScore {
     required this.relevance,
     required this.feedback,
   });
-
   factory QualityScore.fromJson(Map<String, dynamic> json) {
     return QualityScore(
       overall: (json['overall'] as num).toDouble(),
@@ -306,7 +256,6 @@ class QualityScore {
       feedback: List<String>.from(json['feedback'] as List),
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'overall': overall,
@@ -317,11 +266,8 @@ class QualityScore {
       'feedback': feedback,
     };
   }
-
   bool get isAcceptable => overall >= 0.7;
 }
-
-/// Represents an AI-generated flashcard before integration
 class GeneratedFlashcard {
   final String id;
   final String question;
@@ -334,7 +280,6 @@ class GeneratedFlashcard {
   final String? memoryTip;
   final QualityScore? qualityScore;
   final DateTime generatedAt;
-
   const GeneratedFlashcard({
     required this.id,
     required this.question,
@@ -348,7 +293,6 @@ class GeneratedFlashcard {
     this.qualityScore,
     required this.generatedAt,
   });
-
   factory GeneratedFlashcard.fromJson(Map<String, dynamic> json) {
     return GeneratedFlashcard(
       id: json['id'] as String,
@@ -366,7 +310,6 @@ class GeneratedFlashcard {
       generatedAt: DateTime.parse(json['generated_at'] as String),
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -382,8 +325,6 @@ class GeneratedFlashcard {
       'generated_at': generatedAt.toIso8601String(),
     };
   }
-
-  /// Convert to existing Flashcard model for system integration
   Flashcard toFlashcard({String? userId, String? deckId}) {
     return Flashcard(
       id: id,
@@ -397,8 +338,6 @@ class GeneratedFlashcard {
       category: concepts.isNotEmpty ? concepts.first : null,
     );
   }
-
-  /// Create a copy with updated fields
   GeneratedFlashcard copyWith({
     String? id,
     String? question,
@@ -427,8 +366,6 @@ class GeneratedFlashcard {
     );
   }
 }
-
-/// Represents updates to a flashcard during review
 class FlashcardUpdates {
   final String? question;
   final String? answer;
@@ -437,7 +374,6 @@ class FlashcardUpdates {
   final List<String>? concepts;
   final String? explanation;
   final String? memoryTip;
-
   const FlashcardUpdates({
     this.question,
     this.answer,
@@ -447,7 +383,6 @@ class FlashcardUpdates {
     this.explanation,
     this.memoryTip,
   });
-
   factory FlashcardUpdates.fromJson(Map<String, dynamic> json) {
     return FlashcardUpdates(
       question: json['question'] as String?,
@@ -463,7 +398,6 @@ class FlashcardUpdates {
       memoryTip: json['memory_tip'] as String?,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'question': question,
@@ -476,8 +410,6 @@ class FlashcardUpdates {
     };
   }
 }
-
-/// Represents a content source for AI analysis
 class ContentSource {
   final String id;
   final ContentType type;
@@ -485,7 +417,6 @@ class ContentSource {
   final String content;
   final ContentMetadata metadata;
   final DateTime uploadedAt;
-
   const ContentSource({
     required this.id,
     required this.type,
@@ -494,7 +425,6 @@ class ContentSource {
     required this.metadata,
     required this.uploadedAt,
   });
-
   factory ContentSource.fromJson(Map<String, dynamic> json) {
     return ContentSource(
       id: json['id'] as String,
@@ -505,7 +435,6 @@ class ContentSource {
       uploadedAt: DateTime.parse(json['uploaded_at'] as String),
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -517,8 +446,6 @@ class ContentSource {
     };
   }
 }
-
-/// Represents a complete AI generation session
 class GenerationSession {
   final String id;
   final String userId;
@@ -529,7 +456,6 @@ class GenerationSession {
   final DateTime? completedAt;
   final String? errorMessage;
   final Map<String, dynamic>? metadata;
-
   const GenerationSession({
     required this.id,
     required this.userId,
@@ -541,7 +467,6 @@ class GenerationSession {
     this.errorMessage,
     this.metadata,
   });
-
   factory GenerationSession.fromJson(Map<String, dynamic> json) {
     return GenerationSession(
       id: json['id'] as String,
@@ -559,7 +484,6 @@ class GenerationSession {
       metadata: json['metadata'] as Map<String, dynamic>?,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -573,8 +497,6 @@ class GenerationSession {
       'metadata': metadata,
     };
   }
-
-  /// Create a copy with updated fields
   GenerationSession copyWith({
     String? id,
     String? userId,
@@ -598,7 +520,6 @@ class GenerationSession {
       metadata: metadata ?? this.metadata,
     );
   }
-
   bool get isComplete => status == GenerationStatus.saved;
   bool get hasError => status == GenerationStatus.failed;
   int get flashcardCount => generatedFlashcards.length;

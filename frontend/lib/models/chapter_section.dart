@@ -1,4 +1,3 @@
-/// Represents a section within a chapter for the Chapter Reading Interface
 class ChapterSection {
   final int sectionNumber;
   final String title;
@@ -6,7 +5,6 @@ class ChapterSection {
   final List<String> keyTerms;
   final bool isCompleted;
   final DateTime? completedAt;
-
   const ChapterSection({
     required this.sectionNumber,
     required this.title,
@@ -15,8 +13,6 @@ class ChapterSection {
     required this.isCompleted,
     this.completedAt,
   });
-
-  /// Creates a ChapterSection from JSON
   factory ChapterSection.fromJson(Map<String, dynamic> json) {
     return ChapterSection(
       sectionNumber: json['section_number'] as int,
@@ -29,8 +25,6 @@ class ChapterSection {
           : null,
     );
   }
-
-  /// Converts ChapterSection to JSON
   Map<String, dynamic> toJson() {
     return {
       'section_number': sectionNumber,
@@ -41,8 +35,6 @@ class ChapterSection {
       'completed_at': completedAt?.toIso8601String(),
     };
   }
-
-  /// Creates a copy with updated fields for immutable updates
   ChapterSection copyWith({
     int? sectionNumber,
     String? title,
@@ -61,8 +53,6 @@ class ChapterSection {
       completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
     );
   }
-
-  /// Creates a new ChapterSection with default values
   factory ChapterSection.create({
     required int sectionNumber,
     required String title,
@@ -78,39 +68,27 @@ class ChapterSection {
       completedAt: null,
     );
   }
-
-  /// Marks the section as completed
   ChapterSection markCompleted() {
     return copyWith(
       isCompleted: true,
       completedAt: DateTime.now(),
     );
   }
-
-  /// Marks the section as incomplete
   ChapterSection markIncomplete() {
     return copyWith(
       isCompleted: false,
       clearCompletedAt: true,
     );
   }
-
-  /// Gets the estimated reading time in minutes based on content length
-  /// Assumes average reading speed of 200 words per minute
   int get estimatedReadingTimeMinutes {
     final wordCount = content.split(RegExp(r'\s+')).length;
     final minutes = (wordCount / 200).ceil();
     return minutes < 1 ? 1 : minutes; // Minimum 1 minute
   }
-
-  /// Gets the word count of the section content
   int get wordCount {
     return content.split(RegExp(r'\s+')).length;
   }
-
-  /// Checks if the section has key terms
   bool get hasKeyTerms => keyTerms.isNotEmpty;
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -122,7 +100,6 @@ class ChapterSection {
         other.isCompleted == isCompleted &&
         other.completedAt == completedAt;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -134,13 +111,10 @@ class ChapterSection {
       completedAt,
     );
   }
-
   @override
   String toString() {
     return 'ChapterSection(sectionNumber: $sectionNumber, title: $title, isCompleted: $isCompleted, keyTerms: ${keyTerms.length}, wordCount: $wordCount)';
   }
-
-  /// Helper method to compare lists
   bool _listEquals<T>(List<T> a, List<T> b) {
     if (a.length != b.length) return false;
     for (int i = 0; i < a.length; i++) {

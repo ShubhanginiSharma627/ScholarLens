@@ -1,4 +1,3 @@
-/// Represents a flashcard for spaced repetition learning
 class Flashcard {
   final String id;
   final String subject;
@@ -9,7 +8,6 @@ class Flashcard {
   final int reviewCount;
   final DateTime createdAt;
   final String? category;
-
   const Flashcard({
     required this.id,
     required this.subject,
@@ -21,8 +19,6 @@ class Flashcard {
     required this.createdAt,
     this.category,
   });
-
-  /// Creates a Flashcard from JSON
   factory Flashcard.fromJson(Map<String, dynamic> json) {
     return Flashcard(
       id: json['id'] as String,
@@ -39,8 +35,6 @@ class Flashcard {
       category: json['category'] as String?,
     );
   }
-
-  /// Converts Flashcard to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -54,18 +48,12 @@ class Flashcard {
       'category': category,
     };
   }
-
-  /// Checks if the card is due for review
   bool get isDue => DateTime.now().isAfter(nextReviewDate);
-
-  /// Gets the number of days until next review
   int get daysUntilReview {
     final now = DateTime.now();
     if (isDue) return 0;
     return nextReviewDate.difference(now).inDays;
   }
-
-  /// Creates a new flashcard
   factory Flashcard.create({
     required String subject,
     required String question,
@@ -85,13 +73,9 @@ class Flashcard {
       category: category,
     );
   }
-
-  /// Updates the card after a review with spaced repetition algorithm
   Flashcard updateAfterReview(Difficulty newDifficulty) {
     final now = DateTime.now();
     Duration nextInterval;
-
-    // Simple spaced repetition algorithm
     switch (newDifficulty) {
       case Difficulty.easy:
         nextInterval = Duration(days: (reviewCount + 1) * 4);
@@ -103,15 +87,12 @@ class Flashcard {
         nextInterval = const Duration(days: 1);
         break;
     }
-
     return copyWith(
       difficulty: newDifficulty,
       nextReviewDate: now.add(nextInterval),
       reviewCount: reviewCount + 1,
     );
   }
-
-  /// Creates a copy with updated fields
   Flashcard copyWith({
     String? id,
     String? subject,
@@ -135,7 +116,6 @@ class Flashcard {
       category: category ?? this.category,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -150,7 +130,6 @@ class Flashcard {
         other.createdAt == createdAt &&
         other.category == category;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -165,19 +144,15 @@ class Flashcard {
       category,
     );
   }
-
   @override
   String toString() {
     return 'Flashcard(id: $id, subject: $subject, difficulty: $difficulty, reviewCount: $reviewCount, isDue: $isDue)';
   }
 }
-
-/// Difficulty levels for flashcards
 enum Difficulty {
   easy('Easy'),
   medium('Medium'),
   hard('Hard');
-
   const Difficulty(this.displayName);
   final String displayName;
 }

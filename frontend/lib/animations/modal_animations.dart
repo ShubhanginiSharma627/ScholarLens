@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'animation_config.dart';
-
-/// Enhanced modal presentation animations with scale-up from trigger element
 class ModalAnimations {
-  /// Shows a modal with enhanced scale-up animation from trigger element
   static Future<T?> showEnhancedModal<T>({
     required BuildContext context,
     required WidgetBuilder builder,
@@ -34,8 +31,6 @@ class ModalAnimations {
       },
     );
   }
-
-  /// Shows a dialog with enhanced scale animation
   static Future<T?> showEnhancedDialog<T>({
     required BuildContext context,
     required WidgetBuilder builder,
@@ -59,8 +54,6 @@ class ModalAnimations {
       barrierLabel: barrierLabel,
     );
   }
-
-  /// Shows an alert dialog with enhanced animations
   static Future<T?> showEnhancedAlertDialog<T>({
     required BuildContext context,
     Widget? title,
@@ -86,14 +79,11 @@ class ModalAnimations {
       barrierDismissible: barrierDismissible,
     );
   }
-
-  /// Gets the position of a widget for trigger-based animations
   static Offset? getWidgetPosition(GlobalKey key) {
     final RenderBox? renderBox = key.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox != null) {
       final position = renderBox.localToGlobal(Offset.zero);
       final size = renderBox.size;
-      // Return center position of the widget
       return Offset(
         position.dx + size.width / 2,
         position.dy + size.height / 2,
@@ -102,15 +92,12 @@ class ModalAnimations {
     return null;
   }
 }
-
-/// Enhanced modal transition with scale-up animation from trigger element
 class _EnhancedModalTransition extends StatelessWidget {
   final Animation<double> animation;
   final Animation<double> secondaryAnimation;
   final Offset? triggerPosition;
   final Curve curve;
   final Widget child;
-
   const _EnhancedModalTransition({
     required this.animation,
     required this.secondaryAnimation,
@@ -118,29 +105,20 @@ class _EnhancedModalTransition extends StatelessWidget {
     required this.curve,
     required this.child,
   });
-
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
     final screenCenter = Offset(screenSize.width / 2, screenSize.height / 2);
-    
-    // Use trigger position if provided, otherwise use screen center
     final startPosition = triggerPosition ?? screenCenter;
-    
-    // Create curved animation
     final curvedAnimation = CurvedAnimation(
       parent: animation,
       curve: curve,
       reverseCurve: curve.flipped,
     );
-
-    // Scale animation
     final scaleAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(curvedAnimation);
-
-    // Fade animation for backdrop
     final fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -148,8 +126,6 @@ class _EnhancedModalTransition extends StatelessWidget {
       parent: animation,
       curve: Curves.easeInOut,
     ));
-
-    // Position animation - scale from trigger position to center
     final positionAnimation = Tween<Offset>(
       begin: Offset(
         (startPosition.dx - screenCenter.dx) / screenSize.width,
@@ -157,13 +133,11 @@ class _EnhancedModalTransition extends StatelessWidget {
       ),
       end: Offset.zero,
     ).animate(curvedAnimation);
-
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
         return Stack(
           children: [
-            // Animated backdrop
             FadeTransition(
               opacity: fadeAnimation,
               child: Container(
@@ -172,7 +146,6 @@ class _EnhancedModalTransition extends StatelessWidget {
                 color: Colors.black54,
               ),
             ),
-            // Modal content with scale and position animation
             Center(
               child: Transform.translate(
                 offset: Offset(
@@ -194,10 +167,7 @@ class _EnhancedModalTransition extends StatelessWidget {
     );
   }
 }
-
-/// Bottom sheet animations with slide-up and backdrop blur
 class BottomSheetAnimations {
-  /// Shows an enhanced bottom sheet with slide-up animation and backdrop blur
   static Future<T?> showEnhancedBottomSheet<T>({
     required BuildContext context,
     required WidgetBuilder builder,
@@ -234,7 +204,6 @@ class BottomSheetAnimations {
       ),
     );
   }
-
   static AnimationController _createBottomSheetAnimationController(
     BuildContext context, {
     required Duration duration,
@@ -245,25 +214,19 @@ class BottomSheetAnimations {
       reverseDuration: Duration(milliseconds: (duration.inMilliseconds * 0.8).round()),
       vsync: Navigator.of(context),
     );
-    
     return controller;
   }
 }
-
-/// Enhanced bottom sheet content with backdrop blur
 class _EnhancedBottomSheetContent extends StatelessWidget {
   final Widget child;
   final bool enableBlur;
-
   const _EnhancedBottomSheetContent({
     required this.child,
     this.enableBlur = true,
   });
-
   @override
   Widget build(BuildContext context) {
     Widget content = child;
-    
     if (enableBlur) {
       content = Container(
         decoration: BoxDecoration(
@@ -282,14 +245,10 @@ class _EnhancedBottomSheetContent extends StatelessWidget {
         ),
       );
     }
-    
     return content;
   }
 }
-
-/// Overlay animations for dismissible overlays
 class OverlayAnimations {
-  /// Shows an overlay with fade-in animation
   static OverlayEntry showEnhancedOverlay({
     required BuildContext context,
     required WidgetBuilder builder,
@@ -298,7 +257,6 @@ class OverlayAnimations {
     VoidCallback? onDismiss,
   }) {
     late OverlayEntry overlayEntry;
-    
     overlayEntry = OverlayEntry(
       builder: (context) => _EnhancedOverlay(
         duration: duration ?? const Duration(milliseconds: 250),
@@ -310,35 +268,28 @@ class OverlayAnimations {
         child: builder(context),
       ),
     );
-    
     Overlay.of(context).insert(overlayEntry);
     return overlayEntry;
   }
 }
-
-/// Enhanced overlay with fade animations
 class _EnhancedOverlay extends StatefulWidget {
   final Widget child;
   final Duration duration;
   final Curve curve;
   final VoidCallback? onDismiss;
-
   const _EnhancedOverlay({
     required this.child,
     required this.duration,
     required this.curve,
     this.onDismiss,
   });
-
   @override
   State<_EnhancedOverlay> createState() => _EnhancedOverlayState();
 }
-
 class _EnhancedOverlayState extends State<_EnhancedOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
-
   @override
   void initState() {
     super.initState();
@@ -346,7 +297,6 @@ class _EnhancedOverlayState extends State<_EnhancedOverlay>
       duration: widget.duration,
       vsync: this,
     );
-    
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -354,21 +304,17 @@ class _EnhancedOverlayState extends State<_EnhancedOverlay>
       parent: _controller,
       curve: widget.curve,
     ));
-    
     _controller.forward();
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   void _dismiss() async {
     await _controller.reverse();
     widget.onDismiss?.call();
   }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -395,18 +341,13 @@ class _EnhancedOverlayState extends State<_EnhancedOverlay>
     );
   }
 }
-
-/// Predefined modal animation configurations
 class ModalAnimationConfigs {
   static const Duration defaultDuration = Duration(milliseconds: 300);
   static const Duration fastDuration = Duration(milliseconds: 200);
   static const Duration slowDuration = Duration(milliseconds: 500);
-  
   static const Curve defaultCurve = Curves.easeOutBack;
   static const Curve fastCurve = Curves.easeOut;
   static const Curve bouncyCurve = Curves.elasticOut;
-  
-  /// Configuration for alert dialogs
   static const AnimationConfig alertDialog = AnimationConfig(
     duration: defaultDuration,
     curve: defaultCurve,
@@ -416,8 +357,6 @@ class ModalAnimationConfigs {
     fadeEnd: 1.0,
     priority: 1,
   );
-  
-  /// Configuration for bottom sheets
   static const AnimationConfig bottomSheet = AnimationConfig(
     duration: Duration(milliseconds: 350),
     curve: Curves.easeOutCubic,
@@ -427,8 +366,6 @@ class ModalAnimationConfigs {
     fadeEnd: 1.0,
     priority: 1,
   );
-  
-  /// Configuration for overlays
   static const AnimationConfig overlay = AnimationConfig(
     duration: Duration(milliseconds: 250),
     curve: Curves.easeInOut,

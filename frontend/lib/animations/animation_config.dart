@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-
-/// Configuration class for animations with timing, curves, and behavior settings
 class AnimationConfig {
   final Duration duration;
   final Curve curve;
@@ -12,7 +10,6 @@ class AnimationConfig {
   final double? fadeEnd;
   final bool respectReducedMotion;
   final int priority; // For performance management (1 = highest, 5 = lowest)
-
   const AnimationConfig({
     required this.duration,
     this.curve = Curves.easeInOut,
@@ -25,8 +22,6 @@ class AnimationConfig {
     this.respectReducedMotion = true,
     this.priority = 1,
   });
-
-  /// Creates a copy of this config with optional parameter overrides
   AnimationConfig copyWith({
     Duration? duration,
     Curve? curve,
@@ -52,7 +47,6 @@ class AnimationConfig {
       priority: priority ?? this.priority,
     );
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -68,7 +62,6 @@ class AnimationConfig {
         other.respectReducedMotion == respectReducedMotion &&
         other.priority == priority;
   }
-
   @override
   int get hashCode {
     return Object.hash(
@@ -85,10 +78,7 @@ class AnimationConfig {
     );
   }
 }
-
-/// Predefined animation configurations for common use cases
 class AnimationConfigs {
-  // Interactive element animations
   static const AnimationConfig buttonPress = AnimationConfig(
     duration: Duration(milliseconds: 150),
     curve: Curves.easeInOut,
@@ -96,7 +86,6 @@ class AnimationConfigs {
     scaleEnd: 0.95,
     priority: 1,
   );
-
   static const AnimationConfig buttonRelease = AnimationConfig(
     duration: Duration(milliseconds: 200),
     curve: Curves.elasticOut,
@@ -104,20 +93,16 @@ class AnimationConfigs {
     scaleEnd: 1.0,
     priority: 1,
   );
-
   static const AnimationConfig hoverEffect = AnimationConfig(
     duration: Duration(milliseconds: 200),
     curve: Curves.easeInOut,
     priority: 2,
   );
-
   static const AnimationConfig focusTransition = AnimationConfig(
     duration: Duration(milliseconds: 200),
     curve: Curves.easeInOut,
     priority: 2,
   );
-
-  // Screen transition animations
   static const AnimationConfig screenSlide = AnimationConfig(
     duration: Duration(milliseconds: 300),
     curve: Curves.easeInOut,
@@ -125,7 +110,6 @@ class AnimationConfigs {
     slideEnd: Offset.zero,
     priority: 1,
   );
-
   static const AnimationConfig modalSlideUp = AnimationConfig(
     duration: Duration(milliseconds: 300),
     curve: Curves.easeOut,
@@ -133,7 +117,6 @@ class AnimationConfigs {
     slideEnd: Offset.zero,
     priority: 1,
   );
-
   static const AnimationConfig fadeTransition = AnimationConfig(
     duration: Duration(milliseconds: 250),
     curve: Curves.easeInOut,
@@ -141,8 +124,6 @@ class AnimationConfigs {
     fadeEnd: 1.0,
     priority: 1,
   );
-
-  // Content animations
   static const AnimationConfig listItemStagger = AnimationConfig(
     duration: Duration(milliseconds: 300),
     curve: Curves.easeOut,
@@ -152,7 +133,6 @@ class AnimationConfigs {
     slideEnd: Offset.zero,
     priority: 3,
   );
-
   static const AnimationConfig cardAppear = AnimationConfig(
     duration: Duration(milliseconds: 400),
     curve: Curves.elasticOut,
@@ -162,29 +142,23 @@ class AnimationConfigs {
     fadeEnd: 1.0,
     priority: 3,
   );
-
-  // Loading animations
   static const AnimationConfig loadingSpinner = AnimationConfig(
     duration: Duration(milliseconds: 1000),
     curve: Curves.linear,
     respectReducedMotion: false, // Always show loading feedback
     priority: 2,
   );
-
   static const AnimationConfig progressBar = AnimationConfig(
     duration: Duration(milliseconds: 500),
     curve: Curves.easeInOut,
     priority: 2,
   );
-
   static const AnimationConfig skeletonShimmer = AnimationConfig(
     duration: Duration(milliseconds: 1500),
     curve: Curves.easeInOut,
     respectReducedMotion: false, // Always show loading feedback
     priority: 4,
   );
-
-  // Chat animations
   static const AnimationConfig messageSlideInUser = AnimationConfig(
     duration: Duration(milliseconds: 300),
     curve: Curves.easeOut,
@@ -194,7 +168,6 @@ class AnimationConfigs {
     fadeEnd: 1.0,
     priority: 2,
   );
-
   static const AnimationConfig messageSlideInAI = AnimationConfig(
     duration: Duration(milliseconds: 300),
     curve: Curves.easeOut,
@@ -204,26 +177,21 @@ class AnimationConfigs {
     fadeEnd: 1.0,
     priority: 2,
   );
-
   static const AnimationConfig typingIndicator = AnimationConfig(
     duration: Duration(milliseconds: 600),
     curve: Curves.easeInOut,
     priority: 3,
   );
-
-  // Flashcard animations
   static const AnimationConfig flashcardFlip = AnimationConfig(
     duration: Duration(milliseconds: 600),
     curve: Curves.easeInOut,
     priority: 1,
   );
-
   static const AnimationConfig flashcardSwipe = AnimationConfig(
     duration: Duration(milliseconds: 400),
     curve: Curves.easeOut,
     priority: 1,
   );
-
   static const AnimationConfig difficultyRating = AnimationConfig(
     duration: Duration(milliseconds: 250),
     curve: Curves.elasticOut,
@@ -231,21 +199,16 @@ class AnimationConfigs {
     scaleEnd: 1.2,
     priority: 2,
   );
-
-  // Celebration animations
   static const AnimationConfig celebration = AnimationConfig(
     duration: Duration(milliseconds: 1000),
     curve: Curves.elasticOut,
     priority: 1,
   );
-
   static const AnimationConfig particleEffect = AnimationConfig(
     duration: Duration(milliseconds: 2000),
     curve: Curves.easeOut,
     priority: 4,
   );
-
-  // Search and filter animations
   static const AnimationConfig searchFilter = AnimationConfig(
     duration: Duration(milliseconds: 200),
     curve: Curves.easeInOut,
@@ -255,7 +218,6 @@ class AnimationConfigs {
     scaleEnd: 1.0,
     priority: 2,
   );
-
   static const AnimationConfig searchSuggestions = AnimationConfig(
     duration: Duration(milliseconds: 200),
     curve: Curves.easeOut,
@@ -265,7 +227,6 @@ class AnimationConfigs {
     slideEnd: Offset.zero,
     priority: 2,
   );
-
   static const AnimationConfig filterChip = AnimationConfig(
     duration: Duration(milliseconds: 150),
     curve: Curves.elasticOut,
@@ -274,8 +235,6 @@ class AnimationConfigs {
     priority: 2,
   );
 }
-
-/// Animation state enumeration
 enum AnimationState {
   idle,
   running,
@@ -283,8 +242,6 @@ enum AnimationState {
   completed,
   disposed,
 }
-
-/// Transition type enumeration for smart transitions
 enum TransitionType {
   adaptive,     // Chooses based on platform and context
   slide,        // Slide transition
@@ -293,8 +250,6 @@ enum TransitionType {
   slideUp,      // Modal-style slide up
   custom,       // Custom transition
 }
-
-/// Animation category for performance management
 enum AnimationCategory {
   microInteraction,  // Button presses, hover effects
   transition,        // Screen changes, modal presentations

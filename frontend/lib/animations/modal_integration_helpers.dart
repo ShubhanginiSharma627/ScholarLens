@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'modal_animations.dart';
-
-/// Integration helpers for using enhanced modal animations throughout the app
 class ModalIntegrationHelpers {
-  /// Shows an enhanced confirmation dialog
   static Future<bool?> showConfirmationDialog({
     required BuildContext context,
     required String title,
@@ -39,8 +36,6 @@ class ModalIntegrationHelpers {
       ],
     );
   }
-
-  /// Shows an enhanced error dialog
   static Future<void> showErrorDialog({
     required BuildContext context,
     required String title,
@@ -67,8 +62,6 @@ class ModalIntegrationHelpers {
       ],
     );
   }
-
-  /// Shows an enhanced success dialog
   static Future<void> showSuccessDialog({
     required BuildContext context,
     required String title,
@@ -95,8 +88,6 @@ class ModalIntegrationHelpers {
       ],
     );
   }
-
-  /// Shows an enhanced loading dialog
   static Future<T?> showLoadingDialog<T>({
     required BuildContext context,
     required String message,
@@ -124,8 +115,6 @@ class ModalIntegrationHelpers {
       ),
     );
   }
-
-  /// Shows an enhanced options bottom sheet
   static Future<T?> showOptionsBottomSheet<T>({
     required BuildContext context,
     required String title,
@@ -139,7 +128,6 @@ class ModalIntegrationHelpers {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
             Container(
               width: 40,
               height: 4,
@@ -149,7 +137,6 @@ class ModalIntegrationHelpers {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // Title
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
@@ -157,7 +144,6 @@ class ModalIntegrationHelpers {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
-            // Options
             ...options.map((option) => ListTile(
               leading: option.icon != null ? Icon(option.icon) : null,
               title: Text(option.title),
@@ -170,8 +156,6 @@ class ModalIntegrationHelpers {
       ),
     );
   }
-
-  /// Shows an enhanced custom bottom sheet
   static Future<T?> showCustomBottomSheet<T>({
     required BuildContext context,
     required WidgetBuilder builder,
@@ -189,8 +173,6 @@ class ModalIntegrationHelpers {
       isDismissible: isDismissible,
     );
   }
-
-  /// Shows an enhanced overlay with custom content
   static OverlayEntry showCustomOverlay({
     required BuildContext context,
     required WidgetBuilder builder,
@@ -205,14 +187,11 @@ class ModalIntegrationHelpers {
     );
   }
 }
-
-/// Option for bottom sheet menus
 class BottomSheetOption<T> {
   final String title;
   final String? subtitle;
   final IconData? icon;
   final T value;
-
   const BottomSheetOption({
     required this.title,
     this.subtitle,
@@ -220,10 +199,7 @@ class BottomSheetOption<T> {
     required this.value,
   });
 }
-
-/// Extension methods for easier modal usage
 extension ModalExtensions on BuildContext {
-  /// Shows an enhanced confirmation dialog
   Future<bool?> showEnhancedConfirmation({
     required String title,
     required String message,
@@ -244,8 +220,6 @@ extension ModalExtensions on BuildContext {
       iconColor: iconColor,
     );
   }
-
-  /// Shows an enhanced error dialog
   Future<void> showEnhancedError({
     required String title,
     required String message,
@@ -260,8 +234,6 @@ extension ModalExtensions on BuildContext {
       triggerPosition: triggerPosition,
     );
   }
-
-  /// Shows an enhanced success dialog
   Future<void> showEnhancedSuccess({
     required String title,
     required String message,
@@ -276,8 +248,6 @@ extension ModalExtensions on BuildContext {
       triggerPosition: triggerPosition,
     );
   }
-
-  /// Shows an enhanced loading dialog
   Future<T?> showEnhancedLoading<T>({
     required String message,
     Offset? triggerPosition,
@@ -290,8 +260,6 @@ extension ModalExtensions on BuildContext {
       barrierDismissible: barrierDismissible,
     );
   }
-
-  /// Shows an enhanced options bottom sheet
   Future<T?> showEnhancedOptions<T>({
     required String title,
     required List<BottomSheetOption<T>> options,
@@ -304,8 +272,6 @@ extension ModalExtensions on BuildContext {
       enableBlur: enableBlur,
     );
   }
-
-  /// Shows an enhanced custom bottom sheet
   Future<T?> showEnhancedBottomSheet<T>({
     required WidgetBuilder builder,
     bool isScrollControlled = false,
@@ -322,8 +288,6 @@ extension ModalExtensions on BuildContext {
       isDismissible: isDismissible,
     );
   }
-
-  /// Shows an enhanced overlay
   OverlayEntry showEnhancedOverlay({
     required WidgetBuilder builder,
     Duration? duration,

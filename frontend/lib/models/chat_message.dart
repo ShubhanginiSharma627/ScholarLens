@@ -1,11 +1,9 @@
-/// Represents a chat message in the tutor conversation
 class ChatMessage {
   final String id;
   final String content;
   final bool isUser;
   final DateTime timestamp;
   final MessageStatus status;
-
   const ChatMessage({
     required this.id,
     required this.content,
@@ -13,8 +11,6 @@ class ChatMessage {
     required this.timestamp,
     required this.status,
   });
-
-  /// Creates a ChatMessage from JSON
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     return ChatMessage(
       id: json['id'] as String,
@@ -27,8 +23,6 @@ class ChatMessage {
       ),
     );
   }
-
-  /// Converts ChatMessage to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -38,8 +32,6 @@ class ChatMessage {
       'status': status.name,
     };
   }
-
-  /// Creates a user message
   factory ChatMessage.user({
     required String content,
   }) {
@@ -52,8 +44,6 @@ class ChatMessage {
       status: MessageStatus.sending,
     );
   }
-
-  /// Creates an AI response message
   factory ChatMessage.ai({
     required String content,
   }) {
@@ -66,12 +56,9 @@ class ChatMessage {
       status: MessageStatus.delivered,
     );
   }
-
-  /// Gets formatted timestamp string
   String get formattedTime {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
-
     if (difference.inMinutes < 1) {
       return 'Just now';
     } else if (difference.inMinutes < 60) {
@@ -86,17 +73,9 @@ class ChatMessage {
       return '${timestamp.day}/${timestamp.month} $hour:$minute';
     }
   }
-
-  /// Gets the sender label
   String get senderLabel => isUser ? 'You' : 'AI Tutor';
-
-  /// Checks if the message failed to send
   bool get hasFailed => status == MessageStatus.failed;
-
-  /// Checks if the message is still sending
   bool get isSending => status == MessageStatus.sending;
-
-  /// Creates a copy with updated fields
   ChatMessage copyWith({
     String? id,
     String? content,
@@ -112,12 +91,9 @@ class ChatMessage {
       status: status ?? this.status,
     );
   }
-
-  /// Updates the message status
   ChatMessage updateStatus(MessageStatus newStatus) {
     return copyWith(status: newStatus);
   }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -128,25 +104,20 @@ class ChatMessage {
         other.timestamp == timestamp &&
         other.status == status;
   }
-
   @override
   int get hashCode {
     return Object.hash(id, content, isUser, timestamp, status);
   }
-
   @override
   String toString() {
     return 'ChatMessage(id: $id, isUser: $isUser, status: $status, content: ${content.length} chars)';
   }
 }
-
-/// Status of a chat message
 enum MessageStatus {
   sending('Sending'),
   sent('Sent'),
   delivered('Delivered'),
   failed('Failed');
-
   const MessageStatus(this.displayName);
   final String displayName;
 }

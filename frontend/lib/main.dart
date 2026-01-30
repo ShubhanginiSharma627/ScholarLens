@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'providers/providers.dart';
 import 'screens/auth_wrapper.dart';
 import 'screens/login_screen.dart';
@@ -9,28 +8,18 @@ import 'screens/password_reset_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'theme/app_theme.dart';
 import 'services/performance_optimizer.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize performance monitoring
   PerformanceOptimizer.instance.startMonitoring();
-  
-  // Analyze device capabilities and optimize settings
   final deviceCapabilities = await PerformanceOptimizer.analyzeDeviceCapabilities();
   debugPrint('Device capabilities: $deviceCapabilities');
-  
-  // Apply optimizations based on device capabilities
   PerformanceOptimizer.optimizeImageProcessing();
   PerformanceOptimizer.optimizeNetworkRequests();
   PerformanceOptimizer.optimizeUIRendering();
-  
   runApp(const ScholarLensApp());
 }
-
 class ScholarLensApp extends StatelessWidget {
   const ScholarLensApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MultiProvider(

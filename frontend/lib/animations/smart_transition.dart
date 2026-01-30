@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'animation_config.dart';
 import 'animation_manager.dart';
-
-/// Smart page route builder that provides adaptive transition selection based on context
 class SmartTransition<T> extends PageRouteBuilder<T> {
   final Widget child;
   final TransitionType type;
@@ -18,7 +16,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
   final String? barrierLabel;
   final bool barrierDismissible;
   final AnimationManager? animationManager;
-
   SmartTransition({
     required this.child,
     this.type = TransitionType.adaptive,
@@ -59,8 +56,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
             );
           },
         );
-
-  /// Factory constructor for slide transitions
   factory SmartTransition.slide({
     required Widget child,
     Offset direction = const Offset(1.0, 0.0),
@@ -79,8 +74,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       maintainState: maintainState,
     );
   }
-
-  /// Factory constructor for fade transitions
   factory SmartTransition.fade({
     required Widget child,
     Duration duration = const Duration(milliseconds: 250),
@@ -97,8 +90,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       maintainState: maintainState,
     );
   }
-
-  /// Factory constructor for scale transitions
   factory SmartTransition.scale({
     required Widget child,
     Duration duration = const Duration(milliseconds: 300),
@@ -115,8 +106,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       maintainState: maintainState,
     );
   }
-
-  /// Factory constructor for slide-up (modal) transitions
   factory SmartTransition.slideUp({
     required Widget child,
     Duration duration = const Duration(milliseconds: 300),
@@ -135,8 +124,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       fullscreenDialog: fullscreenDialog,
     );
   }
-
-  /// Factory constructor for hero transitions with shared elements
   factory SmartTransition.hero({
     required Widget child,
     required String heroTag,
@@ -157,8 +144,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       maintainState: maintainState,
     );
   }
-
-  /// Factory constructor for adaptive transitions that choose based on context
   factory SmartTransition.adaptive({
     required Widget child,
     required BuildContext context,
@@ -171,7 +156,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
     final adaptiveType = _determineAdaptiveTransition(context, fullscreenDialog);
     final adaptiveDuration = duration ?? _getAdaptiveDuration(adaptiveType);
     final adaptiveCurve = curve ?? _getAdaptiveCurve(adaptiveType);
-
     return SmartTransition<T>(
       child: child,
       type: adaptiveType,
@@ -182,8 +166,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       fullscreenDialog: fullscreenDialog,
     );
   }
-
-  /// Static method to build transitions (used in constructor)
   static Widget _buildTransitionStatic(
     BuildContext context,
     Animation<double> animation,
@@ -194,13 +176,10 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
     Curve curve,
     AnimationManager? animationManager,
   ) {
-    // Check if reduced motion is enabled
     final manager = animationManager ?? AnimationManager();
     if (manager.isInitialized && manager.isReducedMotionEnabled) {
       return _buildReducedMotionTransitionStatic(animation, child);
     }
-
-    // Apply performance scaling if available
     final scaledAnimation = manager.isInitialized
         ? Tween<double>(begin: 0.0, end: 1.0).animate(
             CurvedAnimation(
@@ -213,7 +192,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
             ),
           )
         : animation;
-
     switch (_getEffectiveTransitionTypeStatic(context, type)) {
       case TransitionType.slide:
         return _buildSlideTransitionStatic(scaledAnimation, secondaryAnimation, child, slideDirection, curve);
@@ -230,9 +208,7 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
         return _buildAdaptiveTransitionStatic(context, scaledAnimation, secondaryAnimation, child, slideDirection, curve);
     }
   }
-
   static Widget _buildReducedMotionTransitionStatic(Animation<double> animation, Widget child) {
-    // For reduced motion, use a simple fade with very short duration
     return FadeTransition(
       opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(
@@ -243,7 +219,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       child: child,
     );
   }
-
   static Widget _buildSlideTransitionStatic(
     Animation<double> animation,
     Animation<double> secondaryAnimation,
@@ -252,8 +227,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
     Curve curve,
   ) {
     final slideOffset = slideDirection ?? const Offset(1.0, 0.0);
-    
-    // Primary slide animation
     final primarySlide = SlideTransition(
       position: Tween<Offset>(
         begin: slideOffset,
@@ -261,8 +234,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       ).animate(CurvedAnimation(parent: animation, curve: curve)),
       child: child,
     );
-
-    // Secondary slide animation for the previous page
     final secondarySlide = SlideTransition(
       position: Tween<Offset>(
         begin: Offset.zero,
@@ -270,17 +241,14 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       ).animate(CurvedAnimation(parent: secondaryAnimation, curve: curve)),
       child: primarySlide,
     );
-
     return secondarySlide;
   }
-
   static Widget _buildFadeTransitionStatic(Animation<double> animation, Widget child, Curve curve) {
     return FadeTransition(
       opacity: CurvedAnimation(parent: animation, curve: curve),
       child: child,
     );
   }
-
   static Widget _buildScaleTransitionStatic(Animation<double> animation, Widget child, Curve curve) {
     return ScaleTransition(
       scale: Tween<double>(begin: 0.8, end: 1.0).animate(
@@ -292,7 +260,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       ),
     );
   }
-
   static Widget _buildSlideUpTransitionStatic(Animation<double> animation, Widget child, Curve curve) {
     return SlideTransition(
       position: Tween<Offset>(
@@ -302,7 +269,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       child: child,
     );
   }
-
   static Widget _buildAdaptiveTransitionStatic(
     BuildContext context,
     Animation<double> animation,
@@ -312,7 +278,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
     Curve curve,
   ) {
     final adaptiveType = _determineAdaptiveTransition(context, false);
-    
     switch (adaptiveType) {
       case TransitionType.slide:
         return _buildSlideTransitionStatic(animation, secondaryAnimation, child, slideDirection, curve);
@@ -326,14 +291,12 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
         return _buildFadeTransitionStatic(animation, child, curve);
     }
   }
-
   static TransitionType _getEffectiveTransitionTypeStatic(BuildContext context, TransitionType type) {
     if (type == TransitionType.adaptive) {
       return _determineAdaptiveTransition(context, false);
     }
     return type;
   }
-
   Widget _buildTransition(
     BuildContext context,
     Animation<double> animation,
@@ -351,9 +314,7 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       animationManager,
     );
   }
-
   Widget _buildReducedMotionTransition(Animation<double> animation, Widget child) {
-    // For reduced motion, use a simple fade with very short duration
     return FadeTransition(
       opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(
@@ -364,15 +325,12 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       child: child,
     );
   }
-
   Widget _buildSlideTransition(
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
     final slideOffset = slideDirection ?? const Offset(1.0, 0.0);
-    
-    // Primary slide animation
     final primarySlide = SlideTransition(
       position: Tween<Offset>(
         begin: slideOffset,
@@ -380,8 +338,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       ).animate(CurvedAnimation(parent: animation, curve: curve)),
       child: child,
     );
-
-    // Secondary slide animation for the previous page
     final secondarySlide = SlideTransition(
       position: Tween<Offset>(
         begin: Offset.zero,
@@ -389,17 +345,14 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       ).animate(CurvedAnimation(parent: secondaryAnimation, curve: curve)),
       child: primarySlide,
     );
-
     return secondarySlide;
   }
-
   Widget _buildFadeTransition(Animation<double> animation, Widget child) {
     return FadeTransition(
       opacity: CurvedAnimation(parent: animation, curve: curve),
       child: child,
     );
   }
-
   Widget _buildScaleTransition(Animation<double> animation, Widget child) {
     return ScaleTransition(
       scale: Tween<double>(begin: 0.8, end: 1.0).animate(
@@ -411,7 +364,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       ),
     );
   }
-
   Widget _buildSlideUpTransition(Animation<double> animation, Widget child) {
     return SlideTransition(
       position: Tween<Offset>(
@@ -421,16 +373,13 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       child: child,
     );
   }
-
   Widget _buildCustomTransition(
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    // Default custom transition - can be overridden by subclasses
     return _buildFadeTransition(animation, child);
   }
-
   Widget _buildAdaptiveTransition(
     BuildContext context,
     Animation<double> animation,
@@ -438,7 +387,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
     Widget child,
   ) {
     final adaptiveType = _determineAdaptiveTransition(context, fullscreenDialog);
-    
     switch (adaptiveType) {
       case TransitionType.slide:
         return _buildSlideTransition(animation, secondaryAnimation, child);
@@ -452,54 +400,38 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
         return _buildFadeTransition(animation, child);
     }
   }
-
   TransitionType _getEffectiveTransitionType(BuildContext context) {
     if (type == TransitionType.adaptive) {
       return _determineAdaptiveTransition(context, fullscreenDialog);
     }
     return type;
   }
-
   static TransitionType _determineAdaptiveTransition(
     BuildContext context,
     bool isModal,
   ) {
-    // Determine transition based on context and platform
     final theme = Theme.of(context);
     final platform = theme.platform;
     final mediaQuery = MediaQuery.of(context);
-    
-    // Modal presentations should slide up
     if (isModal) {
       return TransitionType.slideUp;
     }
-    
-    // Camera and scanner screens should use fade to avoid jarring changes
     final routeName = ModalRoute.of(context)?.settings.name;
     if (routeName != null && 
         (routeName.contains('camera') || routeName.contains('scanner'))) {
       return TransitionType.fade;
     }
-    
-    // Tablet and desktop prefer fade transitions
     if (mediaQuery.size.width > 768) {
       return TransitionType.fade;
     }
-    
-    // iOS prefers slide transitions
     if (platform == TargetPlatform.iOS) {
       return TransitionType.slide;
     }
-    
-    // Android prefers slide for navigation, scale for dialogs
     if (platform == TargetPlatform.android) {
       return TransitionType.slide;
     }
-    
-    // Default to slide
     return TransitionType.slide;
   }
-
   static Duration _getAdaptiveDuration(TransitionType type) {
     switch (type) {
       case TransitionType.fade:
@@ -513,7 +445,6 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
         return const Duration(milliseconds: 300);
     }
   }
-
   static Curve _getAdaptiveCurve(TransitionType type) {
     switch (type) {
       case TransitionType.slideUp:
@@ -527,10 +458,7 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
     }
   }
 }
-
-/// Extension methods for easier navigation with SmartTransition
 extension SmartNavigationExtensions on NavigatorState {
-  /// Push a route with smart transition
   Future<T?> pushSmart<T extends Object?>(
     Widget child, {
     TransitionType type = TransitionType.adaptive,
@@ -554,8 +482,6 @@ extension SmartNavigationExtensions on NavigatorState {
       ),
     );
   }
-
-  /// Push a slide transition
   Future<T?> pushSlide<T extends Object?>(
     Widget child, {
     Offset direction = const Offset(1.0, 0.0),
@@ -573,8 +499,6 @@ extension SmartNavigationExtensions on NavigatorState {
       ),
     );
   }
-
-  /// Push a fade transition
   Future<T?> pushFade<T extends Object?>(
     Widget child, {
     Duration duration = const Duration(milliseconds: 250),
@@ -590,8 +514,6 @@ extension SmartNavigationExtensions on NavigatorState {
       ),
     );
   }
-
-  /// Push a scale transition
   Future<T?> pushScale<T extends Object?>(
     Widget child, {
     Duration duration = const Duration(milliseconds: 300),
@@ -607,8 +529,6 @@ extension SmartNavigationExtensions on NavigatorState {
       ),
     );
   }
-
-  /// Push a slide-up (modal) transition
   Future<T?> pushSlideUp<T extends Object?>(
     Widget child, {
     Duration duration = const Duration(milliseconds: 300),
@@ -624,8 +544,6 @@ extension SmartNavigationExtensions on NavigatorState {
       ),
     );
   }
-
-  /// Push with hero transition
   Future<T?> pushHero<T extends Object?>(
     Widget child, {
     required String heroTag,
@@ -643,8 +561,6 @@ extension SmartNavigationExtensions on NavigatorState {
       ),
     );
   }
-
-  /// Push with adaptive transition that chooses based on context
   Future<T?> pushAdaptive<T extends Object?>(
     Widget child, {
     required BuildContext context,
@@ -665,10 +581,7 @@ extension SmartNavigationExtensions on NavigatorState {
     );
   }
 }
-
-/// Extension methods for BuildContext navigation
 extension SmartContextNavigationExtensions on BuildContext {
-  /// Push a route with smart transition
   Future<T?> pushSmart<T extends Object?>(
     Widget child, {
     TransitionType type = TransitionType.adaptive,
@@ -690,8 +603,6 @@ extension SmartContextNavigationExtensions on BuildContext {
       fullscreenDialog: fullscreenDialog,
     );
   }
-
-  /// Push a slide transition
   Future<T?> pushSlide<T extends Object?>(
     Widget child, {
     Offset direction = const Offset(1.0, 0.0),
@@ -707,8 +618,6 @@ extension SmartContextNavigationExtensions on BuildContext {
       settings: settings,
     );
   }
-
-  /// Push a fade transition
   Future<T?> pushFade<T extends Object?>(
     Widget child, {
     Duration duration = const Duration(milliseconds: 250),
@@ -722,8 +631,6 @@ extension SmartContextNavigationExtensions on BuildContext {
       settings: settings,
     );
   }
-
-  /// Push a scale transition
   Future<T?> pushScale<T extends Object?>(
     Widget child, {
     Duration duration = const Duration(milliseconds: 300),
@@ -737,8 +644,6 @@ extension SmartContextNavigationExtensions on BuildContext {
       settings: settings,
     );
   }
-
-  /// Push a slide-up (modal) transition
   Future<T?> pushSlideUp<T extends Object?>(
     Widget child, {
     Duration duration = const Duration(milliseconds: 300),
@@ -752,8 +657,6 @@ extension SmartContextNavigationExtensions on BuildContext {
       settings: settings,
     );
   }
-
-  /// Push with hero transition
   Future<T?> pushHero<T extends Object?>(
     Widget child, {
     required String heroTag,
@@ -769,8 +672,6 @@ extension SmartContextNavigationExtensions on BuildContext {
       settings: settings,
     );
   }
-
-  /// Push with adaptive transition that chooses based on context
   Future<T?> pushAdaptive<T extends Object?>(
     Widget child, {
     Duration? duration,
@@ -788,10 +689,7 @@ extension SmartContextNavigationExtensions on BuildContext {
     );
   }
 }
-
-/// Utility class for common transition configurations
 class SmartTransitionConfigs {
-  /// Bottom navigation tab transitions
   static SmartTransition<T> bottomNavTab<T>(Widget child) {
     return SmartTransition<T>.slide(
       child: child,
@@ -800,8 +698,6 @@ class SmartTransitionConfigs {
       curve: Curves.easeInOut,
     );
   }
-
-  /// Modal presentation transitions
   static SmartTransition<T> modal<T>(Widget child) {
     return SmartTransition<T>.slideUp(
       child: child,
@@ -809,8 +705,6 @@ class SmartTransitionConfigs {
       curve: Curves.easeOut,
     );
   }
-
-  /// Camera screen transitions
   static SmartTransition<T> camera<T>(Widget child) {
     return SmartTransition<T>.fade(
       child: child,
@@ -818,8 +712,6 @@ class SmartTransitionConfigs {
       curve: Curves.easeInOut,
     );
   }
-
-  /// Back navigation transitions
   static SmartTransition<T> back<T>(Widget child) {
     return SmartTransition<T>.slide(
       child: child,
@@ -828,8 +720,6 @@ class SmartTransitionConfigs {
       curve: Curves.easeInOut,
     );
   }
-
-  /// Dialog transitions
   static SmartTransition<T> dialog<T>(Widget child) {
     return SmartTransition<T>.scale(
       child: child,
