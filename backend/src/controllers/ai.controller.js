@@ -192,6 +192,13 @@ const chatWithTutor = async (req, res) => {
       });
       const processingTime = Date.now() - startTime;
 
+      logger.info(`[${requestId}] Raw tutor response received`, {
+        responseType: typeof tutorResponse,
+        isObject: typeof tutorResponse === 'object',
+        hasMessage: tutorResponse && typeof tutorResponse === 'object' && 'message' in tutorResponse,
+        responsePreview: typeof tutorResponse === 'string' ? tutorResponse.substring(0, 100) : 'object'
+      });
+
       // Handle both string and structured responses
       let responseMessage, structuredData;
       if (typeof tutorResponse === 'object' && tutorResponse.message) {
@@ -206,9 +213,16 @@ const chatWithTutor = async (req, res) => {
           responseType: tutorResponse.responseType,
           difficultyLevel: tutorResponse.difficultyLevel
         };
+        logger.info(`[${requestId}] Using structured response`, {
+          messageLength: responseMessage.length,
+          structuredDataKeys: Object.keys(structuredData)
+        });
       } else {
         responseMessage = tutorResponse;
         structuredData = null;
+        logger.info(`[${requestId}] Using plain text response`, {
+          responseLength: typeof tutorResponse === 'string' ? tutorResponse.length : 'not string'
+        });
       }
 
       if (!responseMessage || responseMessage.trim() === '') {

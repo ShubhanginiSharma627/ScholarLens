@@ -444,8 +444,22 @@ async function generateTutorResponse(message, options = {}) {
     let finalResponse = response;
     let structuredData = null;
     
+    // Remove markdown code blocks if present
+    let cleanedResponse = response;
+    if (response.startsWith('```json') && response.endsWith('```')) {
+      cleanedResponse = response.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      logger.info(`[${requestId}] Removed markdown code blocks from response`);
+    }
+    
     try {
-      const parsedResponse = JSON.parse(response);
+      const parsedResponse = JSON.parse(cleanedResponse);
+      logger.info(`[${requestId}] Successfully parsed JSON response`, {
+        hasResponse: !!parsedResponse.response,
+        hasMainMessage: !!(parsedResponse.response && parsedResponse.response.main_message),
+        responseKeys: Object.keys(parsedResponse),
+        responseStructure: parsedResponse.response ? Object.keys(parsedResponse.response) : null
+      });
+      
       if (parsedResponse.response && parsedResponse.response.main_message) {
         finalResponse = parsedResponse.response.main_message;
         structuredData = {
@@ -458,24 +472,39 @@ async function generateTutorResponse(message, options = {}) {
           responseType: parsedResponse.response?.type || 'general',
           difficultyLevel: parsedResponse.response?.difficulty_level || 'medium'
         };
-        logger.info(`[${requestId}] Extracted structured data from response`, {
-          hasFollowUpQuestions: structuredData.followUpQuestions.length > 0,
-          hasKeyConcepts: structuredData.keyConcepts.length > 0,
+        logger.info(`[${requestId}] Extracted structured data`, {
+          followUpQuestionsCount: structuredData.followUpQuestions.length,
+          keyConceptsCount: structuredData.keyConcepts.length,
           hasSessionSummary: !!structuredData.sessionSummary,
-          responseType: structuredData.responseType
+          studyTipsCount: structuredData.studyTips.length
         });
       } else {
-        logger.warn(`[${requestId}] Structured response missing main_message, using full response`);
+        logger.warn(`[${requestId}] Structured response missing main_message, using full response`, {
+          availableKeys: Object.keys(parsedResponse),
+          responseContent: parsedResponse.response
+        });
       }
     } catch (parseError) {
-      logger.info(`[${requestId}] Response is not JSON, using as plain text`);
+      logger.warn(`[${requestId}] Response is not valid JSON, using as plain text`, {
+        parseError: parseError.message,
+        responsePreview: cleanedResponse.substring(0, 200)
+      });
+      
+      // Try to extract main_message from malformed JSON
+      const mainMessageMatch = cleanedResponse.match(/"main_message":\s*"([^"]+)"/);
+      if (mainMessageMatch) {
+        finalResponse = mainMessageMatch[1];
+        logger.info(`[${requestId}] Extracted main_message from malformed JSON using regex`);
+      }
     }
     
     logger.info(`[${requestId}] Tutor response generated successfully`, {
       responseLength: finalResponse.length,
       duration,
       isEmpty: finalResponse.trim().length === 0,
-      hasStructuredData: !!structuredData
+      hasStructuredData: !!structuredData,
+      responseType: typeof finalResponse,
+      structuredDataKeys: structuredData ? Object.keys(structuredData) : null
     });
     
     if (!finalResponse || finalResponse.trim().length === 0) {
@@ -488,12 +517,14 @@ async function generateTutorResponse(message, options = {}) {
     
     // Return structured response if we have it, otherwise just the text
     if (structuredData) {
+      logger.info(`[${requestId}] Returning structured response with message and data`);
       return {
         message: finalResponse,
         ...structuredData
       };
     }
     
+    logger.info(`[${requestId}] Returning plain text response`);
     return finalResponse;
   } catch (error) {
     logger.error(`[${requestId}] Tutor response generation failed`, {
