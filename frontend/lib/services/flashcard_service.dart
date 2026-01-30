@@ -7,7 +7,7 @@ class StudySession {
   final String id;
   final String flashcardId;
   final DateTime timestamp;
-  final double duration; // in hours
+  final double duration; 
   final bool isCorrect;
   final String activityType;
 
@@ -101,10 +101,13 @@ class FlashcardService {
         difficulty: 'medium',
       );
 
+      final allFlashcards = await getAllFlashcards();
+      final updatedFlashcards = <Flashcard>[];
+      
       for (final flashcard in generatedFlashcards) {
         final updatedFlashcard = Flashcard(
           id: flashcard.id,
-          subject: subject, // Use the provided subject instead of backend's tags
+          subject: subject,
           question: flashcard.question,
           answer: flashcard.answer,
           difficulty: flashcard.difficulty,
@@ -171,7 +174,7 @@ class FlashcardService {
         await _apiService.studyFlashcard(
           flashcardId: flashcard.id,
           correct: difficulty == Difficulty.easy,
-          timeSpent: 180000, // 3 minutes in milliseconds
+          timeSpent: 180000,
         );
       } catch (e) {
         print('Failed to record study session on backend: $e');
