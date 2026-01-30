@@ -29,7 +29,7 @@ class GCSStorageService {
       // Initialize Google Cloud Storage
       this.storage = new Storage({
         projectId: process.env.GOOGLE_CLOUD_PROJECT,
-        keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+        keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS || "secrets/scholar-lens-fa555-27cba8b3d8f5.json",
       });
 
       // Get bucket reference

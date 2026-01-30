@@ -148,7 +148,7 @@ async function generateText(prompt, taskType = 'general', complexity = 'medium',
       complexity,
       originalModel: options.model
     });
-    model = 'gemini-1.5-pro'; // Hard-coded fallback
+    model = 'gemini-2.0-pro'; // Hard-coded fallback
     logger.warn(`[${requestId}] Using fallback model: ${model}`);
   }
   

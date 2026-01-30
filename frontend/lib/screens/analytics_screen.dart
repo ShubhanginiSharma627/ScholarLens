@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/common/top_navigation_bar.dart';
 
 /// Analytics screen showing detailed learning statistics and insights
 class AnalyticsScreen extends StatelessWidget {
@@ -7,181 +8,89 @@ class AnalyticsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Header
-              _buildHeader(context),
-              
-              // Content
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    // Key Metrics Cards
-                    _buildKeyMetricsGrid(context),
-                    const SizedBox(height: 20),
-                    
-                    // Study Time Chart
-                    _buildStudyTimeChart(context),
-                    const SizedBox(height: 20),
-                    
-                    // Activity Breakdown
-                    _buildActivityBreakdown(context),
-                    const SizedBox(height: 20),
-                    
-                    // Performance by Subject
-                    _buildPerformanceBySubject(context),
-                    const SizedBox(height: 20),
-                    
-                    // Areas to Improve
-                    _buildAreasToImprove(context),
-                    const SizedBox(height: 100), // Bottom padding for navigation
-                  ],
-                ),
+      backgroundColor: Colors.grey[50],
+      appBar: const TopNavigationBar(),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title and description
+            const Text(
+              'Analytics Dashboard',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Track your learning progress and identify improvement areas',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Key Metrics Cards
+            _buildKeyMetricsGrid(context),
+            const SizedBox(height: 20),
+            
+            // Study Time Chart
+            _buildStudyTimeChart(context),
+            const SizedBox(height: 20),
+            
+            // Activity Breakdown
+            _buildActivityBreakdown(context),
+            const SizedBox(height: 20),
+            
+            // Performance by Subject
+            _buildPerformanceBySubject(context),
+            const SizedBox(height: 20),
+            
+            // Areas to Improve
+            _buildAreasToImprove(context),
+            const SizedBox(height: 100), // Bottom padding for navigation
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top bar with logo, streak, notifications, profile
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF7C3AED),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.school,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'ScholarLens',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3CD),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.local_fire_department, color: Color(0xFFFF9500), size: 16),
-                    SizedBox(width: 4),
-                    Text(
-                      '7',
-                      style: TextStyle(
-                        color: Color(0xFFFF9500),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.notifications_outlined, size: 24),
-              ),
-              const SizedBox(width: 8),
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: const Color(0xFF7C3AED),
-                child: const Icon(Icons.person, color: Colors.white, size: 20),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          
-          // Title and description
-          const Text(
-            'Analytics Dashboard',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Track your learning progress and identify improvement areas',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-          ),
-        ],
       ),
     );
   }
 
   Widget _buildKeyMetricsGrid(BuildContext context) {
-    return Column(
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.4, // Made taller for better text visibility
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricCard(
-                icon: Icons.schedule,
-                iconColor: const Color(0xFF7C3AED),
-                value: '23.5h',
-                label: 'Study Time (Week)',
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(
-                icon: Icons.gps_fixed,
-                iconColor: const Color(0xFF14B8A6),
-                value: '78%',
-                label: 'Avg Accuracy',
-              ),
-            ),
-          ],
+        _buildMetricCard(
+          icon: Icons.schedule,
+          iconColor: const Color(0xFF7C3AED),
+          value: '23.5h',
+          label: 'Study Time\n(Week)',
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricCard(
-                icon: Icons.quiz,
-                iconColor: const Color(0xFFFF9500),
-                value: '505',
-                label: 'Questions Solved',
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(
-                icon: Icons.trending_up,
-                iconColor: const Color(0xFF10B981),
-                value: '+12%',
-                label: 'Performance Change',
-              ),
-            ),
-          ],
+        _buildMetricCard(
+          icon: Icons.gps_fixed,
+          iconColor: const Color(0xFF14B8A6),
+          value: '78%',
+          label: 'Average\nAccuracy',
+        ),
+        _buildMetricCard(
+          icon: Icons.quiz,
+          iconColor: const Color(0xFFFF9500),
+          value: '505',
+          label: 'Questions\nSolved',
+        ),
+        _buildMetricCard(
+          icon: Icons.trending_up,
+          iconColor: const Color(0xFF10B981),
+          value: '+12%',
+          label: 'Performance\nChange',
         ),
       ],
     );
@@ -194,7 +103,7 @@ class AnalyticsScreen extends StatelessWidget {
     required String label,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -208,7 +117,9 @@ class AnalyticsScreen extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // Icon at the top
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -221,22 +132,32 @@ class AnalyticsScreen extends StatelessWidget {
               size: 20,
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+          
+          // Value and label at the bottom
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey[600],
+                  height: 1.2,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.visible,
+              ),
+            ],
           ),
         ],
       ),
