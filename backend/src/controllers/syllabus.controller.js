@@ -69,13 +69,44 @@ exports.scanSyllabus = async (req, res) => {
     }
 
     const file = req.file;
+    const originalFileName = file.originalname;
+    
+    try {
+      const existingFiles = await gcsStorage.listFiles('syllabus');
+      const duplicateFile = existingFiles.find(existingFile => {
+        const existingOriginalName = existingFile.metadata?.originalName || existingFile.name;
+        return existingOriginalName === originalFileName && 
+               Math.abs(existingFile.size - file.size) < 1000;
+      });
+
+      if (duplicateFile) {
+        await fs.remove(file.path);
+        
+        const existingAnalysis = duplicateFile.metadata?.analysis || 'This document has been previously analyzed.';
+        
+        return res.status(200).json({
+          success: true,
+          data: {
+            analysis: existingAnalysis,
+            fileUri: `gs://${process.env.GCS_BUCKET}/${duplicateFile.name}`,
+            downloadUrl: await gcsStorage.getDownloadUrl(duplicateFile.name),
+            isDuplicate: true,
+            message: 'File already exists. Returning previous analysis.'
+          }
+        });
+      }
+    } catch (listError) {
+      console.log('Could not check for duplicates:', listError.message);
+    }
+
     const fileName = gcsStorage.generateUniqueFilename(file.originalname, 'syllabus-');
 
     const downloadUrl = await gcsStorage.uploadFile(file.path, fileName, {
       contentType: file.mimetype,
-      makePublic: false, // Keep private for security
+      makePublic: false,
       originalName: file.originalname,
       uploadedBy: req.body.userId || 'anonymous',
+      fileSize: file.size,
     });
 
     await fs.remove(file.path);
@@ -87,6 +118,17 @@ exports.scanSyllabus = async (req, res) => {
     try {
       const analysis = await analyzeDocument(gcsStoragePath, fullPrompt, 'gemini-1.5-pro');
 
+      try {
+        const analysisMetadata = _extractAnalysisMetadata(analysis);
+        await gcsStorage.updateFileMetadata(fileName, {
+          analysis: analysis,
+          ...analysisMetadata,
+          analyzedAt: new Date().toISOString(),
+        });
+      } catch (metadataError) {
+        console.log('Could not update file metadata:', metadataError.message);
+      }
+
       await db.collection('interactions').add({
         type: 'syllabus',
         userId: req.body.userId || 'anonymous',
@@ -97,16 +139,18 @@ exports.scanSyllabus = async (req, res) => {
       });
 
       res.status(200).json({ 
-        analysis, 
-        fileUri: gcsStoragePath,
-        downloadUrl: downloadUrl 
+        success: true,
+        data: {
+          analysis, 
+          fileUri: gcsStoragePath,
+          downloadUrl: downloadUrl,
+          isDuplicate: false
+        }
       });
     } catch (analysisError) {
-      // Check if this is the service agents provisioning error
       if (analysisError.message && analysisError.message.includes('Service agents are being provisioned')) {
         console.log('Service agents still being provisioned, returning helpful message');
         
-        // Still log the interaction for tracking
         await db.collection('interactions').add({
           type: 'syllabus_upload_pending',
           userId: req.body.userId || 'anonymous',
@@ -118,22 +162,23 @@ exports.scanSyllabus = async (req, res) => {
         });
 
         return res.status(202).json({
-          message: 'File uploaded successfully! Google Cloud services are still being set up for your project. Please try analyzing the file again in 2-3 minutes.',
-          status: 'uploaded_pending_analysis',
-          fileUri: gcsStoragePath,
-          downloadUrl: downloadUrl,
-          retryAfter: 180, // 3 minutes in seconds
-          helpText: 'This is a one-time setup process for new Google Cloud projects. The file is safely stored and ready for analysis once the services are ready.'
+          success: true,
+          data: {
+            message: 'File uploaded successfully! Google Cloud services are still being set up for your project. Please try analyzing the file again in 2-3 minutes.',
+            status: 'uploaded_pending_analysis',
+            fileUri: gcsStoragePath,
+            downloadUrl: downloadUrl,
+            retryAfter: 180,
+            helpText: 'This is a one-time setup process for new Google Cloud projects. The file is safely stored and ready for analysis once the services are ready.'
+          }
         });
       }
       
-      // For other analysis errors, throw them normally
       throw analysisError;
     }
   } catch (error) {
     console.error(error);
     
-    // Provide more specific error messages
     if (error.message && error.message.includes('Service agents are being provisioned')) {
       return res.status(503).json({ 
         error: 'Google Cloud services are still being set up. Please try again in 2-3 minutes.',
@@ -155,4 +200,60 @@ exports.scanSyllabus = async (req, res) => {
     });
   }
 };
+
+function _extractAnalysisMetadata(analysis) {
+  try {
+    const metadata = {
+      chapters: [],
+      keyTopics: [],
+      subject: 'Unknown',
+      totalPages: 0
+    };
+
+    const lines = analysis.split('\n');
+    
+    for (const line of lines) {
+      const lowerLine = line.toLowerCase().trim();
+      
+      if (lowerLine.includes('chapter') || lowerLine.includes('unit')) {
+        if (line.length < 100) {
+          metadata.chapters.push(line.trim());
+        }
+      }
+      
+      if (lowerLine.includes('topic') || lowerLine.includes('concept')) {
+        if (line.length < 80) {
+          metadata.keyTopics.push(line.trim());
+        }
+      }
+      
+      if (lowerLine.includes('subject') || lowerLine.includes('course')) {
+        const subjectMatch = line.match(/(?:subject|course):\s*([^,.\n]+)/i);
+        if (subjectMatch) {
+          metadata.subject = subjectMatch[1].trim();
+        }
+      }
+      
+      if (lowerLine.includes('page')) {
+        const pageMatch = line.match(/(\d+)\s*pages?/i);
+        if (pageMatch) {
+          metadata.totalPages = parseInt(pageMatch[1]);
+        }
+      }
+    }
+    
+    metadata.chapters = metadata.chapters.slice(0, 10);
+    metadata.keyTopics = metadata.keyTopics.slice(0, 15);
+    
+    return metadata;
+  } catch (error) {
+    console.log('Error extracting analysis metadata:', error.message);
+    return {
+      chapters: [],
+      keyTopics: [],
+      subject: 'Unknown',
+      totalPages: 0
+    };
+  }
+}
 module.exports = { uploadSyllabus, getSyllabus, listSyllabi, scanSyllabus: exports.scanSyllabus };

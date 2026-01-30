@@ -270,6 +270,34 @@ class GCSStorageService {
       bucketConfigured: !!bucketName,
     };
   }
+  async updateFileMetadata(filePath, newMetadata) {
+    if (!this.initialized) {
+      throw new Error('Google Cloud Storage not initialized');
+    }
+    try {
+      logger.info(`Updating metadata for file: ${filePath}`);
+      const file = this.bucket.file(filePath);
+      
+      // Get current metadata
+      const [currentMetadata] = await file.getMetadata();
+      
+      // Merge with new metadata
+      const updatedMetadata = {
+        ...currentMetadata.metadata,
+        ...newMetadata
+      };
+      
+      await file.setMetadata({
+        metadata: updatedMetadata
+      });
+      
+      logger.info(`Metadata updated successfully for: ${filePath}`);
+    } catch (error) {
+      logger.error(`Update metadata failed: ${error.message}`);
+      throw error;
+    }
+  }
+
   async getBucketInfo() {
     if (!this.initialized) {
       throw new Error('Google Cloud Storage not initialized');
