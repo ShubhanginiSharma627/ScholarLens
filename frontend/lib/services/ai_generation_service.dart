@@ -52,7 +52,6 @@ class AIGenerationService {
     String difficulty = 'medium',
   }) async {
     try {
-      // For now, just analyze the image and generate from the analysis
       final bytes = await imageFile.readAsBytes();
       final base64Image = base64Encode(bytes);
       

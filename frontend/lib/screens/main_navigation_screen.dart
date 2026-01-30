@@ -24,10 +24,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   final PageController _pageController = PageController();
   AppLifecycleManager? _lifecycleManager;
   final List<Widget> _screens = const [
-    _HomeTab(),           // Index 0 -> Tab 0 (Home)
-    TutorChatScreen(),    // Index 1 -> Tab 1 (Tutor)  
-    FlashcardManagementScreen(), // Index 2 -> Tab 3 (Cards)
-    AnalyticsScreen(),    // Index 3 -> Tab 4 (Analytics)
+    _HomeTab(),          
+    TutorChatScreen(),   
+    FlashcardManagementScreen(), 
+    AnalyticsScreen(),   
   ];
   final List<NavigationTab> _tabs = const [
     NavigationTab(
@@ -61,7 +61,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   void initState() {
     super.initState();
     
-    // Initialize the navigation helper
     NavigationHelper.initialize(_onTabTapped);
     
     SchedulerBinding.instance.addPostFrameCallback((_) {

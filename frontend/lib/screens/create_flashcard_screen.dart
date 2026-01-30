@@ -4,10 +4,12 @@ import '../services/flashcard_service.dart';
 class CreateFlashcardScreen extends StatefulWidget {
   final String? initialSubject;
   final String? initialCategory;
+  final String? initialTopic;
   const CreateFlashcardScreen({
     super.key,
     this.initialSubject,
     this.initialCategory,
+    this.initialTopic,
   });
   @override
   State<CreateFlashcardScreen> createState() => _CreateFlashcardScreenState();
@@ -18,17 +20,15 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
   final _answerController = TextEditingController();
   final _subjectController = TextEditingController();
   final _categoryController = TextEditingController();
-  final _topicController = TextEditingController(); // For AI generation
+  final _topicController = TextEditingController();
   final _flashcardService = FlashcardService();
   
   List<String> _existingSubjects = [];
   List<String> _existingCategories = [];
   bool _isLoading = false;
   
-  // Card generation mode
-  String _generationMode = 'manual'; // 'manual' or 'ai'
+  String _generationMode = 'manual';
   
-  // Store ScaffoldMessenger reference to avoid widget disposal issues
   ScaffoldMessengerState? _scaffoldMessenger;
   @override
   void initState() {
@@ -36,8 +36,10 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
     _subjectController.text = widget.initialSubject ?? '';
     _categoryController.text = widget.initialCategory ?? '';
     
-    // If we have an initial subject, default to AI generation mode and use subject as topic
-    if (widget.initialSubject != null && widget.initialSubject!.isNotEmpty) {
+    if (widget.initialTopic != null && widget.initialTopic!.isNotEmpty) {
+      _generationMode = 'ai';
+      _topicController.text = widget.initialTopic!;
+    } else if (widget.initialSubject != null && widget.initialSubject!.isNotEmpty) {
       _generationMode = 'ai';
       _topicController.text = widget.initialSubject!;
     }
@@ -48,7 +50,7 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Store ScaffoldMessenger reference early to avoid disposal issues
+   
     _scaffoldMessenger = ScaffoldMessenger.of(context);
   }
   @override
@@ -76,7 +78,6 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
         _scaffoldMessenger!.showSnackBar(snackBar);
       }
     } catch (e) {
-      // Silently handle any remaining widget disposal issues
       debugPrint('Could not show snackbar: $e');
     }
   }
@@ -95,7 +96,6 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
 
     try {
       if (_generationMode == 'manual') {
-        // Create single manual flashcard
         final flashcard = Flashcard.create(
           subject: _subjectController.text.trim(),
           question: _questionController.text.trim(),
@@ -115,9 +115,8 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
           );
         }
       } else {
-        // Generate AI flashcards
         if (mounted) {
-          // Show generating message
+        
           _showSnackBar(
             const SnackBar(
               content: Row(
@@ -135,13 +134,12 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
                 ],
               ),
               backgroundColor: Colors.blue,
-              duration: Duration(seconds: 10), // Longer duration for AI generation
+              duration: Duration(seconds: 10), 
             ),
           );
         }
         
         try {
-          // Call the real AI generation API
           final topic = _topicController.text.trim();
           final subject = _subjectController.text.trim();
           final category = _categoryController.text.trim().isEmpty 
@@ -164,9 +162,9 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
           print('Generated ${generatedCards.length} flashcards successfully');
           print('Cards: ${generatedCards.map((c) => c.question).toList()}');
           
-          // Only show success message if widget is still mounted
+        
           if (mounted) {
-            // Clear any existing snackbars first
+            
             _scaffoldMessenger?.clearSnackBars();
             _showSnackBar(
               SnackBar(
@@ -182,9 +180,9 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
           print('Error message: $e');
           print('Stack trace: ${StackTrace.current}');
           
-          // Only show error message if widget is still mounted
+         
           if (mounted) {
-            // Clear any existing snackbars first
+            
             _scaffoldMessenger?.clearSnackBars();
             _showSnackBar(
               SnackBar(
@@ -196,14 +194,14 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
                   textColor: Colors.white,
                   onPressed: () {
                     if (mounted) {
-                      _saveFlashcard(); // Retry the operation
+                      _saveFlashcard();
                     }
                   },
                 ),
               ),
             );
           }
-          // Don't return early, let the user try again
+          
           if (mounted) {
             setState(() {
               _isLoading = false;
@@ -213,16 +211,16 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
         }
       }
       
-      // Only navigate back if the operation was successful and widget is still mounted
+    
       if (mounted) {
-        Navigator.of(context).pop(true); // Return true to indicate success
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       print('=== GENERAL ERROR ===');
       print('Error: $e');
       
       if (mounted) {
-        // Clear any existing snackbars first
+       
         _scaffoldMessenger?.clearSnackBars();
         _showSnackBar(
           SnackBar(
@@ -233,7 +231,7 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
         );
       }
     } finally {
-      // Always reset loading state if widget is still mounted
+    
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -253,9 +251,11 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.initialSubject != null 
-              ? 'Generate More ${widget.initialSubject} Cards'
-              : 'Create Flashcard',
+          widget.initialTopic != null 
+              ? 'Generate Cards: ${widget.initialTopic}'
+              : widget.initialSubject != null 
+                  ? 'Generate ${widget.initialSubject} Cards'
+                  : 'Create Flashcard',
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,

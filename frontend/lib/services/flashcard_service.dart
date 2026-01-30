@@ -95,19 +95,13 @@ class FlashcardService {
     int count = 5,
   }) async {
     try {
-      // Call the API to generate flashcards
       final generatedFlashcards = await _apiService.generateFlashcards(
         topic: topic,
         count: count,
         difficulty: 'medium',
       );
 
-      // Save all generated flashcards locally and update with subject/category
-      final allFlashcards = await getAllFlashcards();
-      final updatedFlashcards = <Flashcard>[];
-      
       for (final flashcard in generatedFlashcards) {
-        // Update subject and category if provided, and ensure proper field mapping
         final updatedFlashcard = Flashcard(
           id: flashcard.id,
           subject: subject, // Use the provided subject instead of backend's tags
@@ -148,14 +142,12 @@ class FlashcardService {
       allFlashcards[index] = updatedCard;
       await _saveFlashcards(allFlashcards);
       
-      // Record study session for analytics
       await _recordStudySession(updatedCard, difficulty);
     }
   }
 
   Future<void> _recordStudySession(Flashcard flashcard, Difficulty difficulty) async {
     try {
-      // Record locally for offline support
       final session = StudySession(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         flashcardId: flashcard.id,
@@ -165,19 +157,16 @@ class FlashcardService {
         activityType: 'Flashcards',
       );
       
-      // Store locally
       final prefs = await SharedPreferences.getInstance();
       final sessionsJson = prefs.getStringList('study_sessions') ?? [];
       sessionsJson.add(jsonEncode(session.toJson()));
       
-      // Keep only last 100 sessions
       if (sessionsJson.length > 100) {
         sessionsJson.removeAt(0);
       }
       
       await prefs.setStringList('study_sessions', sessionsJson);
       
-      // Try to record on backend
       try {
         await _apiService.studyFlashcard(
           flashcardId: flashcard.id,
@@ -185,7 +174,6 @@ class FlashcardService {
           timeSpent: 180000, // 3 minutes in milliseconds
         );
       } catch (e) {
-        // Backend recording failed, but local recording succeeded
         print('Failed to record study session on backend: $e');
       }
     } catch (e) {

@@ -225,7 +225,6 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
       return _buildEmptyDecksState();
     }
 
-    // Group flashcards by subject to create real decks
     final decksBySubject = <String, List<Flashcard>>{};
     for (final flashcard in _allFlashcards) {
       final subject = flashcard.subject;
@@ -285,7 +284,6 @@ class _FlashcardManagementScreenState extends State<FlashcardManagementScreen> {
   }
 
   Widget _buildRealDeckTile(String subject, List<Flashcard> cards) {
-    // Assign colors based on subject name hash for consistency
     final colors = [Colors.purple, Colors.teal, Colors.orange, Colors.blue, Colors.green, Colors.red];
     final colorIndex = subject.hashCode.abs() % colors.length;
     final color = colors[colorIndex];

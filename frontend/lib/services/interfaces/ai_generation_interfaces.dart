@@ -1,9 +1,6 @@
 import 'dart:io';
 import '../../models/flashcard.dart';
 
-// Stub interfaces for AI generation functionality
-// These can be implemented when the full AI generation system is built
-
 abstract class ContentProcessor {
   Future<Map<String, dynamic>> processImage(File file);
   Future<Map<String, dynamic>> processPDF(File file);

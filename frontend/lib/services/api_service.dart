@@ -129,8 +129,7 @@ class ApiService {
         request.files.addAll(files);
       }
       
-      // Use custom timeout or default to longer timeout for file operations
-      final timeout = timeoutSeconds ?? (_timeoutSeconds * 4); // 60 seconds default
+      final timeout = timeoutSeconds ?? (_timeoutSeconds * 4);
       final streamedResponse = await request.send()
           .timeout(Duration(seconds: timeout));
       final response = await http.Response.fromStream(streamedResponse);

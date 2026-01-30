@@ -6,15 +6,18 @@ import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/password_reset_screen.dart';
 import 'screens/main_navigation_screen.dart';
+import 'screens/create_flashcard_screen.dart';
+import 'screens/tutor_chat_screen.dart';
 import 'theme/app_theme.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/performance_optimizer.dart';
+import 'models/models.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   PerformanceOptimizer.instance.startMonitoring();
   
-  // Load environment variables with error handling
+
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
@@ -64,6 +67,122 @@ class ScholarLensApp extends StatelessWidget {
               SignupScreen.routeName: (context) => const SignupScreen(),
               PasswordResetScreen.routeName: (context) => const PasswordResetScreen(),
               '/home': (context) => const MainNavigationScreen(),
+              '/create-flashcard': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments;
+                if (args is UploadedTextbook) {
+                  String? subject = args.subject != 'Unknown' ? args.subject : null;
+                  String? topic;
+                  
+                  if (args.keyTopics.isNotEmpty) {
+                    topic = args.keyTopics.join(', ');
+                  } else if (subject != null) {
+                    topic = subject;
+                  } else {
+                    topic = args.title;
+                  }
+                  
+                  return CreateFlashcardScreen(
+                    initialSubject: subject ?? args.title,
+                    initialCategory: args.title,
+                    initialTopic: topic,
+                  );
+                }
+                return const CreateFlashcardScreen();
+              },
+              '/tutor-chat': (context) {
+                return const TutorChatScreen();
+              },
+              '/quiz': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments;
+                if (args is UploadedTextbook) {
+                  return Scaffold(
+                    appBar: AppBar(
+                      title: Text('Quiz - ${args.title}'),
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                    ),
+                    body: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.quiz,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Quiz feature coming soon!',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'We\'re working on interactive quizzes for your textbooks.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return const Scaffold(
+                  body: Center(child: Text('Quiz feature coming soon!')),
+                );
+              },
+              '/lesson-content': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments;
+                if (args is Map<String, dynamic>) {
+                  final textbook = args['textbook'] as UploadedTextbook?;
+                  final chapter = args['chapter'] as int?;
+                  
+                  if (textbook != null && chapter != null) {
+                    return Scaffold(
+                      appBar: AppBar(
+                        title: Text('${textbook.title} - Chapter $chapter'),
+                        backgroundColor: Colors.transparent,
+                        elevation: 0,
+                      ),
+                      body: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.menu_book,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'Lesson content coming soon!',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'We\'re building interactive lesson content for your textbooks.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                }
+                return const Scaffold(
+                  body: Center(child: Text('Invalid lesson content arguments')),
+                );
+              },
             },
           );
         },

@@ -199,7 +199,6 @@ const chatWithTutor = async (req, res) => {
         responsePreview: typeof tutorResponse === 'string' ? tutorResponse.substring(0, 100) : 'object'
       });
 
-      // Handle both string and structured responses
       let responseMessage, structuredData;
       if (typeof tutorResponse === 'object' && tutorResponse.message) {
         responseMessage = tutorResponse.message;
@@ -290,7 +289,6 @@ const chatWithTutor = async (req, res) => {
         timestamp: new Date().toISOString()
       };
 
-      // Include structured data if available
       if (structuredData) {
         responseData.structuredData = structuredData;
       }

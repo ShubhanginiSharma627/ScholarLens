@@ -5,7 +5,6 @@ import '../screens/syllabus_scanner_screen.dart';
 import '../screens/all_cards_view_screen.dart';
 
 class NavigationHelper {
-  // Simple approach using a global callback
   static void Function(int)? _onTabTapped;
   
   static void initialize(void Function(int) onTabTapped) {
@@ -36,7 +35,6 @@ class NavigationHelper {
     navigateToTab(context, 0); // Home tab is at index 0
   }
 
-  // For screens that should be modals (preserving bottom nav)
   static Future<T?> showModalScreen<T>(
     BuildContext context,
     Widget screen, {
@@ -56,7 +54,6 @@ class NavigationHelper {
     );
   }
 
-  // For screens that should be full screen but return to main nav
   static Future<T?> pushScreen<T>(
     BuildContext context,
     Widget screen, {

@@ -444,7 +444,6 @@ async function generateTutorResponse(message, options = {}) {
     let finalResponse = response;
     let structuredData = null;
     
-    // Remove markdown code blocks if present
     let cleanedResponse = response;
     if (response.startsWith('```json') && response.endsWith('```')) {
       cleanedResponse = response.replace(/^```json\s*/, '').replace(/\s*```$/, '');
@@ -490,7 +489,6 @@ async function generateTutorResponse(message, options = {}) {
         responsePreview: cleanedResponse.substring(0, 200)
       });
       
-      // Try to extract main_message from malformed JSON
       const mainMessageMatch = cleanedResponse.match(/"main_message":\s*"([^"]+)"/);
       if (mainMessageMatch) {
         finalResponse = mainMessageMatch[1];
@@ -515,7 +513,6 @@ async function generateTutorResponse(message, options = {}) {
       throw new Error('Generated tutor response is empty');
     }
     
-    // Return structured response if we have it, otherwise just the text
     if (structuredData) {
       logger.info(`[${requestId}] Returning structured response with message and data`);
       return {

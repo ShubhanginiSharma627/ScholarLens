@@ -12,20 +12,16 @@ class AnalyticsService {
 
   Future<AnalyticsData> getAnalyticsData() async {
     try {
-      // Get stats from backend
       final userStats = await _apiService.getUserStats();
       
-      // Debug logging
       print('UserStats received: ${userStats.toString()}');
       print('WeakestTopics: ${userStats.weakestTopics}');
       print('Streak: ${userStats.streak}');
       print('Streak type: ${userStats.streak.runtimeType}');
       
-      // Get flashcards for additional calculations
       final flashcards = await _flashcardService.getAllFlashcards();
       final studySessions = await _getStudySessions();
       
-      // Calculate additional metrics from local data
       final weeklyStudyTime = _getWeeklyStudyTimeData();
       final activityBreakdown = _getActivityBreakdown(studySessions);
       final subjectPerformance = _getSubjectPerformance(flashcards, studySessions);
@@ -45,9 +41,7 @@ class AnalyticsService {
         weakestTopics: userStats.weakestTopics, // Pass nullable value directly
       );
     } catch (e) {
-      // Debug logging
       print('Analytics API error: $e');
-      // Fallback to local data if API fails
       return await _getLocalAnalyticsData();
     }
   }
@@ -83,7 +77,6 @@ class AnalyticsService {
     final sessions = await _getStudySessions();
     sessions.add(session);
     
-    // Keep only last 100 sessions to avoid storage bloat
     if (sessions.length > 100) {
       sessions.removeRange(0, sessions.length - 100);
     }
@@ -94,7 +87,6 @@ class AnalyticsService {
         .toList();
     await prefs.setStringList(_studySessionsKey, sessionsJson);
     
-    // Update weekly stats
     await _updateWeeklyStats(session);
   }
 
@@ -153,7 +145,6 @@ class AnalyticsService {
   double _calculatePerformanceChange(List<double> quizScores) {
     if (quizScores.length < 2) return 0.0;
     
-    // Compare recent scores with earlier scores
     final recentScores = quizScores.length > 5 
         ? quizScores.sublist(quizScores.length - 5)
         : quizScores;
@@ -176,7 +167,6 @@ class AnalyticsService {
     for (int i = 6; i >= 0; i--) {
       final date = now.subtract(Duration(days: i));
       final dayName = _getDayName(date.weekday);
-      // For now, return some sample data based on actual usage patterns
       final studyTime = (i % 2 == 0) ? 2.5 + (i * 0.5) : 1.5 + (i * 0.3);
       weekData.add(WeeklyStudyData(dayName, studyTime));
     }
@@ -249,9 +239,9 @@ class AnalyticsService {
         .map((entry) => ImprovementArea(
               subject: entry.key,
               currentScore: entry.value.round(),
-              change: 0, // TODO: Calculate actual change
+              change: 0, 
             ))
-        .where((area) => area.currentScore < 80) // Focus on areas below 80%
+        .where((area) => area.currentScore < 80) 
         .toList()
       ..sort((a, b) => a.currentScore.compareTo(b.currentScore));
   }
@@ -266,9 +256,9 @@ class AnalyticsData {
   final Map<String, double> activityBreakdown;
   final Map<String, double> subjectPerformance;
   final List<ImprovementArea> areasToImprove;
-  final int? streak; // Make nullable to handle runtime null
+  final int? streak;
   final Map<String, int> topTopics;
-  final List<WeakTopic>? weakestTopics; // Keep nullable
+  final List<WeakTopic>? weakestTopics;
 
   AnalyticsData({
     required this.totalStudyTime,
@@ -279,9 +269,9 @@ class AnalyticsData {
     required this.activityBreakdown,
     required this.subjectPerformance,
     required this.areasToImprove,
-    this.streak, // Make optional
+    this.streak,
     required this.topTopics,
-    this.weakestTopics, // Keep optional
+    this.weakestTopics, 
   });
 }
 

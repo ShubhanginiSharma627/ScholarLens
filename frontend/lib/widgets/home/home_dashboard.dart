@@ -33,12 +33,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
       final flashcards = await _flashcardService.getAllFlashcards();
       final subjectProgress = await _calculateSubjectProgress(flashcards);
       
-      // Try to get user stats from backend
       UserStats? userStats;
       try {
         userStats = await _apiService.getUserStats();
       } catch (e) {
-        // If backend fails, continue with local data only
         print('Failed to load user stats: $e');
       }
       
@@ -152,7 +150,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
             card.reviewCount >= 3 && card.difficulty == Difficulty.easy).length;
         final dueCards = _allFlashcards.where((card) => card.isDue).length;
         
-        // Use backend stats if available, otherwise fall back to local data
+       
         final streak = _userStats?.streak ?? progress.dayStreak;
         final totalInteractions = _userStats?.totalInteractions ?? totalCards;
         
@@ -302,7 +300,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
       );
     }
 
-    // Find the most recently studied subject
     final recentSubject = _subjectProgress.keys.isNotEmpty 
         ? _subjectProgress.keys.first 
         : 'Study';

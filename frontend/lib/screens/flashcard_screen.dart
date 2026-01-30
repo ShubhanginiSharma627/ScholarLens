@@ -221,7 +221,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // Progress tracker - fixed height
             AnimatedBuilder(
               animation: _progressAnimation,
               builder: (context, child) {
@@ -236,13 +235,11 @@ class _FlashcardScreenState extends State<FlashcardScreen>
                 );
               },
             ),
-            // Main content area - flexible
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return Column(
                     children: [
-                      // Flashcard area - takes most of the available space
                       Expanded(
                         flex: 3,
                         child: PageView.builder(
@@ -279,7 +276,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
                           },
                         ),
                       ),
-                      // Card counter - fixed height
                       FadeTransition(
                         opacity: _fadeAnimation,
                         child: Container(
@@ -294,7 +290,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
                           ),
                         ),
                       ),
-                      // Navigation buttons - fixed height
                       FadeTransition(
                         opacity: _fadeAnimation,
                         child: Container(
@@ -321,7 +316,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
                           ),
                         ),
                       ),
-                      // Difficulty rating - flexible height but constrained
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
                         transitionBuilder: (Widget child, Animation<double> animation) {

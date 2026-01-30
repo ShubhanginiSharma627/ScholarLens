@@ -136,17 +136,14 @@ class _AnimatedInteractiveElementState extends State<AnimatedInteractiveElement>
   }
   @override
   void dispose() {
-    // Track disposal state to prevent double disposal
     bool scaleDisposed = false;
     bool hoverDisposed = false;
     
-    // Only dispose controllers if they haven't been disposed by the animation manager
     if (_scaleAnimationId != null) {
       try {
         _animationManager.disposeController(_scaleAnimationId!);
         scaleDisposed = true;
       } catch (e) {
-        // Controller may have already been disposed
         debugPrint('Scale controller already disposed: $e');
       }
     }
@@ -156,12 +153,10 @@ class _AnimatedInteractiveElementState extends State<AnimatedInteractiveElement>
         _animationManager.disposeController(_hoverAnimationId!);
         hoverDisposed = true;
       } catch (e) {
-        // Controller may have already been disposed
         debugPrint('Hover controller already disposed: $e');
       }
     }
     
-    // Only dispose if not managed by animation manager or if disposal failed
     if (!scaleDisposed) {
       try {
         _scaleController.dispose();

@@ -534,7 +534,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           else
             Column(
               children: [
-                // Show areas from local flashcard analysis
                 ..._analyticsData!.areasToImprove.take(2).map((area) => Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: _buildImprovementItem(
@@ -544,7 +543,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         area.change >= 0 ? Colors.green : Colors.red,
                       ),
                     )),
-                // Show weakest topics from backend stats
                 ...(_analyticsData!.weakestTopics ?? []).take(2).map((topic) => Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: _buildTopicItem(
