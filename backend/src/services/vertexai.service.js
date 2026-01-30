@@ -83,7 +83,7 @@ function selectOptimalModel(taskType, complexity = 'medium') {
   };
   let selectedModel = modelMap[taskType] || MODELS.GEMINI_FLASH;
   if (!selectedModel || selectedModel.trim() === '') {
-    selectedModel = 'gemini-1.5-pro'; // Hard-coded fallback
+    selectedModel = 'gemini-2.5-flash';
     logger.warn(`Using hard-coded fallback model for taskType: ${taskType}`);
   }
   logger.info(`Model selection - TaskType: ${taskType}, Complexity: ${complexity}, Selected: ${selectedModel}`);
@@ -112,7 +112,7 @@ async function generateText(prompt, taskType = 'general', complexity = 'medium',
       complexity,
       originalModel: options.model
     });
-    model = 'gemini-2.0-pro'; // Hard-coded fallback
+    model = 'gemini-2.5-flash'; // Hard-coded fallback
     logger.warn(`[${requestId}] Using fallback model: ${model}`);
   }
   logger.info(`[${requestId}] Model selected: ${model} for task: ${taskType}`);

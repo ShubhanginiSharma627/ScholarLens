@@ -63,38 +63,96 @@ exports.scanSyllabus = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'No file provided' });
     }
+
     if (!gcsStorage.isConfigured()) {
       return res.status(500).json({ error: 'Google Cloud Storage not configured' });
     }
+
     const file = req.file;
     const fileName = gcsStorage.generateUniqueFilename(file.originalname, 'syllabus-');
+
     const downloadUrl = await gcsStorage.uploadFile(file.path, fileName, {
       contentType: file.mimetype,
       makePublic: false, // Keep private for security
       originalName: file.originalname,
       uploadedBy: req.body.userId || 'anonymous',
     });
+
     await fs.remove(file.path);
+
     const userPrompt = req.body.prompt || 'Analyze this syllabus and provide a study plan.';
     const fullPrompt = socraticTutorPrompt(userPrompt, 'Syllabus analysis');
     const gcsStoragePath = `gs://${process.env.GCS_BUCKET}/${fileName}`;
-    const analysis = await analyzeDocument(gcsStoragePath, fullPrompt, 'gemini-1.5-pro');
-    await db.collection('interactions').add({
-      type: 'syllabus',
-      userId: req.body.userId || 'anonymous',
-      prompt: userPrompt,
-      fileUri: gcsStoragePath,
-      downloadUrl: downloadUrl,
-      timestamp: new Date(),
-    });
-    res.status(200).json({ 
-      analysis, 
-      fileUri: gcsStoragePath,
-      downloadUrl: downloadUrl 
-    });
+
+    try {
+      const analysis = await analyzeDocument(gcsStoragePath, fullPrompt, 'gemini-1.5-pro');
+
+      await db.collection('interactions').add({
+        type: 'syllabus',
+        userId: req.body.userId || 'anonymous',
+        prompt: userPrompt,
+        fileUri: gcsStoragePath,
+        downloadUrl: downloadUrl,
+        timestamp: new Date(),
+      });
+
+      res.status(200).json({ 
+        analysis, 
+        fileUri: gcsStoragePath,
+        downloadUrl: downloadUrl 
+      });
+    } catch (analysisError) {
+      // Check if this is the service agents provisioning error
+      if (analysisError.message && analysisError.message.includes('Service agents are being provisioned')) {
+        console.log('Service agents still being provisioned, returning helpful message');
+        
+        // Still log the interaction for tracking
+        await db.collection('interactions').add({
+          type: 'syllabus_upload_pending',
+          userId: req.body.userId || 'anonymous',
+          prompt: userPrompt,
+          fileUri: gcsStoragePath,
+          downloadUrl: downloadUrl,
+          status: 'pending_service_agents',
+          timestamp: new Date(),
+        });
+
+        return res.status(202).json({
+          message: 'File uploaded successfully! Google Cloud services are still being set up for your project. Please try analyzing the file again in 2-3 minutes.',
+          status: 'uploaded_pending_analysis',
+          fileUri: gcsStoragePath,
+          downloadUrl: downloadUrl,
+          retryAfter: 180, // 3 minutes in seconds
+          helpText: 'This is a one-time setup process for new Google Cloud projects. The file is safely stored and ready for analysis once the services are ready.'
+        });
+      }
+      
+      // For other analysis errors, throw them normally
+      throw analysisError;
+    }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error processing syllabus' });
+    
+    // Provide more specific error messages
+    if (error.message && error.message.includes('Service agents are being provisioned')) {
+      return res.status(503).json({ 
+        error: 'Google Cloud services are still being set up. Please try again in 2-3 minutes.',
+        retryAfter: 180,
+        code: 'SERVICE_AGENTS_PROVISIONING'
+      });
+    }
+    
+    if (error.message && error.message.includes('bucket does not exist')) {
+      return res.status(500).json({ 
+        error: 'Storage configuration error. Please contact support.',
+        code: 'STORAGE_NOT_CONFIGURED'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Error processing syllabus. Please try again later.',
+      code: 'PROCESSING_ERROR'
+    });
   }
 };
 module.exports = { uploadSyllabus, getSyllabus, listSyllabi, scanSyllabus: exports.scanSyllabus };

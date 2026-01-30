@@ -18,16 +18,28 @@ class GCSStorageService {
     this.storage = null;
     this.bucket = null;
     this.initialized = false;
-    this.initializeGCS();
+    this.initializationPromise = this.initializeGCS();
   }
-  initializeGCS() {
+  async initializeGCS() {
     try {
       this.storage = new Storage({
         projectId: process.env.GOOGLE_CLOUD_PROJECT,
-        keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS || "secrets/scholar-lens-fa555-27cba8b3d8f5.json",
+        keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS || "etc/secrets/scholar-lens-fa555-7f5fba046557.json",
       });
       const bucketName = process.env.GCS_BUCKET || `${process.env.GOOGLE_CLOUD_PROJECT}-storage`;
       this.bucket = this.storage.bucket(bucketName);
+      
+      // Check if bucket exists, create if it doesn't
+      const [exists] = await this.bucket.exists();
+      if (!exists) {
+        logger.info(`Creating GCS bucket: ${bucketName}`);
+        await this.storage.createBucket(bucketName, {
+          location: 'US',
+          storageClass: 'STANDARD',
+        });
+        logger.info(`Bucket created successfully: ${bucketName}`);
+      }
+      
       this.initialized = true;
       logger.info('Google Cloud Storage initialized successfully', {
         project: process.env.GOOGLE_CLOUD_PROJECT,
@@ -43,6 +55,7 @@ class GCSStorageService {
     }
   }
   async uploadFile(filePath, destination, metadata = {}) {
+    await this.initializationPromise;
     if (!this.initialized) {
       throw new Error('Google Cloud Storage not initialized');
     }
@@ -151,6 +164,7 @@ class GCSStorageService {
     }
   }
   async listFiles(prefix = '', options = {}) {
+    await this.initializationPromise;
     if (!this.initialized) {
       throw new Error('Google Cloud Storage not initialized');
     }
