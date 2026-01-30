@@ -114,9 +114,9 @@ class AnimationPerformanceMonitor {
   Timer? _memoryMonitorTimer;
   Timer? _performanceEvaluationTimer;
   static const int _maxHistorySize = 100;
-  static const int _maxFrameTimesSample = 60; // 1 second at 60fps
-  static const int _maxMemorySample = 30; // 30 seconds of memory samples
-  static const double _memoryPressureThreshold = 80.0; // MB
+  static const int _maxFrameTimesSample = 60;
+  static const int _maxMemorySample = 30;
+  static const double _memoryPressureThreshold = 80.0;
   final List<ValueChanged<AnimationQuality>> _qualityChangeCallbacks = [];
   final List<VoidCallback> _memoryPressureCallbacks = [];
   AnimationQuality _currentQuality = AnimationQuality.high;
@@ -244,7 +244,7 @@ class AnimationPerformanceMonitor {
     }
     final averageFrameTime = _frameTimes.isEmpty ? 16.67 : 
         _frameTimes.reduce((a, b) => a + b) / _frameTimes.length;
-    final cpuUsage = (averageFrameTime / 16.67) * 50; // Rough estimate
+    final cpuUsage = (averageFrameTime / 16.67) * 50;
     _cpuUsageHistory.add(cpuUsage);
     if (_cpuUsageHistory.length > _maxMemorySample) {
       _cpuUsageHistory.removeAt(0);

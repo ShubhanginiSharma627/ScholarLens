@@ -72,8 +72,6 @@ class NavigationHelper {
     BuildContext context,
     String subject,
   ) {
-    // For now, keep as regular navigation since it's a detailed view
-    // In the future, we could implement a nested navigation structure
     return Navigator.of(context).push<T>(
       MaterialPageRoute(
         builder: (context) => AllCardsViewScreen(subject: subject),

@@ -36,7 +36,7 @@ class GoogleSignInService {
     try {
       debugPrint('Attempting Google Sign-In');
       if (!_isInitialized) {
-        initialize(); // Initialize with default settings
+        initialize();
       }
       final GoogleSignInAccount? googleUser = await _googleSignIn!.signIn();
       if (googleUser == null) {
@@ -309,7 +309,7 @@ class GoogleSignInService {
   Future<AuthResult?> signInSilently() async {
     try {
       if (!_isInitialized) {
-        initialize(); // Initialize with default settings
+        initialize();
       }
       debugPrint('Attempting silent Google Sign-In');
       final GoogleSignInAccount? googleUser = await _googleSignIn!.signInSilently();
@@ -330,7 +330,7 @@ class GoogleSignInService {
       );
     } catch (e) {
       debugPrint('Silent Google Sign-In error: $e');
-      return null; // Silent sign-in should not throw errors
+      return null;
     }
   }
   Future<AccountCheckResult> _checkExistingAccount(String email) async {
@@ -433,9 +433,9 @@ class GoogleSignInService {
   Future<bool> canLinkGoogleAccount(String currentUserEmail) async {
     try {
       final googleUser = currentUser;
-      if (googleUser == null) return true; // No Google account signed in, can link
+      if (googleUser == null) return true;
       if (googleUser.email == currentUserEmail) {
-        return true; // Same email, can link
+        return true;
       }
       final accountCheck = await _checkExistingAccount(googleUser.email);
       return !accountCheck.hasConflict;

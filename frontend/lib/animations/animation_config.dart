@@ -9,7 +9,7 @@ class AnimationConfig {
   final double? fadeStart;
   final double? fadeEnd;
   final bool respectReducedMotion;
-  final int priority; // For performance management (1 = highest, 5 = lowest)
+  final int priority;
   const AnimationConfig({
     required this.duration,
     this.curve = Curves.easeInOut,

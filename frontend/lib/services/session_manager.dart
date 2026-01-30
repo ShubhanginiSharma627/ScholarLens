@@ -11,9 +11,9 @@ class SessionManager {
   final SecureStorageService _secureStorage = SecureStorageService();
   Timer? _refreshTimer;
   Timer? _sessionCheckTimer;
-  static const Duration _refreshThreshold = Duration(minutes: 5); // Refresh when 5 minutes left
-  static const Duration _sessionCheckInterval = Duration(minutes: 1); // Check session every minute
-  static const Duration _maxSessionDuration = Duration(hours: 24); // Maximum session duration
+  static const Duration _refreshThreshold = Duration(minutes: 5);
+  static const Duration _sessionCheckInterval = Duration(minutes: 1);
+  static const Duration _maxSessionDuration = Duration(hours: 24);
   bool _isSessionActive = false;
   DateTime? _lastActivity;
   String? _currentUserId;
@@ -254,7 +254,7 @@ class SessionManager {
       return timeUntilExpiry <= _refreshThreshold;
     } catch (e) {
       debugPrint('Error checking token refresh need: $e');
-      return true; // Assume refresh needed if we can't parse
+      return true;
     }
   }
   Future<void> _terminateSession(AuthErrorType errorType) async {

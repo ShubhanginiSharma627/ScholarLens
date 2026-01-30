@@ -145,7 +145,7 @@ class SecureStorageService {
       return DateTime.now().isAfter(expiryTime);
     } catch (e) {
       debugPrint('Error checking session expiry: $e');
-      return true; // Assume expired on error
+      return true;
     }
   }
   Future<void> storeTokens({
@@ -156,8 +156,8 @@ class SecureStorageService {
   }) async {
     try {
       final expiryDuration = rememberMe 
-          ? const Duration(days: 30) // Long-term session
-          : const Duration(days: 1);  // Short-term session
+          ? const Duration(days: 30)
+          : const Duration(days: 1);
       final expiryTime = DateTime.now().add(expiryDuration);
       await Future.wait([
         storeAccessToken(accessToken),
@@ -406,7 +406,7 @@ class SecureStorageService {
       return DateTime.now().isAfter(cleanupTime);
     } catch (e) {
       _secureLog('Error checking session cleanup status', isError: true);
-      return true; // Assume cleanup is due on error
+      return true;
     }
   }
   Future<void> performSessionCleanup() async {

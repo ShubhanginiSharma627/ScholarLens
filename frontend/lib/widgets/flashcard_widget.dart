@@ -339,6 +339,8 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                 fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 32),
             Column(
@@ -441,6 +443,8 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                 color: Colors.green[800],
               ),
               textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 32),
             Row(

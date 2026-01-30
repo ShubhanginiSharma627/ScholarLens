@@ -8,7 +8,7 @@ class ApiService {
   static final String _baseUrl =
       dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
 
-  static const int _timeoutSeconds = 15; // Reduced from 30 to 15 seconds
+  static const int _timeoutSeconds = 15;
   String? _accessToken;
   String? _refreshToken;
   static final ApiService _instance = ApiService._internal();
@@ -599,8 +599,8 @@ class UserStats {
   final int totalInteractions;
   final Map<String, int> topics;
   final List<double> quizScores;
-  final int? streak; // Make nullable temporarily to handle runtime null
-  final List<WeakTopic>? weakestTopics; // Keep nullable
+  final int? streak;
+  final List<WeakTopic>? weakestTopics;
   UserStats({
     required this.totalInteractions,
     required this.topics,

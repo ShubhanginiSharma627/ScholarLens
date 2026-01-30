@@ -202,7 +202,7 @@ class SmartTransition<T> extends PageRouteBuilder<T> {
       case TransitionType.slideUp:
         return _buildSlideUpTransitionStatic(scaledAnimation, child, curve);
       case TransitionType.custom:
-        return _buildFadeTransitionStatic(scaledAnimation, child, curve); // Default to fade for custom
+        return _buildFadeTransitionStatic(scaledAnimation, child, curve);
       case TransitionType.adaptive:
       default:
         return _buildAdaptiveTransitionStatic(context, scaledAnimation, secondaryAnimation, child, slideDirection, curve);

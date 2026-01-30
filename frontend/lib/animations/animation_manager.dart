@@ -16,7 +16,7 @@ class AnimationManager {
   bool _reducedMotion = false;
   double _performanceScale = 1.0;
   bool _isInitialized = false;
-  int _animationCounter = 0; // Add counter for unique IDs
+  int _animationCounter = 0;
   Future<void> initialize() async {
     if (_isInitialized) return;
     await _accessibilityService.initialize();
@@ -319,7 +319,7 @@ class AnimationManager {
     WidgetsBinding.instance.addPostFrameCallback(_onFrameEnd);
   }
   void _onFrameEnd(Duration timestamp) {
-    final frameTime = timestamp.inMicroseconds / 1000.0; // Convert to milliseconds
+    final frameTime = timestamp.inMicroseconds / 1000.0;
     _performanceMonitor.recordFrameTime(frameTime);
     final metrics = _performanceMonitor.getCurrentMetrics(_registry.activeCount);
     _updatePerformanceScaleFromMetrics(metrics);

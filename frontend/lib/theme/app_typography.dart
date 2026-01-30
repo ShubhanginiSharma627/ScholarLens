@@ -242,11 +242,11 @@ class AppTypography {
     final screenWidth = mediaQuery.size.width;
     double scaleFactor = 1.0;
     if (screenWidth < 600) {
-      scaleFactor = 0.9; // Mobile
+      scaleFactor = 0.9;
     } else if (screenWidth < 900) {
-      scaleFactor = 1.0; // Tablet
+      scaleFactor = 1.0;
     } else {
-      scaleFactor = 1.1; // Desktop
+      scaleFactor = 1.1;
     }
     return baseStyle.copyWith(
       fontSize: (baseStyle.fontSize ?? 14) * scaleFactor,

@@ -246,7 +246,7 @@ class WaveformPainter extends CustomPainter {
     final waveCount = 3;
     for (int i = 0; i < waveCount; i++) {
       final waveOffset = (i * size.width / waveCount);
-      final amplitude = (i + 1) * 15.0; // Different amplitudes for each wave
+      final amplitude = (i + 1) * 15.0;
       for (double x = 0; x <= size.width; x += 2) {
         final normalizedX = x / size.width;
         final wavePhase = (normalizedX * 4 * math.pi) + animationValue + (i * math.pi / 2);

@@ -39,7 +39,7 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
   double _lastScrollOffset = 0.0;
   DateTime? _sectionStartTime;
   bool _hasReachedBottom = false;
-  double _totalReadingTime = 0.0; // in seconds
+  double _totalReadingTime = 0.0;
   double _currentScrollProgress = 0.0;
   Timer? _progressTimer;
   DateTime? _lastProgressUpdate;
@@ -102,7 +102,7 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
     _maxScrollReached = currentOffset > _maxScrollReached ? currentOffset : _maxScrollReached;
     _currentScrollProgress = maxScrollExtent > 0 ? currentOffset / maxScrollExtent : 0.0;
     final scrollDelta = (currentOffset - _lastScrollOffset).abs();
-    _isActivelyReading = scrollDelta > 0; // User is scrolling
+    _isActivelyReading = scrollDelta > 0;
     widget.onScrollChanged?.call(currentOffset, maxScrollExtent);
     if (!_hasReachedBottom && maxScrollExtent > 0) {
       final scrollPercentage = currentOffset / maxScrollExtent;
@@ -119,7 +119,7 @@ class _ContentDisplayAreaState extends State<ContentDisplayArea> {
       final readingTime = DateTime.now().difference(_sectionStartTime!);
       final currentSection = _currentSection;
       if (currentSection != null) {
-        final minReadingTime = (currentSection.estimatedReadingTimeMinutes * 0.3 * 60).round(); // 30% of estimated time
+        final minReadingTime = (currentSection.estimatedReadingTimeMinutes * 0.3 * 60).round();
         final hasMinimumTime = readingTime.inSeconds >= minReadingTime;
         final hasMinimumScrollActivity = _scrollEvents >= 5;
         final hasReachedSignificantProgress = _currentScrollProgress >= 0.8;

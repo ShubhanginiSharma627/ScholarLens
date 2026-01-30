@@ -20,7 +20,6 @@ class Flashcard {
     this.category,
   });
   factory Flashcard.fromJson(Map<String, dynamic> json) {
-    // Handle different response formats from backend
     final studyStats = json['studyStats'] as Map<String, dynamic>?;
     
     return Flashcard(

@@ -95,8 +95,8 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget>
   }
   void _createLocalAnimations() {
     final slideStart = widget.message.isUser 
-        ? const Offset(0.3, 0.0)  // User messages slide in from right
-        : const Offset(-0.3, 0.0); // AI messages slide in from left
+        ? const Offset(0.3, 0.0)
+        : const Offset(-0.3, 0.0);
     _slideAnimation = Tween<Offset>(
       begin: slideStart,
       end: Offset.zero,

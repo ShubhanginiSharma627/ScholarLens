@@ -68,7 +68,6 @@ class ChatMessage {
     );
   }
   
-  // Getters for structured data
   List<String> get followUpQuestions => 
       (structuredData?['followUpQuestions'] as List<dynamic>?)?.cast<String>() ?? [];
   

@@ -28,7 +28,7 @@ class _AnimatedBottomNavigationState extends State<AnimatedBottomNavigation>
   final Map<int, String> _colorAnimationIds = {};
   final Map<int, String> _scaleAnimationIds = {};
   final Map<int, String> _badgeAnimationIds = {};
-  final Map<int, int> _badgeCounts = {1: 3, 3: 1}; // Tutor has 3, Cards has 1
+  final Map<int, int> _badgeCounts = {1: 3, 3: 1};
   final Map<int, int> _previousBadgeCounts = {};
   bool _animationsInitialized = false;
   @override

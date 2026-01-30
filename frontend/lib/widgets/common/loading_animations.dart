@@ -13,7 +13,7 @@ class LoadingAnimations {
     String? label,
   }) {
     final effectiveColor = color ?? _getContextColor(context);
-    final effectiveStrokeWidth = strokeWidth * (size / 24.0); // Scale stroke with size
+    final effectiveStrokeWidth = strokeWidth * (size / 24.0);
     Widget loader = SizedBox(
       width: size,
       height: size,
@@ -1886,7 +1886,7 @@ class _WaveProgressPainter extends CustomPainter {
       } else if (i == activeWaves) {
         waveHeight = size.height * partialWave;
       } else {
-        waveHeight = size.height * 0.1; // Minimum height for inactive waves
+        waveHeight = size.height * 0.1;
       }
       final opacity = i < activeWaves ? 1.0 : 
                      i == activeWaves ? partialWave : 0.3;

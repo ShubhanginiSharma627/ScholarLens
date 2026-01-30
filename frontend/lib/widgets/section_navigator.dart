@@ -6,7 +6,7 @@ class SectionNavigator extends StatelessWidget {
   final int currentSection;
   final int totalSections;
   final List<bool> sectionCompletionStatus;
-  final List<ChapterSection>? sections; // Optional for section titles
+  final List<ChapterSection>? sections;
   final Function(int) onSectionChanged;
   final VoidCallback? onPreviousPressed;
   final VoidCallback? onNextPressed;

@@ -158,7 +158,7 @@ class CircularProgressPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
-    const startAngle = -math.pi / 2; // Start from top
+    const startAngle = -math.pi / 2;
     final sweepAngle = 2 * math.pi * progress.clamp(0.0, 1.0);
     if (sweepAngle > 0) {
       canvas.drawArc(

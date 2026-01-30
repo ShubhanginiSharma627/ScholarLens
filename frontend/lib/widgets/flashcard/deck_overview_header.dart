@@ -296,7 +296,7 @@ class DeckOverviewHeader extends StatelessWidget {
     } else if (subjectLower.contains('economics') || subjectLower.contains('business')) {
       return Icons.trending_up;
     } else {
-      return Icons.school; // Default icon
+      return Icons.school;
     }
   }
 }

@@ -40,7 +40,7 @@ class CardListItemExample extends StatelessWidget {
         itemCount: sampleFlashcards.length,
         itemBuilder: (context, index) {
           final flashcard = sampleFlashcards[index];
-          final isMastered = flashcard.reviewCount >= 3; // Simple mastery logic
+          final isMastered = flashcard.reviewCount >= 3;
           return CardListItem(
             flashcard: flashcard,
             isMastered: isMastered,

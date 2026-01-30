@@ -146,7 +146,7 @@ class StorageService {
     };
     return supportedExtensions.contains(extension);
   }
-  int get maxFileSize => 100 * 1024 * 1024; // 100MB
+  int get maxFileSize => 100 * 1024 * 1024;
   String get supportedExtensions => 
       'PDF, DOC, DOCX, TXT, JPG, PNG, MP3, MP4, ZIP and more';
 }

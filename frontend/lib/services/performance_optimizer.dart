@@ -36,7 +36,7 @@ class PerformanceOptimizer {
     }
   }
   double _estimateMemoryUsage() {
-    return 50.0 + (_memoryUsageHistory.length * 2.0); // Simulated increasing usage
+    return 50.0 + (_memoryUsageHistory.length * 2.0);
   }
   void _triggerMemoryOptimization() {
     debugPrint('Triggering memory optimization...');
@@ -126,8 +126,8 @@ class PerformanceMetrics {
     required this.frameTimeHistory,
   });
   bool get isPerformanceGood {
-    return currentMemoryUsageMB < 150.0 && // Under 150MB
-           currentFps >= 30; // At least 30fps
+    return currentMemoryUsageMB < 150.0 &&
+           currentFps >= 30;
   }
   String get performanceStatus {
     if (currentMemoryUsageMB > 200.0) return 'High Memory Usage';

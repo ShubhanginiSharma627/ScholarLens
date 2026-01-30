@@ -192,17 +192,24 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
                         ),
                         const SizedBox(height: AppTheme.spacingL),
                         Flexible(
-                          child: Text(
-                            widget.flashcard.question,
-                            style: AppTypography.getTextStyle(context, 'headlineMedium').copyWith(
-                              fontWeight: AppTypography.bold,
-                              height: 1.3,
-                              letterSpacing: -0.2,
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? AppTheme.darkPrimaryTextColor
-                                  : AppTheme.primaryTextColor.withValues(alpha: 0.95),
+                          child: Container(
+                            constraints: const BoxConstraints(
+                              maxHeight: 200, // Limit height to prevent overflow
                             ),
-                            textAlign: TextAlign.center,
+                            child: SingleChildScrollView(
+                              child: Text(
+                                widget.flashcard.question,
+                                style: AppTypography.getTextStyle(context, 'headlineMedium').copyWith(
+                                  fontWeight: AppTypography.bold,
+                                  height: 1.3,
+                                  letterSpacing: -0.2,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? AppTheme.darkPrimaryTextColor
+                                      : AppTheme.primaryTextColor.withValues(alpha: 0.95),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: AppTheme.spacingL),
@@ -297,17 +304,24 @@ class _EnhancedFlashcardWidgetState extends State<EnhancedFlashcardWidget>
                         ),
                         const SizedBox(height: AppTheme.spacingL),
                         Flexible(
-                          child: Text(
-                            widget.flashcard.answer,
-                            style: AppTypography.getTextStyle(context, 'headlineMedium').copyWith(
-                              fontWeight: AppTypography.extraBold,
-                              height: 1.2,
-                              letterSpacing: -0.3,
-                              color: Theme.of(context).brightness == Brightness.dark 
-                                  ? Colors.white.withValues(alpha: 0.95)
-                                  : AppTheme.successColor.withValues(alpha: 0.9),
+                          child: Container(
+                            constraints: const BoxConstraints(
+                              maxHeight: 200, // Limit height to prevent overflow
                             ),
-                            textAlign: TextAlign.center,
+                            child: SingleChildScrollView(
+                              child: Text(
+                                widget.flashcard.answer,
+                                style: AppTypography.getTextStyle(context, 'headlineMedium').copyWith(
+                                  fontWeight: AppTypography.extraBold,
+                                  height: 1.2,
+                                  letterSpacing: -0.3,
+                                  color: Theme.of(context).brightness == Brightness.dark 
+                                      ? Colors.white.withValues(alpha: 0.95)
+                                      : AppTheme.successColor.withValues(alpha: 0.9),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: AppTheme.spacingL),
