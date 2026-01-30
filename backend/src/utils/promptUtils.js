@@ -24,7 +24,6 @@ exports.syllabusAnalysisPrompt = (userRequest = '') => {
     return basePrompt + userContext;
   } catch (error) {
     console.error('Error loading syllabus analysis prompt:', error);
-    // Fallback prompt if file can't be read
     return `Analyze this document and provide structured information about its content.
     
 Please extract:
