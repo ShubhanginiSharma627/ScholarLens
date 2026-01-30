@@ -154,6 +154,17 @@ class HttpTutorService implements TutorService {
             }
           ],
         );
+        
+        // Handle structured response
+        if (response['structuredData'] != null) {
+          // Store structured data for potential future use
+          // For now, just return the main response
+          final responseText = response['response'] as String? ?? 
+                              response['message'] as String? ??
+                              'I apologize, but I couldn\'t process your follow-up question at the moment.';
+          return responseText;
+        }
+        
         final responseText = response['response'] as String? ?? 
                             response['message'] as String? ??
                             'I apologize, but I couldn\'t process your follow-up question at the moment.';

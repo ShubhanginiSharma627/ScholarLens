@@ -191,7 +191,27 @@ const chatWithTutor = async (req, res) => {
         sessionType: sessionType || 'general_chat'
       });
       const processingTime = Date.now() - startTime;
-      if (!tutorResponse || tutorResponse.trim() === '') {
+
+      // Handle both string and structured responses
+      let responseMessage, structuredData;
+      if (typeof tutorResponse === 'object' && tutorResponse.message) {
+        responseMessage = tutorResponse.message;
+        structuredData = {
+          followUpQuestions: tutorResponse.followUpQuestions,
+          keyConcepts: tutorResponse.keyConcepts,
+          sessionSummary: tutorResponse.sessionSummary,
+          suggestedTopics: tutorResponse.suggestedTopics,
+          studyTips: tutorResponse.studyTips,
+          encouragement: tutorResponse.encouragement,
+          responseType: tutorResponse.responseType,
+          difficultyLevel: tutorResponse.difficultyLevel
+        };
+      } else {
+        responseMessage = tutorResponse;
+        structuredData = null;
+      }
+
+      if (!responseMessage || responseMessage.trim() === '') {
         logger.error(`[${requestId}] Empty tutor response received`, {
           processingTime,
           originalMessage: message,
@@ -203,8 +223,9 @@ const chatWithTutor = async (req, res) => {
         });
       }
       logger.info(`[${requestId}] Tutor response generated successfully`, {
-        responseLength: tutorResponse.length,
+        responseLength: responseMessage.length,
         processingTime,
+        hasStructuredData: !!structuredData,
         userId: userId || 'anonymous'
       });
       logBusiness('tutor_chat_success', userId, {
@@ -212,26 +233,29 @@ const chatWithTutor = async (req, res) => {
         subject,
         sessionType: sessionType || 'general_chat',
         processingTime,
-        responseLength: tutorResponse.length
+        responseLength: responseMessage.length
       });
       logPerformance('tutor_chat_generation', processingTime, {
         requestId,
         userId: userId || 'anonymous',
         messageLength: message.length,
-        responseLength: tutorResponse.length
+        responseLength: responseMessage.length
       });
       if (userId) {
         try {
           const chatSessionData = {
             userId,
             userMessage: message,
-            tutorResponse,
+            tutorResponse: responseMessage,
             sessionType: sessionType || 'general_chat',
             processingTime,
             timestamp: new Date(),
           };
           if (subject !== undefined && subject !== null) {
             chatSessionData.subject = subject;
+          }
+          if (structuredData) {
+            chatSessionData.structuredData = structuredData;
           }
           await db.collection('chat_sessions').add(chatSessionData);
           logger.debug(`[${requestId}] Chat session logged to database`);
@@ -244,14 +268,22 @@ const chatWithTutor = async (req, res) => {
           });
         }
       }
+
+      const responseData = { 
+        response: responseMessage,
+        sessionType: sessionType || 'general_chat',
+        processingTime,
+        timestamp: new Date().toISOString()
+      };
+
+      // Include structured data if available
+      if (structuredData) {
+        responseData.structuredData = structuredData;
+      }
+
       res.json({
         success: true,
-        data: { 
-          response: tutorResponse,
-          sessionType: sessionType || 'general_chat',
-          processingTime,
-          timestamp: new Date().toISOString()
-        }
+        data: responseData
       });
     } catch (generationError) {
       const processingTime = Date.now() - startTime;

@@ -442,12 +442,28 @@ async function generateTutorResponse(message, options = {}) {
     const duration = Date.now() - startTime;
     
     let finalResponse = response;
+    let structuredData = null;
     
     try {
       const parsedResponse = JSON.parse(response);
       if (parsedResponse.response && parsedResponse.response.main_message) {
         finalResponse = parsedResponse.response.main_message;
-        logger.info(`[${requestId}] Extracted main message from structured response`);
+        structuredData = {
+          followUpQuestions: parsedResponse.conversation_flow?.follow_up_questions || [],
+          keyConcepts: parsedResponse.educational_content?.key_concepts || [],
+          sessionSummary: parsedResponse.conversation_flow?.session_summary || '',
+          suggestedTopics: parsedResponse.conversation_flow?.suggested_topics || [],
+          studyTips: parsedResponse.learning_support?.study_tips || [],
+          encouragement: parsedResponse.encouragement || {},
+          responseType: parsedResponse.response?.type || 'general',
+          difficultyLevel: parsedResponse.response?.difficulty_level || 'medium'
+        };
+        logger.info(`[${requestId}] Extracted structured data from response`, {
+          hasFollowUpQuestions: structuredData.followUpQuestions.length > 0,
+          hasKeyConcepts: structuredData.keyConcepts.length > 0,
+          hasSessionSummary: !!structuredData.sessionSummary,
+          responseType: structuredData.responseType
+        });
       } else {
         logger.warn(`[${requestId}] Structured response missing main_message, using full response`);
       }
@@ -458,8 +474,10 @@ async function generateTutorResponse(message, options = {}) {
     logger.info(`[${requestId}] Tutor response generated successfully`, {
       responseLength: finalResponse.length,
       duration,
-      isEmpty: finalResponse.trim().length === 0
+      isEmpty: finalResponse.trim().length === 0,
+      hasStructuredData: !!structuredData
     });
+    
     if (!finalResponse || finalResponse.trim().length === 0) {
       logger.error(`[${requestId}] Empty tutor response generated`, {
         originalMessage: message,
@@ -467,6 +485,15 @@ async function generateTutorResponse(message, options = {}) {
       });
       throw new Error('Generated tutor response is empty');
     }
+    
+    // Return structured response if we have it, otherwise just the text
+    if (structuredData) {
+      return {
+        message: finalResponse,
+        ...structuredData
+      };
+    }
+    
     return finalResponse;
   } catch (error) {
     logger.error(`[${requestId}] Tutor response generation failed`, {

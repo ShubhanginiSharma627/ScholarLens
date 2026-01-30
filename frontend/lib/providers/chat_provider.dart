@@ -53,8 +53,11 @@ class ChatProvider extends ChangeNotifier {
     await addMessage(userMessage);
     return userMessage;
   }
-  Future<void> addAIResponse(String content) async {
-    final aiMessage = ChatMessage.ai(content: content);
+  Future<void> addAIResponse(String content, {Map<String, dynamic>? structuredData}) async {
+    final aiMessage = ChatMessage.ai(
+      content: content,
+      structuredData: structuredData,
+    );
     await addMessage(aiMessage);
   }
   Future<void> updateMessageStatus(String messageId, MessageStatus status) async {
