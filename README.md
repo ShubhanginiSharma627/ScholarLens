@@ -35,6 +35,21 @@ An intelligent educational assistant powered by AI that helps students learn eff
 - **Database**: Firebase integration
 - **Logging**: Comprehensive Winston-based logging system
 
+### ScienceQA Service (Python/FastAPI)
+- **Framework**: FastAPI for high-performance API endpoints
+- **RAG Engine**: Retrieval-Augmented Generation for science questions
+- **Vector Database**: ChromaDB for semantic search
+- **Embeddings**: Sentence Transformers for text embeddings
+- **Quiz Generation**: Automated quiz creation from science topics
+- **Performance Analysis**: Student performance tracking and feedback
+
+#### ScienceQA Features
+- **Knowledge Retrieval**: Semantic search through science exam database
+- **Context-Aware Answers**: RAG-based answer generation with source attribution
+- **Quiz Generation**: Dynamic quiz creation by topic and difficulty
+- **Performance Analytics**: Detailed feedback on quiz results
+- **Dockerized Deployment**: Container-ready for easy deployment
+
 ### AI Services
 - **Primary AI**: Google Vertex AI (Gemini 1.5 Pro/Flash)
 - **ScienceQA Integration**: Specialized science question answering
@@ -94,6 +109,53 @@ An intelligent educational assistant powered by AI that helps students learn eff
    npm start
    ```
 
+### ScienceQA Service Setup
+
+1. **Navigate to ScienceQA directory**
+   ```bash
+   cd ../ScienceQA
+   ```
+
+2. **Install Python dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Prepare the knowledge base**
+   ```bash
+   # Clean and prepare exam data
+   python scripts/1_clean_data.py
+   
+   # Build the vector database
+   python scripts/2_build_db.py
+   ```
+
+4. **Start the ScienceQA service**
+   ```bash
+   cd app
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+5. **Docker deployment (optional)**
+   ```bash
+   # Build the Docker image
+   docker build -t scienceqa-service .
+   
+   # Run the container
+   docker run -p 8000:8000 scienceqa-service
+   ```
+
+6. **Test the service**
+   ```bash
+   # Run API tests
+   python test_api.py
+   
+   # Or use curl
+   curl -X POST "http://localhost:8000/retrieve" \
+     -H "Content-Type: application/json" \
+     -d '{"question_text": "What is photosynthesis?"}'
+   ```
+
 ### Frontend Setup
 
 1. **Navigate to frontend directory**
@@ -122,6 +184,74 @@ An intelligent educational assistant powered by AI that helps students learn eff
    ```
 
 ## 🔧 Configuration
+
+### Project Structure
+
+```
+ScholarLens/
+├── frontend/              # Flutter mobile/web app
+│   ├── lib/
+│   │   ├── screens/      # UI screens
+│   │   ├── services/     # Business logic
+│   │   ├── models/       # Data models
+│   │   ├── widgets/      # Reusable components
+│   │   └── animations/   # Animation system
+│   └── test/             # Unit and widget tests
+│
+├── backend/              # Node.js API server
+│   ├── src/
+│   │   ├── controllers/  # API endpoints
+│   │   ├── services/     # Business logic
+│   │   ├── middleware/   # Auth & logging
+│   │   └── routes/       # Route definitions
+│   ├── prompts/          # AI prompt templates
+│   └── logs/             # Application logs
+│
+└── ScienceQA/            # Python RAG service
+    ├── app/
+    │   ├── main.py       # FastAPI application
+    │   ├── rag_engine.py # RAG implementation
+    │   ├── quiz_engine.py # Quiz generation
+    │   ├── models.py     # Pydantic models
+    │   └── Dockerfile    # Container config
+    ├── data/
+    │   └── cleaned_exam.json # Science exam database
+    ├── scripts/
+    │   ├── 1_clean_data.py   # Data preprocessing
+    │   └── 2_build_db.py     # Vector DB setup
+    └── requirements.txt  # Python dependencies
+```
+
+### ScienceQA API Endpoints
+
+The ScienceQA service provides the following endpoints:
+
+1. **Health Check**
+   ```bash
+   GET /
+   # Returns service status
+   ```
+
+2. **Knowledge Retrieval**
+   ```bash
+   POST /retrieve
+   # Body: {"question_text": "your question"}
+   # Returns: {"answer_context": "...", "source_topic": "...", "confidence_score": 0.95}
+   ```
+
+3. **Quiz Generation**
+   ```bash
+   POST /quiz/generate
+   # Body: {"topic": "biology", "difficulty": "medium"}
+   # Returns: {"quiz": [...questions...]}
+   ```
+
+4. **Performance Analysis**
+   ```bash
+   POST /quiz/analyze
+   # Body: {"results": [...quiz results...]}
+   # Returns: {"feedback": {...performance analysis...}}
+   ```
 
 ### Google Cloud Setup
 
@@ -160,6 +290,23 @@ An intelligent educational assistant powered by AI that helps students learn eff
 cd backend
 npm test
 npm run test:integration
+```
+
+### ScienceQA Testing
+```bash
+cd ScienceQA/app
+# Run API tests
+python test_api.py
+
+# Test knowledge retrieval
+curl -X POST "http://localhost:8000/retrieve" \
+  -H "Content-Type: application/json" \
+  -d '{"question_text": "Explain the water cycle"}'
+
+# Test quiz generation
+curl -X POST "http://localhost:8000/quiz/generate" \
+  -H "Content-Type: application/json" \
+  -d '{"topic": "chemistry", "difficulty": "easy"}'
 ```
 
 ### Frontend Testing
@@ -228,6 +375,31 @@ Logs are stored in `backend/logs/` with different categories:
    - Check API response times
    - Verify database connection
 
+#### ScienceQA Issues
+1. **Vector Database Errors**
+   ```bash
+   # Rebuild the ChromaDB database
+   cd ScienceQA
+   python scripts/2_build_db.py
+   ```
+
+2. **Missing Dependencies**
+   ```bash
+   # Reinstall Python packages
+   pip install -r requirements.txt --upgrade
+   ```
+
+3. **Port Conflicts**
+   ```bash
+   # Change the port in startup command
+   uvicorn main:app --port 8001
+   ```
+
+4. **Low Confidence Scores**
+   - Ensure the knowledge base is properly built
+   - Check if the question is within the science domain
+   - Verify embedding model is loaded correctly
+
 #### Frontend Issues
 1. **Animation Performance**
    - Check for animation controller disposal errors
@@ -290,5 +462,8 @@ flutter run --profile
 - Google Cloud AI Platform for Vertex AI services
 - Flutter team for the amazing framework
 - Firebase for backend services
+- ChromaDB for vector database capabilities
+- Sentence Transformers for embedding models
+- FastAPI for high-performance Python APIs
 - Open source community for various packages used
 
